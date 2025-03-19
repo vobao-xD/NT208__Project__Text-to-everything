@@ -8,10 +8,11 @@
 
 # Mẹo backend
 
-- Lúc mới pull về, cd vào thư mục backend gõ
+- Lúc mới pull về, để cài các gói cần thiết ta chạy các lệnh sau
   sudo apt update
   sudo apt install python3
   sudo apt install python3-venv
+  cd backend
   python3 -m venv venv
   source venv/bin/activate
   pip install -r requirement.txt
