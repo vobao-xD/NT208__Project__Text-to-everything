@@ -8,4 +8,10 @@
 
 # Mẹo backend
 
-- Tải các package cần thiết: pip install -r requirement.txt
+- Lúc mới pull về, cd vào thư mục backend gõ
+  sudo apt update
+  sudo apt install python3
+  sudo apt install python3-venv
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install -r requirement.txt
