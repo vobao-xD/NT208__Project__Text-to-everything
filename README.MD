@@ -1,4 +1,4 @@
-Các ứng dụng cần cài
+# Các ứng dụng cần cài
 
 - Terminal
 - WSL2
