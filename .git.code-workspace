@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../../hoc/.git"
+		},
+		{
+			"path": "../../F8-JOB"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "F8-JOB"
+	}
+}
