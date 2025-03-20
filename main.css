@@ -21,14 +21,13 @@
     font-size: 1.2em;
 }
 .sidebar_text>span {
-    margin-left: 25px;
+    margin-left: 12.5px;
     padding: 10px 30px;
     background-clip: padding-box;
     background-color: aqua;
     color: black;
     border-radius: 10px;
     font-weight: bold;
-
 }
 .sidebar_text>h2 {
     margin-bottom: 40px;
@@ -49,15 +48,15 @@
  }
  .navbar_btn {
     position: absolute;
-    right: 30px;
+    right: 30px; 
  }
  .btn_login {
     border: none;
     font-size: 1em;
-    padding: 10px 20px;
+    padding: 10px 25px;
     border-radius: 15px;
-    margin: 0 5px;
     background-color: aqua;
+    cursor: pointer;
  }
  /* CSS Content body */
 .content_body {
@@ -84,13 +83,74 @@
     font-weight: 100;
     margin: 10px 0 0;
 }
+.start_link {
+    margin: 100px auto 0;
+}
 .start_btn {
-    width: 25%;
     padding: 20px;
     font-size: 1.1em;
     font-weight: bold;
-    margin: 100px auto 0;
     border: none;
     border-radius: 15px;
     background-color: aqua;
+    cursor: pointer;
+}
+/* CSS trang tạo */
+.sidebar_title {
+    font-size: 1.2em;
+}
+.sidebar_title>h2 {
+    margin: 30px 0 30px 30px;
+}
+.choices {
+    margin:0 0 30px 42.5px;
+}
+.options {
+    width: 175px;
+    height: 41px;
+    padding: 10px 5px 10px 15px;
+    background-color: aqua;
+    color: black;
+    border-radius: 10px;
+    font-weight: bold;
+    margin-bottom: 30px;
+    font-size: 1.2em;
+    border: none;
+    cursor: pointer;
+}
+.generate_btn {
+    color: white;
+    border: none;
+    background-color: black;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+.history {
+    margin-left: 42.5px;
+}
+.list {
+    margin-left: 30px;
+    margin-top: 10px;
+}
+.content_heading {
+    position: relative;
+}
+.avatar {
+    font-size: 40px;
+    position: absolute;
+    top: 10px;
+    left: 990px;
+}
+.question {
+    margin: 40% auto 50px;
+}                                                       
+.input {
+    height: 100px;
+    width: 600px;
+    background-color: black;
+    color: white;
+    border-radius: 5px;
+}
+.input:focus::placeholder {
+    color: transparent;
 }

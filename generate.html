@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo</title>
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
+</head>
+<body>
+    <div class="full-container">
+        <div class="sidebar">
+            <heading class="sidebar_title">
+                <h2>Sidebar</h2>
+            </heading>
+            <div class="choices">
+                <select class="options" name="options" id="">
+                    <option value="1">Text to Speech</option>
+                    <option value="2">Text to Image</option>
+                    <option value="3">Text to Video</option>
+                    <option value="4">Create AI Avatar</option>
+                    <option value="5">Improve Image Quality</option>
+                    <option value="6">AI Chatbox</option>
+                </select>
+                <button class="generate_btn">+ Cuộc trò chuyện mới</button>
+            </div>
+            <div class="history">
+                <ul class="recent_history">
+                    Đoạn chat gần đây
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                </ul>
+            </div>
+        </div>
+        <div class="content">
+            <heading class="content_heading">
+                <i class="fa-solid fa-circle-user avatar"></i>
+            </heading>
+            <div class="content_body">
+                <h1 class="question">Tôi có thể giúp gì cho bạn?</h1>
+                <textarea class="input" name="" id="" rows="4" placeholder="Mô tả những gì bạn muốn tạo"></textarea>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
