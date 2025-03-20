@@ -2,20 +2,36 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
- }
+    font-family: "Tektur", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings: "wdth" 100;   
+ } 
  .full-container {
     display: flex;
     height: 100vh;
     margin: 0;
-    font-family: Arial;
+    background-color: rgb(29, 29, 29);
  }
  /* CSS Sidebar */
  .sidebar {
     flex:1;
+    background: linear-gradient(45deg, black, #242424);
     color: white;
-    background-color: black;
     border-radius: 0 15px 15px 0;
+    animation: slideIn 1s ease-in-out;
  }
+ @keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
 .sidebar_text {
     margin: 30px 0 0 30px;
     font-size: 1.2em;
@@ -24,7 +40,7 @@
     margin-left: 12.5px;
     padding: 10px 30px;
     background-clip: padding-box;
-    background-color: aqua;
+    background: linear-gradient(135deg, #3999ff, #50e2ff);
     color: black;
     border-radius: 10px;
     font-weight: bold;
@@ -43,25 +59,35 @@
     align-items: center;
     margin-top: 10px;
  }
- .btn_link {
-    text-decoration: none;
- }
  .navbar_btn {
     position: absolute;
     right: 30px; 
+ }
+ .btn_link {
+    text-decoration: none;
+    color: black;
  }
  .btn_login {
     border: none;
     font-size: 1em;
     padding: 10px 25px;
     border-radius: 15px;
-    background-color: aqua;
+    background: linear-gradient(135deg, #3999ff, #50e2ff);
+    color: black;
     cursor: pointer;
+ }
+ .btn_login:hover,.start_btn:hover {
+    opacity: 0.8;
+    box-shadow: 2px 2px black;
+    background: linear-gradient(135deg, #50e2ff, #3999ff);
+  transform: scale(1.05);
  }
  /* CSS Content body */
 .content_body {
    display: grid;
    justify-content: center;
+   margin-top: 10px;
+   color: white;
 }
 .body_title {
     display: grid;
@@ -70,6 +96,7 @@
 }
 .body_title>h1 {
     margin: 40px auto 5px;
+     font-weight: lighter;
 }
 .body_title>h3 {
     margin: 0 auto;
@@ -84,7 +111,7 @@
     margin: 10px 0 0;
 }
 .start_link {
-    margin: 100px auto 0;
+    margin: 50px auto 0;
 }
 .start_btn {
     padding: 20px;
@@ -92,7 +119,7 @@
     font-weight: bold;
     border: none;
     border-radius: 15px;
-    background-color: aqua;
+    background: linear-gradient(135deg, #3999ff, #50e2ff);
     cursor: pointer;
 }
 /* CSS trang tạo */
@@ -109,19 +136,19 @@
     width: 175px;
     height: 41px;
     padding: 10px 5px 10px 15px;
-    background-color: aqua;
+    background: linear-gradient(135deg, #3999ff, #50e2ff);
     color: black;
     border-radius: 10px;
     font-weight: bold;
     margin-bottom: 30px;
-    font-size: 1.2em;
+    font-size: 1.1em;
     border: none;
     cursor: pointer;
 }
 .generate_btn {
     color: white;
     border: none;
-    background-color: black;
+    background-color: transparent;
     cursor: pointer;
     font-size: 0.9em;
 }
@@ -150,7 +177,53 @@
     background-color: black;
     color: white;
     border-radius: 5px;
+    border: none;
+    resize: none;
+}
+.typing--animation {
+    white-space: nowrap;
+    overflow: hidden;
+    border-right: 3px solid black;
+    width: 0;
+    animation: typing 3.5s steps(30, end) forwards, blink 1s step-end infinite,hideCursor 1s 3.5s forwards;
+}
+
+@keyframes typing {
+    from {
+        width: 0;
+    }
+    to {
+        width: 70%;
+    }
+}
+
+@keyframes blink {
+    50% {
+        border-color: transparent;
+    }
+}
+@keyframes hideCursor {
+    to {
+        border-right: none;
+    }
 }
 .input:focus::placeholder {
     color: transparent;
 }
+/* Animation */
+.content-item {
+    opacity: 0;
+    animation: fadeInUp 1s ease-in-out forwards;
+  }
+  
+  .content-item:nth-child(1) { animation-delay: 0.2s; }
+  .content-item:nth-child(2) { animation-delay: 0.4s; }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
