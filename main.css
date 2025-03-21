@@ -1,3 +1,7 @@
+ :root{
+    --success-color:#2691d9;
+    --error-color:#e74c3c;
+ }
  * {
     margin: 0;
     padding: 0;
@@ -228,79 +232,131 @@
     }
   }
   
-body.signup-page {
-    background-color: #f4f4f4;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  body.signup-page {
+    background: linear-gradient(120deg, #000, #050549);
+    display: flex; /* Kích hoạt flexbox */
+    justify-content: center; /* Căn giữa theo chiều ngang */
+    align-items: center; /* Căn giữa theo chiều dọc */
+    height: 100vh; /* Chiều cao toàn màn hình */
+    margin: 0; /* Loại bỏ margin mặc định */
+    font-family:'Poppins';
 }
 
-body.signup-page.signup-container {
+/* Container chứa form */
+.signup-container {
     background: white;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 40px;
+    border: none;
+    border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 350px;
-    text-align: center;
+    width: 350px; /* Chiều rộng cố định */
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+
 }
 
-body.signup-page h2 {
+.signup-container h1 {
     margin-bottom: 15px;
+    text-align: center; /* Căn giữa nội dung bên trong */
+    font-weight: bold;
+
 }
 
 
-body.signup-page input {
+.form-control {
     width: 100%;
-    padding: 10px;
-    margin: 8px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    margin-top: 40px;
+    position: relative;
 }
+.form-control input{
+    width: 100%;
+    height:40px;
+    font-size: 16px;
+    border:none;
+    outline: none;
+    border-bottom: 2px solid #adadad;
 
+}
+.form-control span{
+position:absolute;
+border-bottom:3px solid var(--success-color);
+top: 38px;
+left: 0;
+width: 0%;
+transition: 0.3s;
+}
+.form-control input:focus ~ span{
+    width: 100%;
+}
+.form-control small{
+    color:var(--error-color);
+
+}
 body.signup-page button {
     width: 100%;
     padding: 10px;
-    background-color: #007bff;
+    background: linear-gradient(135deg, #3999ff, #50e2ff);
     border: none;
+    outline: none;
     color: white;
     font-size: 16px;
-    border-radius: 5px;
+    border-radius: 25px;
     cursor: pointer;
-    margin-top: 10px;
+    margin:25px 0;
+    font-weight: bold;
 }
 
 body.signup-page button:hover {
-    background-color: #0056b3;
+    background: var(--success-color)
 }
+.signup-container a{
+    color:var(--success-color);
+    text-decoration: none;
+    cursor:pointer;
+    font-weight: bold;
+}
+.signup-container a:hover{
+    text-decoration: underline;
+}
+
+/* Định dạng chung cho trang đăng nhập */
 body.signin-page {
-    background-color: #f4f4f4;
+    background: linear-gradient(120deg, #000, #050549);
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
 }
-body.signin-page .container {
+
+/* Container chứa form */
+.signin-container {
     background: white;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 40px;
+    border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     width: 350px;
-    text-align: center;
 }
 
 /* Tiêu đề */
-body.signin-page h2 {
-    margin-bottom: 15px;
+.signin-container h1 {
+    margin-bottom: 35px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
 }
 
 /* Ô nhập liệu */
 body.signin-page input {
     width: 100%;
-    padding: 10px;
-    margin: 8px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    height:40px;
+    font-size: 16px;
+    border:none;
+    outline: none;
+    border-bottom: 2px solid #adadad;
 }
 
 /* Nút đăng nhập */
@@ -313,27 +369,20 @@ body.signin-page button {
     font-size: 16px;
     border-radius: 5px;
     cursor: pointer;
-    margin-top: 10px;
+    margin: 25px 0;
 }
 
 body.signin-page button:hover {
     background-color: #218838;
 }
 
-/* Link đăng ký */
-p.signin-container,
-p.signup-container {
-    margin-top: 10px;
-}
-
-p a.signin-container,
-p a.signup-container {
-    color: #007bff;
+.signin-container a{
+    color:var(--success-color);
     text-decoration: none;
+    cursor:pointer;
+    font-weight: bold;
 }
-
-p a.signin-container:hover,
-p a.signup-container:hover {
+.signin-container a:hover{
     text-decoration: underline;
 }
 
