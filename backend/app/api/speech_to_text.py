@@ -10,3 +10,4 @@ def speech_to_text(file: UploadFile = File(...)):
     """
     # text = AIService.speech_to_text(file)
     # return {"text": text}
+    return {"message" : "Chưa làm"}

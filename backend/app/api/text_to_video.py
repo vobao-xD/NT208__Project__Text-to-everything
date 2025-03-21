@@ -10,4 +10,4 @@ def text_to_video(script: str):
     """
     # video_url = AIService.text_to_video(script)
     # return {"video_url": video_url}
-    pass
+    return {"message" : "Chưa làm"}
