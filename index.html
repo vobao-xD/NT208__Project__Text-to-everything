@@ -19,16 +19,12 @@
         <div class="content">
             <nav class="navbar content-item">
                 <div class="navbar_btn">
-                    <a class="btn_link" href="signup.html">
-                        <button class="btn_login">Sign Up</button>
-                    </a>
-                    <a class="btn_link" href="signin.html">
-                        <button class="btn_login">Sign In</button>
-                    </a>
+                    <button onclick="sign_up()" class="btn_login">Sign Up</button>
+                    <button onclick="sign_in()" class="btn_login">Sign In</button>
                 </div>
             </nav>
             <div class="content_body content-item">
-                <div class="body_title">
+                <div class="body_title  ">
                     <h1>CHÀO MỪNG BẠN ĐẾN VỚI [...]</h1>
                     <h3>Slogan</h3>
                 </div>
@@ -42,11 +38,20 @@
                         <li>...</li>
                     </ul>
                 </div>
-                <a class="start_link" href="generate.html">
-                    <button class="start_btn">BẮT ĐẦU NÀO</button>
-                </a>
+                <button onclick="get_started()" class="start_btn">BẮT ĐẦU NÀO</button>
             </div>
         </div>
     </div>
+    <script>
+        function get_started() {
+            window.location.href="generate.html"
+        }
+        function sign_in() {
+            window.location.href="signin.html"
+        }
+        function sign_up() {
+            window.location.href="signup.html"
+        }
+    </script>
 </body>
 </html>
