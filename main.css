@@ -63,10 +63,6 @@
     position: absolute;
     right: 30px; 
  }
- .btn_link {
-    text-decoration: none;
-    color: black;
- }
  .btn_login {
     border: none;
     font-size: 1em;
@@ -110,9 +106,7 @@
     font-weight: 100;
     margin: 10px 0 0;
 }
-.start_link {
-    margin: 50px auto 0;
-}
+
 .start_btn {
     padding: 20px;
     font-size: 1.1em;
@@ -121,6 +115,7 @@
     border-radius: 15px;
     background: linear-gradient(135deg, #3999ff, #50e2ff);
     cursor: pointer;
+    margin: 50px auto 0;
 }
 /* CSS trang tạo */
 .sidebar_title {
@@ -196,7 +191,6 @@
         width: 70%;
     }
 }
-
 @keyframes blink {
     50% {
         border-color: transparent;
