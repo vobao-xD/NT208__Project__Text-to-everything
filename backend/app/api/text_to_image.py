@@ -10,5 +10,5 @@ def text_to_image(prompt: str):
     """
     # image_url = AIService.text_to_image(prompt)
     # return {"image_url": image_url}
-    pass
+    return {"message" : "Chưa làm"}
 

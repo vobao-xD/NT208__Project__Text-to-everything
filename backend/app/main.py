@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from api import router
 
-# app = FastAPI(docs_url=None, redoc_url=None)
+# app = FastAPI(docs_url=None, redoc_url=None) -> Disable docs and redoc
 app = FastAPI()
 
 app.include_router(router)

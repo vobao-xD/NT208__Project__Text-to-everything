@@ -9,7 +9,7 @@ def register(username: str, password: str):
     Đăng ký tài khoản
     """
     # return AuthService.register(username, password)
-    pass
+    return {"message" : "Chưa làm"}
 
 @router.post("/login/")
 def login(username: str, password: str):
@@ -17,4 +17,4 @@ def login(username: str, password: str):
     Đăng nhập lấy token
     """
     # return AuthService.login(username, password)
-    pass
+    return {"message" : "Chưa làm"}
