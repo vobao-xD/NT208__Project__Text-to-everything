@@ -37,7 +37,7 @@
     font-size: 1.2em;
 }
 .sidebar_text>span {
-    margin-left: 12.5px;
+    margin-left: 20px;
     padding: 10px 30px;
     background-clip: padding-box;
     background: linear-gradient(135deg, #3999ff, #50e2ff);
@@ -129,7 +129,7 @@
 }
 .options {
     width: 175px;
-    height: 41px;
+    height: 45px;
     padding: 10px 5px 10px 15px;
     background: linear-gradient(135deg, #3999ff, #50e2ff);
     color: black;
