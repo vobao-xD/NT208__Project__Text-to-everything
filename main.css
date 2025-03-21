@@ -221,3 +221,114 @@
       opacity: 1;
     }
   }
+  
+body.signup-page {
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+body.signup-page.signup-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 350px;
+    text-align: center;
+}
+
+body.signup-page h2 {
+    margin-bottom: 15px;
+}
+
+
+body.signup-page input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+body.signup-page button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+body.signup-page button:hover {
+    background-color: #0056b3;
+}
+body.signin-page {
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+body.signin-page .container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 350px;
+    text-align: center;
+}
+
+/* Tiêu đề */
+body.signin-page h2 {
+    margin-bottom: 15px;
+}
+
+/* Ô nhập liệu */
+body.signin-page input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Nút đăng nhập */
+body.signin-page button {
+    width: 100%;
+    padding: 10px;
+    background-color: #28a745;
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+body.signin-page button:hover {
+    background-color: #218838;
+}
+
+/* Link đăng ký */
+p.signin-container,
+p.signup-container {
+    margin-top: 10px;
+}
+
+p a.signin-container,
+p a.signup-container {
+    color: #007bff;
+    text-decoration: none;
+}
+
+p a.signin-container:hover,
+p a.signup-container:hover {
+    text-decoration: underline;
+}
+
+
