@@ -4,16 +4,16 @@ from datetime import datetime
 #################### Text to image ####################
 class SlowPrompt(BaseModel):
     prompt: str
-    negative_prompt: str
-    height: int
-    width: int
-    num_steps: int
-    guidance: float
-    model: int
+    negative_prompt: str | None = None
+    height: int | None = None
+    width: int | None = None
+    num_steps: int | None = None
+    guidance: float | None = None
+    model: int | None = None
 
 class QuickPrompt(BaseModel):
     prompt: str
-    steps: int = 4
+    steps: int | None = None
 
 
 #################### Text to speech ####################

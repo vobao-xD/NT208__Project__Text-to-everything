@@ -14,20 +14,20 @@ class TextToSpeechService:
     @staticmethod
     def text_to_speech(text, voice='banmai', speed=''):
         """
-        Gửi yêu cầu chuyển đổi văn bản thành giọng nói bằng API FPT.AI
-        :param text: Văn bản cần chuyển thành giọng nói
-        :param voice: Giọng nói sử dụng 
-            - banmai : nữ miền Bắc
-            - leminh : nam miền Bắc
-            - thuminh : nữ miền Bắc
-            - minhquang : nam miền Bắc
-            - myan : nữ miền Trung
-            - linhsan : nữ miền Nam
-            - giahuy : nam miền Trung
-            - lannhi : nữ miền Nam
-            - ngoclam : nữ miền Trung
-        :param speed: Tốc độ đọc (-3 đến 3, mặc định là 0)
-        :return: URL file âm thanh hoặc thông tin lỗi
+        Gửi yêu cầu chuyển đổi văn bản thành giọng nói bằng API FPT.AI\n
+        :param text: Văn bản cần chuyển thành giọng nói\n
+        :param voice: Giọng nói sử dụng\n 
+        * banmai : nữ miền Bắc\n
+        * leminh : nam miền Bắc\n
+        * thuminh : nữ miền Bắc\n
+        * minhquang : nam miền Bắc\n
+        * myan : nữ miền Trung\n
+        * linhsan : nữ miền Nam\n
+        * giahuy : nam miền Trung\n
+        * lannhi : nữ miền Nam\n
+        * ngoclam : nữ miền Trung\n
+        :param speed: Tốc độ đọc (-3 đến 3, mặc định là 0)\n
+        :return: URL file âm thanh hoặc thông tin lỗi\n
         """
 
         if not TextToSpeechService.api_key:
