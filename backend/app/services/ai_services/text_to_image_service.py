@@ -5,34 +5,32 @@ import json
 import os
 from dotenv import load_dotenv
 from googletrans import Translator
-from db.schemas import *
+from db.schemas import SlowPrompt, QuickPrompt
 
 load_dotenv()
 
 class TextToImageService:
 
     # Khởi tạo API Key, Acount,...
-    def __init__(self):
-        self.head = {
-            "Authorization": f"Bearer {os.getenv('TTI_API_KEY')}"
-        }
-        self.accountId = os.getenv("TTI_ACCOUNT_ID")
+    head = {
+        "Authorization": f"Bearer {os.getenv('TTI_API_KEY')}"
+    }
+    accountId = os.getenv("TTI_ACCOUNT_ID")
 
     # Hàm hỗ trợ dịch tiếng Việt sang tiếng Anh để cho kết quả từ API chính xác hơn
-    async def translateText(self, text: str):
+    @staticmethod 
+    async def translateText(text: str):
         async with Translator() as translator:
             result = await translator.translate(text)
             return result
         
-    # Tạo ảnh chất lượng cao (nhưng chậm hơn)
-    def getImageSlow(self, prompt: str | None, negative_prompt: str = '', 
-                     height = 512, width = 512, num_steps = 20, guidance = 7.5, model = 0):
-        
+    # Tạo ảnh tốc độ chậm
+    @staticmethod
+    def getImageSlow(prompt: str | None, negative_prompt: str = '', height = 512, width = 512, num_steps = 20, guidance = 7.5, model=0):
         if prompt is None:
             return 'No prompt'
-        
-        url = f'https://api.cloudflare.com/client/v4/accounts/{self.accountId}/ai/run/@cf/{sub_url[model]}'
         sub_url = ['stabilityai/stable-diffusion-xl-base-1.0','bytedance/stable-diffusion-xl-lightning']
+        url = f'https://api.cloudflare.com/client/v4/accounts/{TextToImageService.accountId}/ai/run/@cf/{sub_url[model]}'
         if model in [0,1]:
             body = json.dumps(
                 {
@@ -44,7 +42,7 @@ class TextToImageService:
                     'guidance':guidance
                 }
             )
-            response = requests.post(url, body, headers=self.head)
+            response = requests.post(url, body, headers=TextToImageService.head)
             successCode = response.status_code
             if successCode == 200:
                 image = response.content
@@ -52,18 +50,19 @@ class TextToImageService:
             else:
                 return 'Something went wrong'
 
-    # Tạo ảnh nhanh hơn
-    def getImageQuick(self, prompt: str | None, steps: int = 4):
+    # Tạo ảnh tốc độ nhanh
+    @staticmethod
+    def getImageQuick(prompt: str | None, steps: int = 4):
         if prompt is None:
             return 'No prompt'
-        url = f'https://api.cloudflare.com/client/v4/accounts/{self.accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell'
+        url = f'https://api.cloudflare.com/client/v4/accounts/{TextToImageService.accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell'
         body = json.dumps(
                 {
                     'prompt':prompt,
                     'steps':steps
                 }
             )
-        response = requests.post(url, body, headers=self.head)
+        response = requests.post(url, body, headers=TextToImageService.head)
         successCode = response.status_code
         if successCode == 200:
             image = json.loads(response.text)['result']['image']
@@ -71,14 +70,16 @@ class TextToImageService:
         else:
             return 'Something went wrong'
         
-    # Chuyển văn bản thành hình ảnh (chậm)
-    def textToImageSlow(self, prompt: SlowPrompt):
-        enPrompt = asyncio.run(self.translateText(self, prompt.prompt)).text
-        image = self.getImageSlow(self, enPrompt, prompt.negative_prompt, prompt.height, prompt.width, prompt.num_steps, prompt.guidance, prompt.model)
+    # Tạo ảnh tốc độ chậm 
+    @staticmethod
+    def textToImageSlow(prompt: SlowPrompt):
+        enPrompt = asyncio.run(TextToImageService.translateText(str(prompt.prompt))).text
+        image = TextToImageService.getImageSlow(enPrompt, prompt.negative_prompt, prompt.height, prompt.width, prompt.num_steps, prompt.guidance, prompt.model)
         return image
     
-    # Chuyển văn bản thành hình ảnh (nhanh)
-    def textToImageQuick(self, prompt: QuickPrompt):
-        enPrompt = asyncio.run(self.translateText(prompt.prompt)).text
-        image = self.getImageQuick(enPrompt, prompt.steps)
+    # Tạo ảnh tốc độ nhanh
+    @staticmethod
+    def textToImageQuick(prompt: QuickPrompt):
+        enPrompt = asyncio.run(TextToImageService.translateText(prompt.prompt)).text
+        image = TextToImageService.getImageQuick(enPrompt, prompt.steps)
         return image
