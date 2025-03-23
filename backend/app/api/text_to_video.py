@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from services.ai_service import AIService
+from services.ai_services import TextToVideoService as service
 
 router = APIRouter()
 
@@ -8,6 +8,4 @@ def text_to_video(script: str):
     """
     Chuyển văn bản thành video bằng AI
     """
-    # video_url = AIService.text_to_video(script)
-    # return {"video_url": video_url}
     return {"message" : "Chưa làm"}

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File
-from services.ai_service import AIService
+from services.ai_services import SpeechToTextService as service
 
 router = APIRouter()
 
@@ -8,6 +8,4 @@ def speech_to_text(file: UploadFile = File(...)):
     """
     Nhận file audio và chuyển thành văn bản
     """
-    # text = AIService.speech_to_text(file)
-    # return {"text": text}
     return {"message" : "Chưa làm"}

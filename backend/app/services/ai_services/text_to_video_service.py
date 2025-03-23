@@ -1,0 +1,2 @@
+class TextToVideoService:
+    pass
