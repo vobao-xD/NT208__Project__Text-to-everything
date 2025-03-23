@@ -1,8 +1,9 @@
 from fastapi import APIRouter
-from . import auth, speech_to_text, text_to_speech, text_to_image, text_to_video
+from . import auth, speech_to_text, text_to_speech, text_to_image, text_to_video, general
 
 router = APIRouter()
 
+router.include_router(general.router, prefix="", tags=["General"])
 router.include_router(auth.router, prefix="/auth", tags=["Auth"])
 router.include_router(speech_to_text.router, prefix="/speech-to-text", tags=["Speech-to-Text"])
 router.include_router(text_to_speech.router, prefix="/text-to-speech", tags=["Text-to-Speech"])

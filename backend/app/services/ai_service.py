@@ -12,7 +12,7 @@ class AIService:
         """
         Gửi yêu cầu chuyển đổi văn bản thành giọng nói bằng API FPT.AI
         :param text: Văn bản cần chuyển thành giọng nói
-        :param voice: Giọng nói sử dụng (ví dụ: 'banmai', 'male', 'female')
+        :param voice: Giọng nói sử dụng (đọc trên trang của FTP để biết rõ hơn)
         :param speed: Tốc độ đọc (-3 đến 3, mặc định là 0)
         :return: URL file âm thanh hoặc thông tin lỗi
         """
