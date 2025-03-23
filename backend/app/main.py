@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from api import router
 from db import init_db
 
-# app = FastAPI(docs_url=None, redoc_url=None) -> Disable docs and redoc
+# app = FastAPI(docs_url=None, redoc_url=None) -> Disable docs and redoc (tạm chưa dùng)
 app = FastAPI()
 
 # Khởi tạo database nếu chưa có

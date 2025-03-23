@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from datetime import datetime
 
 #################### Text to image ####################
-
 class SlowPrompt(BaseModel):
     prompt: str
     negative_prompt: str
@@ -14,19 +13,19 @@ class SlowPrompt(BaseModel):
 
 class QuickPrompt(BaseModel):
     prompt: str
-    steps: int
+    steps: int = 4
 
 
 #################### Text to speech ####################
-
-from pydantic import BaseModel
-from datetime import datetime
 
 class RequestBase(BaseModel):
     input_type: str  # text, audio, file
     input_text: str | None = None
     input_audio_url: str | None = None
     output_type: str  # speech, image, video
+
+class RequestCreate(RequestBase):
+    pass
 
 class RequestResponse(RequestBase):
     id: int
@@ -40,6 +39,9 @@ class ResponseBase(BaseModel):
     output_type: str
     output_url: str
     model_used: str
+
+class ResponseCreate(ResponseBase):
+    pass
 
 class ResponseResponse(ResponseBase):
     id: int
