@@ -1,24 +1,17 @@
 from fastapi import FastAPI
 from api import router
-from db import models
-from db.database import engine
-
-# Câu này sẽ tạo các table đã được định nghĩa trong models.py mà không cần tạo thủ công trong database
-models.Base.metadata.create_all(bind=engine)
+from db import init_db
 
 # app = FastAPI(docs_url=None, redoc_url=None) -> Disable docs and redoc
 app = FastAPI()
 
+# Khởi tạo database nếu chưa có
+init_db()
+
+# Lấy các route để xử lý truy vấn
 app.include_router(router)
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to Text-to-Everything API"}
-
-@app.get("/docs")
-def do_nothing():
-    return {"message": "What r u doing bro???"}
-
+# Main
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
