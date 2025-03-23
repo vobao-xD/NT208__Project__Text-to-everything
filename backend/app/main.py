@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 from api import router
+from db import models
+from db.database import engine
+
+# Câu này sẽ tạo các table đã được định nghĩa trong models.py mà không cần tạo thủ công trong database
+models.Base.metadata.create_all(bind=engine)
 
 # app = FastAPI(docs_url=None, redoc_url=None) -> Disable docs and redoc
 app = FastAPI()
