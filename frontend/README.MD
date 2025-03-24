@@ -8,4 +8,16 @@
 
 # Mẹo backend
 
-- Tải các package cần thiết: pip install -r requirement.txt
+- Lúc mới pull về, di chuyển tới thư mục tổng (NT208_Project), để cài các gói cần thiết ta chạy các lệnh sau
+  sudo apt update
+  sudo apt install python3
+  sudo apt install python3-venv
+  cd backend
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install -r requirement.txt
+
+- Để chạy backend, ta di chuyển tới thư mục backend và nhập
+  fastapi dev ./app/main.py
+
+### => Nếu không hiểu thì hỏi mấy thằng làm backend :))

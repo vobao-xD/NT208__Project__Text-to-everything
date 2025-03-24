@@ -71,25 +71,42 @@
     </div>
     <script>
         document.getElementById("submit_btn").addEventListener("click", async function () {
-    const textarea = document.querySelector(".input");
-    const text = textarea.value.trim();
+            const textarea = document.querySelector(".input");
+            const text = textarea.value.trim();
 
-    if (!text) {
-        alert("Vui lòng nhập nội dung!");
-        return;
-    }
+            if (!text) {
+                alert("Vui lòng nhập nội dung!");
+                return;
+            }
 
-    try {
-        const response = await fetch("http://192.168.1.249:8000/text-to-speech/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                text: text,
-                voice: "banmai",
-                speed: "0"
-            })
+            try {
+                const response = await fetch("http://192.168.1.249:8000/text-to-speech/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: "banmai",
+                        speed: "0"
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Lỗi API (${response.status}): ${await response.textStatus()}`);
+                }
+
+                const data = await response.json();
+                console.log("API Response:", data);
+                alert("Audio URL: " + data.audio_url);
+
+                // const audioPlayer = document.getElementById("audio_player");
+                // audioPlayer.src = 
+                // audioPlayer.style.display = "block";
+            } catch (error) {
+                console.error("Lỗi:", error);
+                alert("Có lỗi xảy ra khi gọi API: " + error.message);
+            }
         });
 
         if (!response.ok) {

@@ -16,3 +16,4 @@ loguru
 httpx
 pyht
 googletrans
+psycopg2-binary
