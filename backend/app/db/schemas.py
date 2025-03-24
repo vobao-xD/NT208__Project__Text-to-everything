@@ -1,6 +1,12 @@
 from pydantic import BaseModel
 from datetime import datetime
 
+#################### Authentication ####################
+class User(BaseModel):
+    username: str
+    password: str
+
+
 #################### Text to image ####################
 
 class SlowPrompt(BaseModel):

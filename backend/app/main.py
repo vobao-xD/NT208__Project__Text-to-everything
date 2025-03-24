@@ -1,21 +1,21 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from api import router
-# from fastapi.middleware.cors import CORSMiddleware
-from db import init_db
+from db import init_db, get_db
 
 # app = FastAPI(docs_url=None, redoc_url=None) -> Disable docs and redoc (tạm chưa dùng)
 app = FastAPI()
 
+# Cấu hình CORS 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# # Cấu hình CORS 
-# app.add_middleware(
-#         CORSMiddleware,
-#         allow_origins=["*"],
-#         allow_credentials=True,
-#         allow_methods=["*"],
-#         allow_headers=["*"],
-#     )
-
+get_db()
 
 # Khởi tạo database nếu chưa có
 init_db()
