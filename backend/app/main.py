@@ -15,8 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-get_db()
-
 # Khởi tạo database nếu chưa có
 init_db()
 
