@@ -24,5 +24,7 @@ def get_db():
     try:
         yield db
         print("Database connected")
+    except Exception as e:
+        print(f"Database connection failed: {e}")
     finally:
         db.close()
