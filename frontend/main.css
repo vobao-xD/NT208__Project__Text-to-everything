@@ -88,6 +88,7 @@
    justify-content: center;
    margin-top: 10px;
    color: white;
+   position: relative;
 }
 .body_title {
     display: grid;
@@ -178,6 +179,9 @@
     border-radius: 5px;
     border: none;
     resize: none;
+}
+#btn_complex {
+    display: flex;
 }
 .typing--animation {
     white-space: nowrap;
@@ -378,6 +382,19 @@ body.signin-page button:hover {
 }
 .signin-container a:hover{
     text-decoration: underline;
+}
+/* CSS audio */
+.audio {
+    width: 500px;
+    height: 54px;
+    position: absolute;
+    top: 80px;
+    left: 120px;
+}
+#audio_player {
+    width: 500px;
+    height: 35px;
+    display: none;
 }
 
 

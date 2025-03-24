@@ -44,9 +44,14 @@
                 <i class="fa-solid fa-circle-user avatar"></i>
             </heading>
             <div class="content_body content-item">
-                <h1 class="question typing--animation">Tôi có thể giúp gì cho bạn ?</h1>
-                <textarea class="input" name="" id="" rows="4" placeholder="Mô tả những gì bạn muốn tạo"></textarea>
-                <button id="submit_btn" style="cursor: pointer;" type="submit">Create</button>
+                <h1 id="question" class="question typing--animation">Tôi có thể giúp gì cho bạn ?</h1>
+                <div id="btn_complex">
+                    <textarea class="input" name="" id="" rows="4" placeholder="Mô tả những gì bạn muốn tạo"></textarea>
+                    <button id="submit_btn" style="cursor: pointer;" type="submit">Create</button>    
+                </div>
+                <div class="audio">
+                    <audio id="audio_player" controls></audio>
+                </div>
             </div>
         </div>
     </div>
@@ -61,7 +66,7 @@
             }
 
             try {
-                const response = await fetch("http://192.168.1.249:8000/text-to-speech/", {
+                const response = await fetch("http://localhost:8000/text-to-speech/", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -74,17 +79,31 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Lỗi API (${response.status}): ${await response.textStatus()}`);
+                    throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
                 }
 
                 const data = await response.json();
                 console.log("API Response:", data);
-                alert("Audio URL: " + data.audio_url);
+                const audioURL = data.audio_url;
 
-                document.getElementById("submit_btn").style.alignItems = "flex-end";
-                // const audioPlayer = document.getElementById("audio_player");
-                // audioPlayer.src = 
-                // audioPlayer.style.display = "block";
+                // Reset input
+                textarea.value="";
+
+                // Relocate textarea
+                document.getElementById("question").style.opacity = "0";
+                document.getElementById("btn_complex").style.cssText = `
+                    position:absolute;
+                    bottom: -400px;
+                    left: 20%;
+                    translateX(-50%);
+                ` 
+                
+                // Display audio
+                const audioPlayer = document.getElementById("audio_player");
+                audioPlayer.src = audioURL;
+                audioPlayer.style.display = "block";
+                audioPlayer.load();
+
             } catch (error) {
                 console.error("Lỗi:", error);
                 alert("Có lỗi xảy ra khi gọi API: " + error.message);
