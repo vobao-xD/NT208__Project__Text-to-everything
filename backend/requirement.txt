@@ -17,3 +17,4 @@ httpx
 pyht
 googletrans
 psycopg2-binary
+werkzeug
