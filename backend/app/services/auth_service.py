@@ -10,6 +10,11 @@ class AuthService:
     def register(username, password):
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
         new_user = models.User(username=username, password_hash=hashed_password)
-        db.Session.add(new_user)
-        db.Session.commit()
+        session = db.SessionLocal()
+        try:
+            session.add(new_user)
+            session.commit()
+            session.refresh(new_user)
+        finally:
+            session.close()
         return new_user
