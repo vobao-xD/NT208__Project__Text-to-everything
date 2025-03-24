@@ -107,11 +107,12 @@
                 console.error("Lỗi:", error);
                 alert("Có lỗi xảy ra khi gọi API: " + error.message);
             }
-        });
-
-        if (!response.ok) {
+            if (!response.ok) {
             throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
         }
+        });
+
+
 
         function goto_home() {
             window.location.href="index.html"
