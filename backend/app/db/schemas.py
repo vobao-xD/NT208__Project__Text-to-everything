@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 #################### Text to image ####################
+
 class SlowPrompt(BaseModel):
     prompt: str
     negative_prompt: str | None = None
@@ -15,8 +16,12 @@ class QuickPrompt(BaseModel):
     prompt: str
     steps: int | None = None
 
-
 #################### Text to speech ####################
+
+class TTSClientRequest(BaseModel):
+    text: str
+    voice: str = "banmai"
+    speed: str = "0"
 
 class RequestBase(BaseModel):
     input_type: str  # text, audio, file

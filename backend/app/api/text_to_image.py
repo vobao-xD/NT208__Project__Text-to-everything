@@ -9,7 +9,7 @@ def text_to_image(prompt: schemas.QuickPrompt):
     """
     Chuyển văn bản thành hình ảnh bằng AI (nhanh)
     """
-    image = service.getImageQuick(prompt.prompt)
+    image = service.textToImageQuick(prompt)
     return {"image_base64" : image}
 
 @router.post("/slow")
@@ -17,6 +17,6 @@ def text_to_image(prompt: schemas.SlowPrompt):
     """
     Chuyển văn bản thành hình ảnh bằng AI (chậm)
     """
-    image = service.getImageSlow(prompt.prompt)
+    image = service.textToImageSlow(prompt)
     return {"image_base64" : image}
     
