@@ -46,8 +46,46 @@
             <div class="content_body content-item">
                 <h1 class="question typing--animation">Tôi có thể giúp gì cho bạn ?</h1>
                 <textarea class="input" name="" id="" rows="4" placeholder="Mô tả những gì bạn muốn tạo"></textarea>
+                <button id="submit_btn" style="cursor: pointer;" type="submit">Create</button>
             </div>
         </div>
     </div>
+    <script>
+        document.getElementById("submit_btn").addEventListener("click", async function () {
+    const textarea = document.querySelector(".input");
+    const text = textarea.value.trim();
+
+    if (!text) {
+        alert("Vui lòng nhập nội dung!");
+        return;
+    }
+
+    try {
+        const response = await fetch("http://192.168.1.249:8000/text-to-speech/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                text: text,
+                voice: "banmai",
+                speed: "0"
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+        }
+
+        const data = await response.json();
+        console.log("API Response:", data);
+        alert("Audio URL: " + data.audio_url);
+    } catch (error) {
+        console.error("Lỗi:", error);
+        alert("Có lỗi xảy ra khi gọi API: " + error.message);
+    }
+});
+
+    </script>
 </body>
 </html>
