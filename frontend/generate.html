@@ -113,14 +113,6 @@
             throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
         }
 
-        const data = await response.json();
-        console.log("API Response:", data);
-        alert("Audio URL: " + data.audio_url);
-    } catch (error) {
-        console.error("Lỗi:", error);
-        alert("Có lỗi xảy ra khi gọi API: " + error.message);
-    }
-});
         function goto_home() {
             window.location.href="index.html"
         }
