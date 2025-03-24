@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 from services.ai_services import TextToVideoService as service
+from db import schemas
+
 
 router = APIRouter()
 
