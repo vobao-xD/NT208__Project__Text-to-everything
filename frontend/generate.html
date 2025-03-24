@@ -13,10 +13,13 @@
 </head>
 <body>
     <div class="full-container">
+        
         <div class="sidebar">
+            <button class="back-button" onclick="goto_home()"><i class="fa fa-home"></i></button>
             <heading class="sidebar_title">
                 <h2>Sidebar</h2>
             </heading>
+            
             <div class="choices">
                 <select class="options" name="options" id="">
                     <option value="1">Text to Speech</option>
@@ -36,6 +39,22 @@
                     <li class="list">...</li>
                     <li class="list">...</li>
                     <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    <li class="list">...</li>
+                    
                 </ul>
             </div>
         </div>
@@ -85,6 +104,9 @@
         alert("Có lỗi xảy ra khi gọi API: " + error.message);
     }
 });
+        function goto_home() {
+            window.location.href="index.html"
+        }
 
     </script>
 </body>
