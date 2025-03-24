@@ -6,6 +6,14 @@
   --> Ai chưa biết cài thì lên mạng tìm hiểu hoặc có thể tham khảo ở đây nhe:
   https://www.youtube.com/watch?v=wOimgBphkE0
 
-# Mẹo backend
+# Mẹo backend 
+- Lúc mới pull về, để cài các gói cần thiết ta chạy các lệnh sau
+  sudo apt update
+  sudo apt install python3
+  sudo apt install python3-venv
+  cd backend
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install -r requirement.txt
 
-- Tải các package cần thiết: pip install -r requirement.txt
+### => Nếu không hiểu thì hỏi mấy thằng làm backend :))
