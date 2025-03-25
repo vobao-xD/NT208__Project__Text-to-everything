@@ -105,6 +105,9 @@
                 console.log("API Response:", data);
                 const audioURL = data.audio_url;
 
+                // Chờ 5 giây trước khi hiển thị kết quả
+                await new Promise(resolve => setTimeout(resolve, 5000));
+
                 // Reset input
                 textarea.value="";
 
