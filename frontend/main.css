@@ -412,9 +412,9 @@ body.signin-page {
 .signin-container h1 {
     margin-bottom: 35px;
     text-align: center;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
-    color: #333;
+    color: var(--success-color);
 }
 
 /* Ô nhập liệu */
@@ -425,13 +425,14 @@ body.signin-page input {
     border:none;
     outline: none;
     border-bottom: 2px solid #adadad;
+    color:#3999ff;
 }
 
 /* Nút đăng nhập */
 body.signin-page button {
     width: 100%;
     padding: 10px;
-    background-color: #28a745;
+    background: linear-gradient(135deg, #02AABD, #00CDAC);
     border: none;
     color: white;
     font-size: 16px;
@@ -441,7 +442,8 @@ body.signin-page button {
 }
 
 body.signin-page button:hover {
-    background-color: #218838;
+    background: linear-gradient(135deg, #016a8a, #008b7a);
+    transform: scale(1.03);
 }
 
 .signin-container a{
@@ -453,6 +455,11 @@ body.signin-page button:hover {
 .signin-container a:hover{
     text-decoration: underline;
 }
+
+body.signin-page p{
+    text-align: center;
+}
+
 /* CSS audio */
 .audio {
     width: 500px;
