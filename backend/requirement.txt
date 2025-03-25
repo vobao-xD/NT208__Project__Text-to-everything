@@ -23,5 +23,7 @@ pycryptodome
 python-jose
 fastapi-users[sqlalchemy]
 authlib
+pipreqs
+starlette
 itsdangerous
-pyngrok
+Requests
