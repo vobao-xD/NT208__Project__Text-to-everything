@@ -1,12 +1,2 @@
-venv/
-.env
 .vscode/
-__pycache__/
-*.py[cod]
-*.pyc
-.mypy_cache
-.coverage
-htmlcov
-.cache
-.venv
-backend/.env
+backend/
