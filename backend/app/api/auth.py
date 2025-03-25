@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends
 from services import AuthService as service
-from db import schemas, get_db
+from db import get_db
 from starlette.requests import Request
 from sqlalchemy.orm import Session
-from dotenv import load_dotenv
-import os
 
 router = APIRouter()
 

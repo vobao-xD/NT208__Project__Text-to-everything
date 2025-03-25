@@ -58,13 +58,15 @@ class AuthService:
             db.commit()
             db.refresh(user)
 
-        return {"message": "Login successful", "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "avatar": user.avatar,
-            "provider": user.provider
-        }}
+        return {"message": "Login successful", 
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "avatar": user.avatar,
+                    "provider": user.provider
+                        }
+                }
 
     @staticmethod
     def get_current_user(email: str, db: Session = Depends(get_db)):
