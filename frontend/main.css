@@ -252,10 +252,12 @@
 }
 #image_container {
     display: flex;
-    justify-content: center; /* Căn giữa theo chiều ngang */
-    align-items: center; /* Căn giữa theo chiều dọc nếu cần */
-    margin-top: 20px; /* Tạo khoảng cách phía trên */
+    justify-content: center; 
+    align-items: center; 
     flex-direction: column; /* Giúp các phần tử con sắp xếp theo chiều dọc */
+    position: absolute;
+    top: 5%;
+    left: 32.5%;
 }
 
 #generated_image {
@@ -504,9 +506,5 @@ body.signin-page p{
     position: absolute;
     top: 80px;
     left: 120px;
-}
-
-#generated_image {
-    display: none;
 }
 
