@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="main.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+  <body class="signup-page">
+    <div class="signup-container">
+      <h1>Đăng nhập bằng tài khoản Google</h1>
+      <div class="form-control">
+        <small></small>
+        <span></span>
+      </div>
+      <div class="form-control">
+        <input id="Email" type="text" placeholder="Email" />
+         
+        <small></small>
+        <span></span>
+      </div>
+      <div class="form-control">
+        <small></small>
+        <span></span>
+      </div>
+      <div class="form-control">
+        <small></small>
+        <span></span>
+      </div>
+
+      <!-- <button class="submit-button-signup" type="submit">Đăng ký</button> -->
+       <button class="submit-button-signup" type="submit" onclick="redirectToGoogleAuth()">Đăng ký</button>
+      <div class="separator">
+      </div>
+      
+      <p class="sg-link">
+        <p>Chưa có tài khoản? <a class="link-in" href="signup.html">Đăng ký ngay</a></p>
+      </p>
+    </div>
+  </body>
+  <script>
+    async function redirectToGoogleAuth() {
+        const email = document.getElementById("Email").value;
+        if (!email) {
+            alert("Vui lòng nhập email!");
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8000/auth/google/login?email=${encodeURIComponent(email)}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+               console.log(`Lỗi HTTP: ${response.status}`);
+            }
+
+            if (data.message==='Login successfully!') {
+                alert("Đăng nhập thành công!");
+                window.location.href = "generate.html"; // Chuyển hướng về trang chính
+            } else {
+                alert("Không tìm thấy tài khoản! Vui lòng kiểm tra lại.");
+            }
+        } catch (error) {
+            alert("Lỗi:", error);
+            alert("Có lỗi xảy ra khi đăng nhập!");
+        }
+        // window.location.href = `http://localhost:8000/auth/google/login?email=${encodeURIComponent(email)}`;
+    }
+  </script>
+</html>
