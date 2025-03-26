@@ -71,6 +71,10 @@
                 <div class="audio">
                     <audio id="audio_player" controls></audio>
                 </div>
+                <div class="image">
+                    <img id="generated_image" src="" alt="">
+                </div>
+
             </div>
         </div>
     </div>
@@ -96,15 +100,25 @@
                 speed: "0"
             };
         } else if (selectedOption === "2") { // Text to Image
-            apiUrl = "http://localhost:8000/text-to-image/low";
+            apiUrl = "http://localhost:8000/text-to-image/quick";
             requestBody = {
                 prompt: text,
-        negative_prompt: "",
-        height: 512,
-        width: 512,
-        num_steps: 20,
-        guidance: 7.5
+                steps: 5
             };
+
+            //Add a switch to switch to slow mode:
+            /*
+            apiUrl = "http://localhost:8000/text-to-image/quick";
+            requestBody = {
+                prompt: text,
+                negative_prompt: "",
+                height: 512,
+                width: 512,
+                num_steps: 20,
+                guidance: 7.5,
+                model: 0
+            };
+            */
 
         }
 
@@ -123,7 +137,7 @@
             throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
         }
         const data = await response.json();
-        console.log("API Response:", data);
+        //console.log("API Response:", data);
 
         if (selectedOption === "1") { // Xử lý phản hồi cho Text to Speech
             const audioURL = data.audio_url;
@@ -143,9 +157,21 @@
             audioPlayer.style.display = "block";
             audioPlayer.load();
         } else if (selectedOption === "2") { // Xử lý phản hồi cho Text to Image
-            const imageUrl = data.image_url;
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        
+            textarea.value = "";
+            document.getElementById("question").style.opacity = "0";
+            document.getElementById("btn_complex").style.cssText = `
+                position:absolute;
+                bottom: -1000px;
+                left: 20%;
+                translateX(-50%);
+            `;
+            const imageUrl = data.image_base64;
+            console.log("API Response:", imageUrl);
             const imageElement = document.getElementById("generated_image");
-            imageElement.src = imageUrl;
+            imageElement.src = "data:image/jpeg;base64, "+ imageUrl;
+            //imageElement.src = "data:image/png;base64, "+ imageUrl;
             imageElement.style.display = "block";
         }
     } catch (error) {

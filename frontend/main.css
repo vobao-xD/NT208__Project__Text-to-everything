@@ -474,4 +474,14 @@ body.signin-page p{
     display: none;
 }
 
+/* CSS for generated image */
+.image {
+    position: absolute;
+    top: 80px;
+    left: 120px;
+}
+
+#generated_image {
+    display: none;
+}
 
