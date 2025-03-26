@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from db.models import User
 from db import get_db
+from fastapi.responses import RedirectResponse
 
 load_dotenv()
 
@@ -57,16 +58,8 @@ class AuthService:
             db.add(user)
             db.commit()
             db.refresh(user)
-
-        return {"message": "Login successful", 
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "name": user.name,
-                    "avatar": user.avatar,
-                    "provider": user.provider
-                        }
-                }
+        # return {"message" : "Login successfully"}
+        return RedirectResponse(url="http://localhost:5500/frontend/generate.html") 
 
     @staticmethod
     def get_current_user(email: str, db: Session = Depends(get_db)):
