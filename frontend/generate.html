@@ -68,6 +68,10 @@
                     <textarea class="input" name="" id="" rows="4" placeholder="Mô tả những gì bạn muốn tạo"></textarea>
                     <button id="submit_btn" style="cursor: pointer;" type="submit">Create</button>    
                 </div>
+                <div id="image_container" style="display: none;">
+                    <button id="play_button" style="display: none; cursor: pointer;">Nhấn để xem ảnh</button>
+                    <img id="generated_image" style="display: none; width: 512px; height: 512px;" alt="Generated Image">
+                </div>
                 <div class="audio">
                     <audio id="audio_player" controls></audio>
                 </div>
@@ -75,7 +79,7 @@
         </div>
     </div>
     <script>
-       document.getElementById("submit_btn").addEventListener("click", async function () {
+    document.getElementById("submit_btn").addEventListener("click", async function () {
     const textarea = document.querySelector(".input");
     const text = textarea.value.trim();
     const selectedOption = document.querySelector(".options").value;
@@ -88,6 +92,19 @@
     try {
         let apiUrl = "";
         let requestBody = {};
+
+        // Lấy phần tử trước để tránh lỗi null
+        const playButton = document.getElementById("play_button");
+        const imageContainer = document.getElementById("image_container");
+        const imageElement = document.getElementById("generated_image");
+        const audioPlayer = document.getElementById("audio_player");
+
+        // Kiểm tra nếu phần tử tồn tại trước khi truy cập thuộc tính của nó
+        if (playButton) playButton.style.display = "none";
+        if (imageContainer) imageContainer.style.display = "none";
+        if (imageElement) imageElement.style.display = "none";
+        if (audioPlayer) audioPlayer.style.display = "none";
+
         if (selectedOption === "1") { // Text to Speech
             apiUrl = "http://localhost:8000/text-to-speech";
             requestBody = {
@@ -95,20 +112,14 @@
                 voice: "banmai",
                 speed: "0"
             };
+
         } else if (selectedOption === "2") { // Text to Image
-            apiUrl = "http://localhost:8000/text-to-image/low";
+            apiUrl = "http://localhost:8000/text-to-image/quick";
             requestBody = {
                 prompt: text,
-        negative_prompt: "",
-        height: 512,
-        width: 512,
-        num_steps: 20,
-        guidance: 7.5
+                steps: 0
             };
-
-        }
-
-         else {
+        } else {
             alert("Tính năng này chưa được hỗ trợ!");
             return;
         }
@@ -122,31 +133,36 @@
         if (!response.ok) {
             throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
         }
+
         const data = await response.json();
         console.log("API Response:", data);
 
-        if (selectedOption === "1") { // Xử lý phản hồi cho Text to Speech
+        if (selectedOption === "1") { // Xử lý Text to Speech
             const audioURL = data.audio_url;
-            // Chờ 5 giây trước khi hiển thị kết quả
             await new Promise(resolve => setTimeout(resolve, 5000));
-        
+
             textarea.value = "";
             document.getElementById("question").style.opacity = "0";
-            document.getElementById("btn_complex").style.cssText = `
-                position:absolute;
-                bottom: -400px;
-                left: 20%;
-                translateX(-50%);
-            `;
-            const audioPlayer = document.getElementById("audio_player");
-            audioPlayer.src = audioURL;
-            audioPlayer.style.display = "block";
-            audioPlayer.load();
-        } else if (selectedOption === "2") { // Xử lý phản hồi cho Text to Image
-            const imageUrl = data.image_url;
-            const imageElement = document.getElementById("generated_image");
-            imageElement.src = imageUrl;
-            imageElement.style.display = "block";
+
+            if (audioPlayer) {
+                audioPlayer.src = audioURL;
+                audioPlayer.style.display = "block";
+                audioPlayer.load();
+            }
+        } else if (selectedOption === "2") { // Xử lý Text to Image
+            if (imageElement && playButton && imageContainer) {
+                imageElement.src = "data:image/png;base64," + data.image_base64;
+
+                playButton.style.display = "block"; // Hiện nút play
+                imageElement.style.display = "none"; // Ẩn ảnh
+                imageContainer.style.display = "block"; // Hiện vùng chứa ảnh
+
+                // Khi nhấn nút play, ảnh hiện lên, nút biến mất
+                playButton.onclick = function () {
+                    playButton.style.display = "none";
+                    imageElement.style.display = "block";
+                };
+            }
         }
     } catch (error) {
         console.error("Lỗi:", error);
@@ -154,10 +170,16 @@
     }
 });
 
+// Ẩn nút play khi trang tải lại
+document.addEventListener("DOMContentLoaded", function () {
+    const playButton = document.getElementById("play_button");
+    if (playButton) playButton.style.display = "none";
+});
 
-function goto_home() {
-    window.location.href = "index.html";
-}
+
+    function goto_home() {
+        window.location.href = "index.html";
+    }
 
 
     </script>

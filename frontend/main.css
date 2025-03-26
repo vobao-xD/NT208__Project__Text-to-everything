@@ -239,6 +239,31 @@
 #submit_btn:hover {
     background: linear-gradient(135deg, #3999ff, #50e2ff);
 }
+#play_button{
+    margin: 20px;
+    padding: 10px;
+    background: linear-gradient(135deg, #50e2ff, #3999ff);
+    color: #000;
+    font-weight: bold;
+    border-radius: 10px;
+}
+#play_button:hover{
+    background: linear-gradient(135deg, #3999ff, #50e2ff);
+}
+#image_container {
+    display: flex;
+    justify-content: center; /* Căn giữa theo chiều ngang */
+    align-items: center; /* Căn giữa theo chiều dọc nếu cần */
+    margin-top: 20px; /* Tạo khoảng cách phía trên */
+    flex-direction: column; /* Giúp các phần tử con sắp xếp theo chiều dọc */
+}
+
+#generated_image {
+    max-width: 100%; /* Đảm bảo ảnh không vượt quá khung chứa */
+    height: auto; /* Giữ tỷ lệ ảnh */
+    display: none; /* Mặc định ẩn ảnh */
+    margin-right: -30px;
+}
 
 ::-webkit-scrollbar {
     width: 7px;
