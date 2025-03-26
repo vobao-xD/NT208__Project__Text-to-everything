@@ -69,7 +69,9 @@ class AuthService:
         if not user:
             raise HTTPException(status_code=401, detail="User not authenticated")
 
-        return {"user": {
+        return {
+            "message" : "Login successfully!",
+            "user": {
             "id": user.id,
             "email": user.email,
             "name": user.name,
