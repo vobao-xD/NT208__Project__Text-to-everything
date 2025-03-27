@@ -64,7 +64,9 @@ class AuthService:
             db.refresh(user)
 
         access_token = create_access_token(data={"sub": user.email})
-        return {"access_token": access_token, "token_type": "bearer"}
+        redirect_url = f"http://127.0.0.1:5500/frontend/generate.html"
+        return RedirectResponse(url=redirect_url)
+        #return {"access_token": access_token, "token_type": "bearer"} 
 
     @staticmethod
     def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
