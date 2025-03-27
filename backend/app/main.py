@@ -9,23 +9,23 @@ import os
 # Load environment variables from .env file
 load_dotenv()
 
+# Initialize the database if it doesn't exist
+init_db()
+
 # Initialize FastAPI app
 app = FastAPI()
 
 # Configure CORS for the app
 app.add_middleware(
     CORSMiddleware, 
-    allow_origins=["*"], 
+    allow_origins=["http://localhost:5500"], 
     allow_credentials=True, 
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Configure Session Middleware for OAuth
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("GOOGLE_CLIENT_SECRET"))
-
-# Initialize the database if it doesn't exist
-init_db()
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET"))
 
 # Include API routes
 app.include_router(router)

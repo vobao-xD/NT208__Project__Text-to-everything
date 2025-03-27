@@ -8,13 +8,14 @@ from sqlalchemy.future import select
 from db.models import User
 from db import get_db
 from fastapi.responses import RedirectResponse
+from fastapi.security import OAuth2PasswordBearer
+from core import *
 
 load_dotenv()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
-
 
 # Initialize OAuth
 oauth = OAuth()
@@ -31,6 +32,9 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration", 
 )
+
+# OAuth2 Bearer Token (JWT)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 class AuthService:
 
@@ -58,23 +62,22 @@ class AuthService:
             db.add(user)
             db.commit()
             db.refresh(user)
-        # return {"message" : "Login successfully"}
-        return RedirectResponse(url="http://localhost:5500/frontend/generate.html") 
+
+        access_token = create_access_token(data={"sub": user.email})
+        return {"access_token": access_token, "token_type": "bearer"}
 
     @staticmethod
-    def get_current_user(email: str, db: Session = Depends(get_db)):
-        result = db.execute(select(User).where(User.email == email))
-        user = result.scalars().first()
+    def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+        email = decode_access_token(token) 
+        user = db.query(User).filter(User.email == email).first()
 
         if not user:
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         return {
             "message" : "Login successfully!",
-            "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "avatar": user.avatar,
-            "provider": user.provider
-        }}
+            "id": user.id, 
+            "email": user.email, 
+            "name": user.name, 
+            "avatar": user.avatar
+        }
