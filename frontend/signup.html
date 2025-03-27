@@ -1,51 +1,111 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
-    <link rel="stylesheet" href="main.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng ký - Text to everything</title>
+    <link rel="stylesheet" href="main.css" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
-</head>
-<body class="signup-page">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+  </head>
+  <body class="signup-page">
     <div class="signup-container">
-        <h1>Đăng ký tài khoản</h1>
-       <div class="form-control">
-            <input type="text" placeholder="Username">
-            <small></small>
-            <span></span>
-        </div>
-        <div class="form-control">
-            <input type="text" placeholder="Email">
-            <small></small>
-            <span></span>
-        </div> <div class="form-control">
-            <input type="password" placeholder="Password">
-            <small></small>
-            <span></span>
-        </div> <div class="form-control">
-            <input type="password" placeholder="Re-Password">
-            <small></small>
-            <span></span>
-        </div>
-          
-        
-        <button class="submit-button-signup" type="submit">Đăng ký</button>
-        <div class="separator">
-            <span>HOẶC</span>
-        </div>
-        <div class="social-buttons">
-            <button class="btn Github">  <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" alt="Github" width="24" height="24"> Github</button>
-            <button onclick="redirectToGoogleAuth()" class="btn google"> <img src="https://png.pngtree.com/png-clipart/20230916/original/pngtree-google-internet-icon-vector-png-image_12256707.png" alt="Google" >Google</button>
-        </div>
-        <p class="sg-link">Đã có tài khoản? <a class="link-up" href="signin.html"  >Đăng nhập</a></p>
-    </div>
-</body>
-<script>
-   async function redirectToGoogleAuth() {
-    window.location.href = "http://localhost:8000/auth/google";
-   }
+      <h1>Đăng ký tài khoản</h1>
+      <div class="form-control">
+        <input type="text" id="username" placeholder="Tên đăng nhập" required />
+        <small class="error-message"></small>
+      </div>
+      <div class="form-control">
+        <input type="email" id="email" placeholder="Email" required />
+        <small class="error-message"></small>
+      </div>
+      <div class="form-control">
+        <input type="password" id="password" placeholder="Mật khẩu" required />
+        <small class="error-message"></small>
+      </div>
+      <div class="form-control">
+        <input type="password" id="re-password" placeholder="Nhập lại mật khẩu" required />
+        <small class="error-message"></small>
+      </div>  
 
-</script>
+      <button class="submit-button-signup" type="submit">Đăng ký</button>
+
+      <div class="separator">
+        <span>HOẶC ĐĂNG NHẬP BẰNG</span>
+      </div>
+
+      <div class="social-buttons">
+        <button class="btn Github">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/25/25231.png"
+            alt="Github"
+            width="24"
+            height="24"
+          />
+          Github
+        </button>
+        <button onclick="redirectToGoogleAuth()" class="btn Google">
+          <img
+            src="https://png.pngtree.com/png-clipart/20230916/original/pngtree-google-internet-icon-vector-png-image_12256707.png"
+            alt="Google"
+          />
+          Google
+        </button>
+      </div>
+      <p class="sg-link">
+        Đã có tài khoản? <a class="link-up" href="signin.html">Đăng nhập</a>
+      </p>
+    </div>
+  </body>
+
+  <script>
+    function redirectToGoogleAuth() {
+      window.location.href = "http://localhost:8000/auth/google";
+    }
+    async function checkLoginStatus() {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        try {
+            const response = await fetch("http://localhost:8000/auth/user/me", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const user = await response.json();
+
+            if (user.email) {
+                alert(`Chào ${user.name}!`);
+                window.location.href = "index.html";  // Chuyển hướng về trang chính
+            }
+        } catch (error) {
+            console.error("Lỗi khi lấy thông tin người dùng:", error);
+        }
+    }
+
+    async function handleGoogleLogin(accessToken) {
+        try {
+            // Gửi token Google lên server backend để lấy JWT token
+            const response = await fetch("http://localhost:8000/auth/google/callback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ access_token: accessToken })
+            });
+
+            const data = await response.json();
+            if (data.access_token) {
+                // Lưu JWT token vào localStorage
+                localStorage.setItem("jwt_token", data.access_token);
+
+                // Chuyển hướng về trang chính
+                window.location.href = "index.html";
+            } else {
+                alert("Đăng nhập thất bại!");
+            }
+        } catch (error) {
+            console.error("Lỗi khi xác thực với backend:", error);
+        }
+    }
+  </script>
 </html>

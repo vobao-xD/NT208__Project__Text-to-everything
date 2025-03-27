@@ -12,6 +12,13 @@
     font-style: normal;
     font-variation-settings: "wdth" 100;   
  } 
+ .error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;  /* Khoảng cách giữa lỗi và nút đăng nhập */
+    margin-bottom: 20px; /* Tăng khoảng cách với phần tiếp theo */
+    text-align: center;
+}
  .full-container {
     display: flex;
     width: 100vw;

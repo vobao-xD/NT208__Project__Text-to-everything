@@ -1,57 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo</title>
-    <link rel="stylesheet" href="main.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Boldonse&family=Tektur:wght@400..900&display=swap" rel="stylesheet"></head>
-<body>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trang chủ - Text to everything</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Boldonse&family=Tektur:wght@400..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
     <div class="full-container">
-        <div class="sidebar">
-            <div class="sidebar_text">
-                <h2>Sidebar</h2>
-                <span>TRANG CHỦ</span>
-            </div>
+      <div class="sidebar">
+        <div class="sidebar_text">
+          <h2>Sidebar</h2>
+          <span>TRANG CHỦ</span>
         </div>
-        <div class="content">
-            <nav class="navbar content-item">
-                <div class="navbar_btn">
-                    <button onclick="sign_up()" class="btn_login">Sign Up</button>
-                    <button onclick="sign_in()" class="btn_login">Sign In</button>
-                </div>
-            </nav>
-            <div class="content_body content-item">
-                <div class="body_title  ">
-                    <h1>CHÀO MỪNG BẠN ĐẾN VỚI [...]</h1>
-                    <h3>Slogan</h3>
-                </div>
-                <div class="body_description">
-                    <h3 class="description_prompt">Tôi có thể giúp gì được cho bạn?</h3>
-                    <ul class="description_prompt">
-                        <li>...</li>
-                        <li>...</li>
-                        <li>...</li>
-                        <li>...</li>
-                        <li>...</li>
-                    </ul>
-                </div>
-                <button onclick="get_started()" class="start_btn">BẮT ĐẦU NÀO</button>
-            </div>
+      </div>
+      <div class="content">
+        <nav class="navbar content-item">
+          <div class="navbar_btn">
+            <button onclick="sign_up()" class="btn_login">Sign Up</button>
+            <button onclick="sign_in()" class="btn_login">Sign In</button>
+          </div>
+        </nav>
+        <div class="content_body content-item">
+          <div class="body_title">
+            <h1>CHÀO MỪNG BẠN ĐẾN VỚI [...]</h1>
+            <h3>Slogan</h3>
+          </div>
+          <div class="body_description">
+            <h3 class="description_prompt">Tôi có thể giúp gì được cho bạn?</h3>
+            <ul class="description_prompt">
+              <li>...</li>
+              <li>...</li>
+              <li>...</li>
+              <li>...</li>
+              <li>...</li>
+            </ul>
+          </div>
+          <button onclick="get_started()" class="start_btn">BẮT ĐẦU NÀO</button>
         </div>
+      </div>
     </div>
     <script>
-        function get_started() {
-            window.location.href="generate.html"
+      function get_started() {
+        if (localStorage.getItem("isLoggedIn") === "true") {
+          window.location.href = "generate.html";
+        } else {
+          alert("Bạn cần đăng nhập trước khi sử dụng tính năng này!");
+          window.location.href = "signin.html";
         }
-        function sign_in() {
-            window.location.href="signin.html"
-        }
-        function sign_up() {
-            window.location.href="signup.html"
-        }
+      }
+      function sign_in() {
+        window.location.href = "signin.html";
+      }
+      function sign_up() {
+        window.location.href = "signup.html";
+      }
     </script>
-</body>
+  </body>
 </html>

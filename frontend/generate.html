@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo</title>
+    <title>Trang chủ - Text to everything</title>
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -81,7 +81,14 @@
         </div>
     </div>
     <script>
-    document.getElementById("submit_btn").addEventListener("click", async function () {
+        // document.addEventListener("DOMContentLoaded", function () {
+        // if (localStorage.getItem("isLoggedIn") !== "true") {
+        //     alert("Bạn chưa đăng nhập. Vui lòng đăng nhập trước!");
+        //     window.location.href = "signin.html";
+        // }
+        // });
+
+        document.getElementById("submit_btn").addEventListener("click", async function () {
         const textarea = document.querySelector(".input");
         const text = textarea.value.trim();
         const selectedOption = document.querySelector(".options").value;
@@ -138,6 +145,8 @@
         if (!response.ok) {
             throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
         }
+
+        alert("Vui lòng chờ trong giây lát!");
 
         const data = await response.json();
         console.log("API Response:", data);
