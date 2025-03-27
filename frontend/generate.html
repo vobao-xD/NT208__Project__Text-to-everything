@@ -136,6 +136,8 @@
             return;
         }
 
+        alert("Vui lòng chờ trong giây lát!");
+        
         const response = await fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -146,7 +148,6 @@
             throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
         }
 
-        alert("Vui lòng chờ trong giây lát!");
 
         const data = await response.json();
         console.log("API Response:", data);
