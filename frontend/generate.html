@@ -15,6 +15,8 @@
     <div class="full-container">
         
         <div class="sidebar">
+            <!-- context menu -->
+
             <button class="back-button" onclick="goto_home()"><i class="fa fa-home"></i></button>
             <heading class="sidebar_title">
                 <h2>Sidebar</h2>
@@ -29,162 +31,131 @@
                     <option value="5">Improve Image Quality</option>
                     <option value="6">AI Chatbox</option>
                 </select>
-                <button class="generate_btn">+ Cuộc trò chuyện mới</button>
+                <button class="generate_btn" id="new-chat">+ Cuộc trò chuyện mới</button>
             </div>
             <div class="history">
-                <ul class="recent_history">
+                <ul class="chat-list" id="chat-list" style="list-style: none;">
                     Đoạn chat gần đây
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
-                    <li class="list">...</li>
                     
                 </ul>
             </div>
         </div>
         <div class="content">
-            <heading class="content_heading content-item">
-                <i class="fa-solid fa-circle-user avatar"></i>
-            </heading>
-            <div class="content_body content-item">
-                <h1 id="question" class="question typing--animation">Tôi có thể giúp gì cho bạn ?</h1>
+            <!-- HEADER -->
+            <div class="header_content">
+                <div class="fixed-button-container">
+                    <button class="fixed-button" onclick="goto_Advanced()">Advanced</button>
+                </div>
+
+                <div class="content_heading content-item">
+                    <i class="fa-solid fa-circle-user avatar"></i>
+                </div>
+            </div>
+            <!-- CONSERVATION  -->
+            <div class="conservation" id="conservation">
+                
+            </div>
+
+            <!-- INPUT USER  -->
+            <div class="footer_content">
                 <div id="btn_complex">
                     <textarea class="input" name="" id="" rows="4" placeholder="Mô tả những gì bạn muốn tạo"></textarea>
                     <button id="submit_btn" style="cursor: pointer;" type="submit">Create</button>    
                 </div>
-                <div id="button_image" style="display: none;">
-                    <button id="play_button" style="display: none; cursor: pointer;">Nhấn để xem ảnh</button>
-                </div>
-                <div id="image_container" style="display: none;">
-                    <img id="generated_image" style="display: none; width: 512px; height: 512px;" alt="Generated Image">
-                </div>
-                <div class="audio">
-                    <audio id="audio_player" controls></audio>
-                </div>
-            </div>
+            </div> 
+
         </div>
     </div>
     <script>
-        // document.addEventListener("DOMContentLoaded", function () {
-        // if (localStorage.getItem("isLoggedIn") !== "true") {
-        //     alert("Bạn chưa đăng nhập. Vui lòng đăng nhập trước!");
-        //     window.location.href = "signin.html";
-        // }
-        // });
 
-        document.getElementById("submit_btn").addEventListener("click", async function () {
-        const textarea = document.querySelector(".input");
-        const text = textarea.value.trim();
-        const selectedOption = document.querySelector(".options").value;
+document.getElementById("submit_btn").addEventListener("click", async function () {
+    const textarea = document.querySelector(".input");
+    const text = textarea.value.trim();
+    const selectedOption = document.querySelector(".options").value;
+    var chatbox=document.getElementById("conservation")
 
-        if (!text) {
-            alert("Vui lòng nhập nội dung!");
-            return;
-        }
+    if (text === "") {
+        alert("Vui lòng nhập nội dung trước khi gửi."); 
+        return;
+}
+    var userMessage = document.createElement("div");
+    userMessage.className = "message user-message";
+    userMessage.innerText = text;
+    chatbox.appendChild(userMessage);
+    
+textarea.value="";
 
-        try {
-            let apiUrl;
-            let requestBody = {};
-
-        // Lấy phần tử trước để tránh lỗi null
-        const playButton = document.getElementById("play_button");
-        const imageContainer = document.getElementById("image_container");
-        const imageElement = document.getElementById("generated_image");
-        const audioPlayer = document.getElementById("audio_player");
-        const imageButton=document.getElementById("button_image")
-
-        // Kiểm tra nếu phần tử tồn tại trước khi truy cập thuộc tính của nó
-        if (playButton) playButton.style.display = "none";
-        if (imageContainer) imageContainer.style.display = "none";
-        if (imageElement) imageElement.style.display = "none";
-        if (audioPlayer) audioPlayer.style.display = "none";
-        if (imageButton) imageButton.style.display="none";
-
-        if (selectedOption === "1") { // Text to Speech
-            apiUrl = "http://localhost:8000/text-to-speech";
-            requestBody = {
-                text: text,
-                voice: "banmai",
-                speed: "0"
-            };
-
-        } else if (selectedOption === "2") { // Text to Image
-            apiUrl = "http://localhost:8000/text-to-image/quick";
-            requestBody = {
-                prompt: text,
-                steps: 0
-            };
-        } else {
-
-            alert("Tính năng này chưa được hỗ trợ!");
-            return;
-        }
-
-        alert("Vui lòng chờ trong giây lát!");
-        
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
-        }
+    try {
+        let apiUrl;
+        let requestBody = {};
 
 
-        const data = await response.json();
-        console.log("API Response:", data);
 
-        if (selectedOption === "1") { // Xử lý Text to Speech
-            const audioURL = data.audio_url;
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            document.getElementById("btn_complex").style.cssText = `
-                     position:absolute;
-                     bottom: -400px;
-                     left: 20%;
-                     translateX(-50%);`
+    if (selectedOption === "1") { // Text to Speech
+        apiUrl = "http://localhost:8000/text-to-speech";
+        requestBody = {
+            text: text,
+            voice: "banmai",
+            speed: "0"
+        };
 
-            textarea.value = "";
-            document.getElementById("question").style.opacity = "0";
+    } else if (selectedOption === "2") { // Text to Image
+        apiUrl = "http://localhost:8000/text-to-image/quick";
+        requestBody = {
+            prompt: text,
+            steps: 0
+        };
+    } else {
 
-            if (audioPlayer) {
-                audioPlayer.src = audioURL;
-                audioPlayer.style.display = "block";
-                audioPlayer.load();
-            }         
-        } else if (selectedOption === "2") { // Xử lý Text to Image
-            if (imageElement && playButton && imageContainer) {
-                imageElement.src = "data:image/png;base64," + data.image_base64;
-                imageButton.style.display="block";
-                playButton.style.display = "block"; // Hiện nút play
-                imageElement.style.display = "none"; // Ẩn ảnh
-                imageContainer.style.display = "block"; // Hiện vùng chứa ảnh
+        alert("Tính năng này chưa được hỗ trợ!");
+        return;
+    }
 
-                // Khi nhấn nút play, ảnh hiện lên, nút biến mất
-                playButton.onclick = function () {
-                    playButton.style.display = "none";
-                    imageElement.style.display = "block";
-                };
-            }
+    const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody)
+    });
 
-        }
+    if (!response.ok) {
+        throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+    }
+
+
+    const data = await response.json();
+    console.log("API Response:", data);
+
+    var botMessage = document.createElement("div");
+    botMessage.className = "message bot-message";
+
+
+if (selectedOption === "1") { // Xử lý Text to Speech (Âm thanh)
+    const audioURL = data.audio_url;
+    
+    if (audioURL) {
+        var audioElement = document.createElement("audio");
+        audioElement.controls = true;
+        audioElement.src = audioURL;
+        botMessage.appendChild(audioElement);
+    } else {
+        botMessage.innerText = "Không thể tạo audio!";
+    }
+
+} else if (selectedOption === "2") { // Xử lý Text to Image (Hình ảnh)
+    if (data.image_base64) {
+        var imageElement = document.createElement("img");
+        imageElement.src = "data:image/png;base64," + data.image_base64;
+        imageElement.style.maxWidth = "100%"; 
+        botMessage.appendChild(imageElement);
+    } else {
+        botMessage.innerText = "Không thể tạo hình ảnh!";
+    }
+} else {
+    botMessage.innerText = "Tính năng chưa được hỗ trợ!";
+}
+
+// Thêm bot message vào hộp chat
+chatbox.appendChild(botMessage);
     } catch (error) {
         console.error("Lỗi:", error);
         alert("Có lỗi xảy ra khi gọi API: " + error.message);
@@ -197,12 +168,38 @@ document.addEventListener("DOMContentLoaded", function () {
     if (playButton) playButton.style.display = "none";
 });
 
-
+    function goto_Advanced(){
+        window.location.href = "advanced.html";
+    }
     function goto_home() {
         window.location.href = "index.html";
     }
-    
+document.getElementById("new-chat").addEventListener("click", function () {
+    const chatList = document.getElementById("chat-list");
 
+    // Đếm số hội thoại hiện tại để đặt tên mới
+    const chatCount = chatList.querySelectorAll("li").length + 1;
+    const chatName = `Hội thoại ${chatCount}`;
+
+    // Tạo một phần tử <li>
+    const li = document.createElement("li");
+    li.classList.add("chat-item");
+    li.innerHTML = `
+        ${chatName}
+        <a href="#" class="options-btn" style="decoration:none ;color:white ; margin-left:130px">⋮</a>
+    `;
+
+    chatList.appendChild(li);
+});
+// Lắng nghe sự kiện click trên danh sách (Xử lý cả thẻ mới)
+    document.querySelector(".chat-list").addEventListener("click", function (event) {
+    let target = event.target;
+
+    // Chỉ xử lý khi click vào <li>
+    if (target.classList.contains("chat-item") && !target.classList.contains("selected")) {
+        target.classList.add("selected"); // Đánh dấu đã chọn
+    }
+});
     </script>
 
 </body>

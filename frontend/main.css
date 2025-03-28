@@ -1,4 +1,4 @@
- :root{
+:root{
     --success-color:#2691d9;
     --error-color:#e74c3c;
  }
@@ -68,11 +68,24 @@
 /* CSS Content navigation */
 .content {
     flex: 4;
+    display: flex;
+    flex-direction: column;
     overflow: auto;
  }
+
  .content::-webkit-scrollbar {
     height: 7px;
  }
+ .header_content{
+    display: flex;
+    flex: 1;
+ }
+.conservation{
+    flex: 12;
+}
+.footer_content{
+    flex:2;
+}
  .navbar {
     height: 60px;
     display: flex;
@@ -220,14 +233,16 @@
     margin: 40% auto 30px;
 }                                                       
 .input {
-    height: 100px;
-    width: 600px;
+    height: 80px;
+    width: 90%;
     background-color: black;
     color: white;
     border-radius: 5px;
     border: none;
     resize: none;
     padding: 10px;
+    margin-left: 10px;
+    margin-top: 20px;
 }
 
 #btn_complex {
@@ -574,4 +589,159 @@ size: 30px;
     top: 80px;
     left: 120px;
 }
+.fixed-button-container {
+    position: fixed;
+    top: 10px;
+    left: 400px; 
+}
 
+/* Edit button Advanced */
+.fixed-button {
+    
+    background: linear-gradient(135deg, #42a5f5, #1e88e5);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.fixed-button:hover {
+    background: linear-gradient(135deg, #1e88e5, #0d47a1);
+}
+.fixed-button::after {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #333;
+    left: 0;
+    top: 0;
+    border-radius: 10px;
+  }
+  @keyframes glowing {
+    0% {background-position: 0 0;}
+    50% {background-position: 400% 0;}
+    100% {background-position: 0 0;}
+  }
+.fixed-button::before {
+    content: "";
+    background: linear-gradient(
+      45deg,
+      #FF0000, #FF7300, #FFFB00, #48FF00,
+      #00FFD5, #002BFF, #FF00C8, #FF0000
+    );
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    background-size: 600%;
+    z-index: -1;
+    width: calc(100% + 4px);
+    height:  calc(100% + 4px);
+    filter: blur(8px);
+    animation: glowing 20s linear infinite;
+    transition: opacity .3s ease-in-out;
+    border-radius: 10px;
+    opacity: 0;
+  }
+.fixed-button:hover::before {
+    opacity: 1;
+  }
+.fixed-button:active:after {
+    background: transparent;
+  }
+  
+.fixed-button:active {
+    color: #000;
+    font-weight: bold;
+  }
+
+/* Edit chat item */
+.chat-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 5px;
+}
+.chat-item {
+    position: relative;
+    display: block;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3); 
+    color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out;
+}
+
+.chat-item:hover {
+    transform: scale(1.05);
+}
+
+.chat-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0) 70%);
+    transition: left 0.4s ease-out;
+}
+
+.chat-item:hover::before {
+    left: 100%;
+}
+.chat-item:active {
+    animation: click-effect 0.3s ease-out;
+}
+
+@keyframes click-effect {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+        transform: scale(0.95);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+}
+.chat-item.checked {
+    background: rgba(255, 255, 255, 0.2); 
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+    transform: scale(0.98); 
+    pointer-events: none;
+}
+/* Custom message */
+.message {
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background-color: #007aff;
+    align-self: flex-end;
+    color: white;
+}
+.bot-message {
+    background-color: #EAEAEA;
+    align-self: flex-start;
+}
+.conservation {
+    flex: 8;
+    background-color: #121212;
+    padding: 15px;
+    border-radius: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
