@@ -35,7 +35,7 @@
                 <li>✅ Lưu trữ nội dung trong 7 ngày</li>
                 <li>✅ Không có quảng cáo</li>
             </ul>
-            <button class="btn upgrade">Chuyển sang Plus</button>
+            <button class="btn upgrade" onclick="payment('plus')">Chuyển sang Plus</button>
         </div>
         <div class="plan pro">
             <h2>Pro</h2>
@@ -49,8 +49,50 @@
                 <li>✅ Tăng tốc xử lý (ưu tiên hàng đợi)</li>
                 <li>✅ API riêng để tích hợp dự án</li>
             </ul>
-            <button class="btn upgrade" style="margin-top: 68px;">Chuyển sang Pro</button>
+            <button class="btn upgrade" style="margin-top: 68px;" onclick="payment('pro')">Chuyển sang Pro</button>
         </div>
     </div>
+    <script>
+    async function payment(plan) {
+    let amount;
+    if (plan === "plus") {
+        amount = 100000;
+    } else if (plan === "pro") {
+        amount = 200000;
+    } else {
+        alert("Gói không hợp lệ!");
+        return;
+    }
+
+    try {
+        
+        const response = await fetch(`http://localhost:8000/momo/create-payment?amount=${amount}`, {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+            },
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert("Thanh toán thành công! Link: " + data.payUrl);
+            window.location.href = data.payUrl;  
+        } else {
+            alert("Lỗi thanh toán: " + data.message);
+        }
+    } catch (error) {
+        alert("Lỗi khi tạo đơn hàng!");
+        console.error("Lỗi:", error);
+    }
+}
+
+
+document.querySelectorAll(".btn.upgrade").forEach(button => {
+    button.addEventListener("click", function () {
+        const plan = this.innerText.includes("Plus") ? "plus" : "pro";
+        payment(plan);
+    });
+});
+    </script>
 </body>
 </html>
