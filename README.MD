@@ -1,3 +1,16 @@
+# Cấu trúc cây thư mục
+
+Thư mục app chứa toàn bộ source code của backend
+
+- api: chứa các endpoints, các loại endpoints khác nhau sẽ nằm trong các file khác nhau.
+- core: chứa các logic chính của chương trình, cấu hình bảo mật như JWT, Oauth, cấu hình hệ thống, mã hóa,...
+- db: chứa các thành phần liên quan đến cơ sở dữ liệu
+  -- crud: chứa các hàm thao tác cơ sở dữ liệu
+  -- database: kết nối với cơ sở dữ liệu
+  -- model: chứa các bảng và cấu trúc DB cho SQAlchemy
+  -- schema: định dạng các khung dữ liệu cho request và response
+- services: chứa logic cho các api. Trong các endpoints chỉ cần gọi lại hàm được viết trong services. Mỗi loại service chứa ở các file riêng biệt
+
 # Các ứng dụng cần cài
 
 - Terminal
