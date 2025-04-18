@@ -25,7 +25,11 @@ app.add_middleware(
 )
 
 # Configure Session Middleware for OAuth
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET"))
+secret_key=os.getenv("SESSION_SECRET", None)
+if not secret_key:
+    raise ValueError("SESSION_SECRET environment variable is not set")
+
+app.add_middleware(SessionMiddleware, secret_key)
 
 # Include API routes
 app.include_router(router)
