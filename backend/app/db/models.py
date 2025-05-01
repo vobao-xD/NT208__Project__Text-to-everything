@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
@@ -15,3 +16,7 @@ class User(Base):
     avatar = Column(String, nullable=True)
     provider = Column(String, nullable=False, default="google")
     created_at = Column(DateTime, default=datetime.utcnow)
+class TextInput(BaseModel):
+    user_text: str
+class ChatRequest(BaseModel):
+    prompt: str

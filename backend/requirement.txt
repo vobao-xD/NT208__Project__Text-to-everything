@@ -27,3 +27,9 @@ pipreqs
 starlette
 itsdangerous
 Requests
+moviepy
+PyPDF2
+python-docx
+tiktoken
+paddleocr paddlepaddle
+pydub
