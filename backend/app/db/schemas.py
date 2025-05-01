@@ -6,16 +6,9 @@ from datetime import datetime
 
 #################### Text to image ####################
 
-class SlowPrompt(BaseModel):
-    prompt: str
-    negative_prompt: str | None = None
-    height: int | None = None
-    width: int | None = None
-    num_steps: int | None = None
-    guidance: float | None = None
-    model: int | None = None
 
-class QuickPrompt(BaseModel):
+
+class TTIPrompt(BaseModel):
     prompt: str
     steps: int | None = None
 
