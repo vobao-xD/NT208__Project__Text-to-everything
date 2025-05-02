@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+    EmailShareButton,
+    EmailIcon,
+    FacebookShareButton,
+    FacebookIcon
+  } from "react-share";
 
 const Generate = () => {
     const navigate = useNavigate();
@@ -10,10 +16,10 @@ const Generate = () => {
 
     useEffect(() => {
         const token = localStorage.getItem("access_token");
-        if (!token) {
+/*         if (!token) {
             navigate("/login");
             return;
-        }
+        } */
     }, [navigate]);
 
     const handleNewChat = () => {
@@ -164,6 +170,7 @@ const Generate = () => {
                         </button>
                     </div>
                     <i className="fa-solid fa-circle-user fa-2x avatar"></i>
+                    <i className="username">User</i>
                 </div>
 
                 <div className="conservation content-item">
@@ -173,15 +180,38 @@ const Generate = () => {
                                 message.content
                             ) : (
                                 message.option === "1" ? (
+                                    <>
                                     <audio controls src={message.content.audio_url} />
+                                    <EmailShareButton subject='My content was created by Nhom1, check it out!'
+                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{color: 'white'}}>
+                                                <EmailIcon size={48} round={true} />
+                                    </EmailShareButton>
+
+                                    <FacebookShareButton hashtag='#AI'>
+                                        <FacebookIcon size={48} round={true} />
+                                    </FacebookShareButton>
+                                        </> 
+                                    
                                 ) : message.option === "2" ? (
-                                    <img
-                                        src={`data:image/png;base64,${message.content.image_base64}`}
-                                        alt="Generated"
-                                        style={{ maxWidth: '100%' }}
-                                    />
+                                    <><img
+                                                src={`data:image/png;base64,${message.content.image_base64}`}
+                                                alt="Generated"
+                                                style={{ maxWidth: '100%' }} />
+                                        <EmailShareButton subject='My content was created by Nhom1, check it out!'
+                                                    body='My content was created by Nhom 1! Check it out!' className='share' style={{color: 'white'}}>
+                                            <EmailIcon size={48} round={true} />
+                                        </EmailShareButton>
+                                        
+                                        <FacebookShareButton hashtag='#AI'>
+                                        <FacebookIcon size={48} round={true} />
+                                        </FacebookShareButton>
+                                        
+                                        </> 
+
+                                        
                                 ) : null
                             )}
+   
                         </div>
                     ))}
                 </div>

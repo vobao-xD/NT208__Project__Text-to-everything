@@ -15,6 +15,7 @@ const Header = () => {
                 </button>
             </div>
             <i className="fa-solid fa-circle-user fa-2x avatar"></i>
+            <i className="username">User</i>
         </div>
     );
 };

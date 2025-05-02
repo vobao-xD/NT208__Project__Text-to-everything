@@ -273,6 +273,16 @@
   color: white;
 }
 
+.username {
+  font-size: 20px;
+  color: white;
+  position: relative;
+  top: 12.5px;
+  left: 1100px;
+
+
+}
+
 .question {
   margin: 40% auto 30px;
 }
@@ -694,7 +704,7 @@ body.signin-page p {
 .fixed-button {
 
   background: linear-gradient(135deg, #42a5f5, #1e88e5);
-  color: white;
+  color: black;
   border: none;
   padding: 10px 20px;
   border-radius: 10px;
@@ -857,4 +867,9 @@ body.signin-page p {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/*Share*/
+.share {
+  color: white;
 }
