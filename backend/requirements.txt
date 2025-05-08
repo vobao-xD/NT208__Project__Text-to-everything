@@ -31,5 +31,6 @@ moviepy
 PyPDF2
 python-docx
 tiktoken
-paddleocr paddlepaddle
+paddleocr 
+paddlepaddle
 pydub
