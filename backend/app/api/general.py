@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from db import get_db
 router = APIRouter()
 
 # API trả về trang chủ của web

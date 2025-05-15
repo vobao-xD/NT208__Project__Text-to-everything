@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from db import init_db
@@ -24,8 +25,18 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-# Configure Session Middleware for OAuth
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET"))
+# # Configure Session Middleware for OAuth
+# secret_key=os.getenv("SESSION_SECRET", None)
+# if not secret_key:
+#     raise ValueError("SESSION_SECRET environment variable is not set")
+
+# app.add_middleware(SessionMiddleware, secret_key)
+
+if not os.path.exists("static"):
+    os.makedirs("static")
+
+# Mount static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include API routes
 app.include_router(router)
@@ -33,4 +44,4 @@ app.include_router(router)
 # Main entry point
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)

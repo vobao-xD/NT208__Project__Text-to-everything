@@ -6,16 +6,9 @@ from datetime import datetime
 
 #################### Text to image ####################
 
-class SlowPrompt(BaseModel):
-    prompt: str
-    negative_prompt: str | None = None
-    height: int | None = None
-    width: int | None = None
-    num_steps: int | None = None
-    guidance: float | None = None
-    model: int | None = None
 
-class QuickPrompt(BaseModel):
+
+class TTIPrompt(BaseModel):
     prompt: str
     steps: int | None = None
 
@@ -60,5 +53,13 @@ class ResponseResponse(ResponseBase):
         from_attributes = True
 
 #################### Text to video ####################
+class TextToVideoRequest(BaseModel):
+    prompt: str
+    negative_prompt: str | None = None
+    guidance_scale: float = 5.0
+    fps: int = 16
+    steps: int = 30
+    seed: int = 123456
+    frames: int = 64
 
 #################### Speech to text ####################
