@@ -25,8 +25,12 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-# Configure Session Middleware for OAuth
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET"))
+# # Configure Session Middleware for OAuth
+# secret_key=os.getenv("SESSION_SECRET", None)
+# if not secret_key:
+#     raise ValueError("SESSION_SECRET environment variable is not set")
+
+# app.add_middleware(SessionMiddleware, secret_key)
 
 if not os.path.exists("static"):
     os.makedirs("static")

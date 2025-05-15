@@ -4,19 +4,12 @@ from db import schemas
 
 router = APIRouter()
 
-@router.post("/quick")
-def text_to_image(prompt: schemas.QuickPrompt):
+@router.post("/")
+def text_to_image(prompt: schemas.TTIPrompt):
     """
     Chuyển văn bản thành hình ảnh bằng AI (nhanh)
     """
-    image = service.textToImageQuick(prompt)
+    image = service.textToImage(prompt)
     return {"image_base64" : image}
 
-@router.post("/slow")
-def text_to_image(prompt: schemas.SlowPrompt):
-    """
-    Chuyển văn bản thành hình ảnh bằng AI (chậm)
-    """
-    image = service.textToImageSlow(prompt)
-    return {"image_base64" : image}
     
