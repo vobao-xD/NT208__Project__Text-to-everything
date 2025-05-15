@@ -1,3 +1,4 @@
+from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -63,3 +64,9 @@ class TextToVideoRequest(BaseModel):
     frames: int = 64
 
 #################### Speech to text ####################
+class PermissionCheckRequest(BaseModel):
+    permissions: List[str]
+
+class PermissionResult(BaseModel):
+    allowed: bool
+    reason: Optional[str] = None

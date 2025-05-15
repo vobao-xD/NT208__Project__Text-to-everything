@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from . import auth, speech_to_text, text_to_speech, text_to_image, text_to_video, general, history,auth_github,MOMO,input,ChatBotContent,enhance
+from . import auth, speech_to_text, text_to_speech, text_to_image, text_to_video, general, history,auth_github,MOMO,input,ChatBotContent,enhance,Check_api
 
 router = APIRouter()
 
@@ -16,3 +16,5 @@ router.include_router(MOMO.router,prefix="",tags=["Payment"])
 router.include_router(input.router,prefix="",tags=["Xử lý input"])
 router.include_router(ChatBotContent.router,prefix="",tags=["ChatBot Content"])
 router.include_router(enhance.router,prefix="",tags=["Enhance"])
+router.include_router(Check_api.router,prefix="",tags=["Check Permission"])
+

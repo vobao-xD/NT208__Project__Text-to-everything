@@ -1,0 +1,38 @@
+from fastapi import APIRouter,HTTPException,requests,Depends
+from requests import Session
+from backend.app.api.auth import get_current_user
+from db.models import User,UserSchema
+from db.database import get_db
+from db.schemas import PermissionCheckRequest,PermissionResult
+router=APIRouter()
+
+
+def check_permission(user: User, permission: str) -> PermissionResult:
+    # Định nghĩa quyền theo role
+    permission_rules = {
+        "enhance_image": ["plus", "pro"],
+        "premium_feature": ["pro"],
+        # Thêm các quyền/tính năng khác ở đây
+    }
+    
+    allowed_roles = permission_rules.get(permission, [])
+    if user.role in allowed_roles:
+        return PermissionResult(allowed=True)
+    else:
+        return PermissionResult(
+            allowed=False,
+            reason=f"Yêu cầu role {', '.join(allowed_roles)} để truy cập {permission}"
+        )
+    
+@router.post("/check-permissions")
+async def check_permissions(
+    request: PermissionCheckRequest,
+    current_user: User=Depends(get_current_user),
+    db: Session= Depends(get_db)
+):
+    result=[]
+    for permission in request.permissions:
+        result[permission]=check_permission(current_user,permission)
+    return result
+
+    
