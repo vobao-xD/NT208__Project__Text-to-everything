@@ -60,5 +60,13 @@ class ResponseResponse(ResponseBase):
         from_attributes = True
 
 #################### Text to video ####################
+class TextToVideoRequest(BaseModel):
+    prompt: str
+    negative_prompt: str | None = None
+    guidance_scale: float = 5.0
+    fps: int = 16
+    steps: int = 30
+    seed: int = 123456
+    frames: int = 64
 
 #################### Speech to text ####################

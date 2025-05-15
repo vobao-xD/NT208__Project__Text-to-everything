@@ -64,7 +64,7 @@ class AuthService:
             db.refresh(user)
 
         access_token = create_access_token(data={"sub": user.email})
-        redirect_url = f"http://127.0.0.1:5173/generate"
+        redirect_url = f"http://localhost:5173/auth/google/callback?token={access_token}"
         return RedirectResponse(url=redirect_url)
         #return {"access_token": access_token, "token_type": "bearer"} 
 
