@@ -35,3 +35,4 @@ tiktoken
 paddleocr 
 paddlepaddle
 pydub
+deep-translator

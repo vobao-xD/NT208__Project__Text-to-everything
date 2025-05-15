@@ -44,29 +44,68 @@ class AuthService:
 
     @staticmethod
     async def google_callback(request: Request, db: Session = Depends(get_db)):
-        token = await oauth.google.authorize_access_token(request)
-        user_info = token.get("userinfo")
+        try:
+            state = request.session.get("state")
+            if not state or state != request.query_params.get("state"):
+                raise HTTPException(status_code=400, detail="Invalid state parameter")
 
-        if not user_info:
-            raise HTTPException(status_code=400, detail="Invalid user info")
+            token = await oauth.google.authorize_access_token(request)
+            user_resp = await oauth.google.get("userinfo", token=token)
+            if user_resp.status_code != 200:
+                raise HTTPException(status_code=400, detail="Failed to fetch user info")
 
-        email = user_info["email"]
-        name = user_info.get("name", "Unknown User")
-        avatar = user_info.get("picture", None)
+            user_data = user_resp.json()
+            email = user_data.get("email")
+            if not email:
+                raise HTTPException(status_code=400, detail="Email not provided by Google")
 
-        result = db.execute(select(User).where(User.email == email))
-        user = result.scalars().first()
+            user_id = f"google_{user_data['sub']}"
+            name = user_data.get("name", "Unknown User")
+            avatar = user_data.get("picture")
 
-        if not user:
-            user = User(email=email, name=name, avatar=avatar, provider="google")
-            db.add(user)
+            # Check for existing user
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                user = User(
+                    id=user_id,
+                    email=email,
+                    name=name,
+                    avatar=avatar,
+                    provider="google",
+                )
+                db.add(user)
+            else:
+                # Update user info if provider matches
+                if user.provider == "google":
+                    user.name = name
+                    user.avatar = avatar
+                else:
+                   
+                    user_id = f"google_{user_data['sub']}"
+                    user = User(
+                        id=user_id,
+                        email=email,
+                        name=name,
+                        avatar=avatar,
+                        provider="google",
+                    )
+                    db.add(user)
+
             db.commit()
             db.refresh(user)
 
-        access_token = create_access_token(data={"sub": user.email})
-        redirect_url = f"http://localhost:5173/auth/google/callback?token={access_token}"
-        return RedirectResponse(url=redirect_url)
-        #return {"access_token": access_token, "token_type": "bearer"} 
+            # Create JWT token
+            access_token = create_access_token(data={"sub": user.id})
+            return {"access_token": access_token, "token_type": "bearer", "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "avatar": user.avatar,
+                "provider": user.provider,
+                "role": user.role,
+            }}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Google login failed: {str(e)}") 
 
     @staticmethod
     def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
