@@ -1,3 +1,4 @@
+import secrets
 from dotenv import load_dotenv
 import os
 from fastapi import HTTPException, Depends
@@ -33,11 +34,9 @@ oauth.register(
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration", 
 )
 
-# OAuth2 Bearer Token (JWT)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 class AuthService:
-
     @staticmethod
     async def google_login(request: Request):
         return await oauth.google.authorize_redirect(request, REDIRECT_URI)
@@ -106,19 +105,3 @@ class AuthService:
             }}
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Google login failed: {str(e)}") 
-
-    @staticmethod
-    def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-        email = decode_access_token(token) 
-        user = db.query(User).filter(User.email == email).first()
-
-        if not user:
-            raise HTTPException(status_code=401, detail="User not authenticated")
-
-        return {
-            "message" : "Login successfully!",
-            "id": user.id, 
-            "email": user.email, 
-            "name": user.name, 
-            "avatar": user.avatar
-        }

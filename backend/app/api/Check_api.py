@@ -1,7 +1,7 @@
 from fastapi import APIRouter,HTTPException,requests,Depends
 from requests import Session
-from backend.app.api.auth import get_current_user
-from db.models import User,UserSchema
+from api.auth import get_current_user
+from db.models import User
 from db.database import get_db
 from db.schemas import PermissionCheckRequest,PermissionResult
 router=APIRouter()
