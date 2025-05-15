@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, Request,HTTPException
 import json
 import uuid
 from fastapi.responses import RedirectResponse
@@ -7,6 +7,7 @@ import hmac
 import hashlib
 from dotenv import load_dotenv
 import os
+from db.models import User,Transaction
 
 from db import get_db
 load_dotenv()
@@ -63,19 +64,65 @@ async def create_payment(amount: int):
     return response.json()
 @router.post("/momo/callback")
 async def callback(request: Request, db=Depends(get_db)):
-    data = await request.json() 
-    print("Received callback:", data)  
+    try:  
+        data = await request.json() 
+        print("Received callback:", data)  
 
-    transaction_status = data.get("resultCode")  
-    user_id = data.get("partnerClientId")  
-    plan = data.get("plan")  
+        transaction_status = data.get("resultCode")  
+        user_id = data.get("partnerClientId")  
+        plan = data.get("plan")  
+        order_id=data.get("order_id")
 
-    if transaction_status == 0:  
-        new_role = "plus" if plan == "plus" else "pro"
+        if not all ([transaction_status is not None,user_id,plan]):
+            raise HTTPException(status_code=400,detail="Thiếu thông tin ")
         
-        # UPDATE QUYỀN HẠN USER Ở ĐÂY 
-        # await db.execute("UPDATE users SET role = $1 WHERE id = $2", new_role, user_id)
+        raw_signature = (
+                f"accessKey={ACCESS_KEY}&amount={data.get('amount')}&extraData={data.get('extraData')}"
+                f"&message={data.get('message')}&orderId={order_id}&orderInfo={data.get('orderInfo')}"
+                f"&orderType={data.get('orderType')}&partnerCode={PARTNER_CODE}"
+                f"&payType={data.get('payType')}&requestId={data.get('requestId')}"
+                f"&responseTime={data.get('responseTime')}&resultCode={transaction_status}"
+                f"&transId={data.get('transId')}"
+            )
+        signature = hmac.new(SECRET_KEY.encode(), raw_signature.encode(), hashlib.sha256).hexdigest()
 
-        return {"message": "Cập nhật thành công", "status": "success"}
-    
-    return {"message": "Thanh toán thất bại", "status": "failed"}
+        if signature != data.get("signature"):
+                raise HTTPException(status_code=400, detail="Chữ ký không hợp lệ")
+
+        
+        if transaction_status == 0:  
+            new_role = "plus" if plan.lower() == "plus" else "pro"
+
+            # UPDATE QUYỀN HẠN USER Ở ĐÂY 
+            user=db.query(User).filter(User.id==user_id).first()
+            if not user:
+                raise HTTPException(status_code=400,detail="User không tồn tại")
+            
+            user.role=new_role
+
+            transaction = Transaction(
+                    order_id=order_id,
+                    user_id=user_id,
+                    amount=data.get("amount"),
+                    plan=plan,
+                    status="success"
+                )
+            db.add(transaction)
+            db.commit()
+
+            return {"message": "Cập nhật thành công", "status": "success"}
+        else:
+                # Lưu giao dịch thất bại
+                transaction = Transaction(
+                    order_id=order_id,
+                    user_id=user_id,
+                    amount=data.get("amount"),
+                    plan=plan,
+                    status="failed"
+                )
+                db.add(transaction)
+                db.commit()
+
+                return {"message": "Thanh toán thất bại", "status": "failed"}
+    except Exception as ex:
+        raise HTTPException(status_code=400,detail=f"Lỗi xử lý callback: {ex}")

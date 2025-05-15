@@ -20,7 +20,7 @@ class TTSClientRequest(BaseModel):
     speed: str = "0"
 
 class RequestBase(BaseModel):
-    input_type: str  # text, audio, file
+    input_type: str  # text, audio, filee
     input_text: str | None = None
     input_audio_url: str | None = None
     output_type: str  # speech, image, video
