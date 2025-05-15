@@ -5,7 +5,7 @@ import {
     EmailIcon,
     FacebookShareButton,
     FacebookIcon
-  } from "react-share";
+} from "react-share";
 
 const Generate = () => {
     const navigate = useNavigate();
@@ -16,10 +16,10 @@ const Generate = () => {
 
     useEffect(() => {
         const token = localStorage.getItem("access_token");
-/*         if (!token) {
-            navigate("/login");
-            return;
-        } */
+        /*         if (!token) {
+                    navigate("/login");
+                    return;
+                } */
     }, [navigate]);
 
     const handleNewChat = () => {
@@ -61,7 +61,8 @@ const Generate = () => {
         try {
             let apiUrl;
             let requestBody = {};
-
+            let content = null;
+            let videoUrl = null;
             if (selectedOption === "1") {
                 apiUrl = "http://localhost:8000/text-to-speech";
                 requestBody = {
@@ -75,7 +76,19 @@ const Generate = () => {
                     prompt: text,
                     steps: 0
                 };
-            } else {
+            } else if (selectedOption === "3") {
+                apiUrl = "http://localhost:8000/text-to-video";
+                requestBody = {
+                    prompt: text,
+                    negative_prompt: "blurry, low quality, distorted",
+                    guidance_scale: 5.0,
+                    fps: 16,
+                    steps: 30,
+                    seed: 123456,
+                    frames: 64
+                }
+            }
+            else {
                 alert("Tính năng này chưa được hỗ trợ!");
                 return;
             }
@@ -90,15 +103,24 @@ const Generate = () => {
             });
 
             if (!response.ok) {
-                throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+                const errorText = await response.text();
+                throw new Error(`Lỗi API (${response.status}): ${errorText}`);
             }
 
-            const data = await response.json();
+            if (selectedOption === "3") {
+                const blob = await response.blob();
+                videoUrl = URL.createObjectURL(blob);
+                content = { video_url: videoUrl };
+            } else {
+                const data = await response.json();
+                content = data;
+            }
             await new Promise(resolve => setTimeout(resolve, 5000));
+
             // Add bot message to chat
             const botMessage = {
                 type: 'bot',
-                content: data,
+                content,
                 option: selectedOption
             };
             setChatHistory(prev => [...prev, botMessage]);
@@ -108,6 +130,7 @@ const Generate = () => {
             alert("Có lỗi xảy ra khi gọi API: " + error.message);
         }
     };
+
 
     return (
         <div className="full-container">
@@ -181,37 +204,49 @@ const Generate = () => {
                             ) : (
                                 message.option === "1" ? (
                                     <>
-                                    <audio controls src={message.content.audio_url} />
-                                    <EmailShareButton subject='My content was created by Nhom1, check it out!'
-                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{color: 'white'}}>
-                                                <EmailIcon size={48} round={true} />
-                                    </EmailShareButton>
-
-                                    <FacebookShareButton hashtag='#AI'>
-                                        <FacebookIcon size={48} round={true} />
-                                    </FacebookShareButton>
-                                        </> 
-                                    
-                                ) : message.option === "2" ? (
-                                    <><img
-                                                src={`data:image/png;base64,${message.content.image_base64}`}
-                                                alt="Generated"
-                                                style={{ maxWidth: '100%' }} />
+                                        <audio controls src={message.content.audio_url} />
                                         <EmailShareButton subject='My content was created by Nhom1, check it out!'
-                                                    body='My content was created by Nhom 1! Check it out!' className='share' style={{color: 'white'}}>
+                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white' }}>
                                             <EmailIcon size={48} round={true} />
                                         </EmailShareButton>
-                                        
-                                        <FacebookShareButton hashtag='#AI'>
-                                        <FacebookIcon size={48} round={true} />
-                                        </FacebookShareButton>
-                                        
-                                        </> 
 
-                                        
+                                        <FacebookShareButton hashtag='#AI'>
+                                            <FacebookIcon size={48} round={true} />
+                                        </FacebookShareButton>
+                                    </>
+
+                                ) : message.option === "2" ? (
+                                    <><img
+                                        src={`data:image/png;base64,${message.content.image_base64}`}
+                                        alt="Generated"
+                                        style={{ maxWidth: '100%' }} />
+                                        <EmailShareButton subject='My content was created by Nhom1, check it out!'
+                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white' }}>
+                                            <EmailIcon size={48} round={true} />
+                                        </EmailShareButton>
+
+                                        <FacebookShareButton hashtag='#AI'>
+                                            <FacebookIcon size={48} round={true} />
+                                        </FacebookShareButton>
+
+                                    </>
+
+                                ) : message.option === "3" ? (
+                                    <>
+                                        <video controls width="100%" src={message.content.video_url} />
+                                        <EmailShareButton subject='My content was created by Nhom1, check it out!'
+                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white' }}>
+                                            <EmailIcon size={48} round={true} />
+                                        </EmailShareButton>
+
+                                        <FacebookShareButton hashtag='#AI'>
+                                            <FacebookIcon size={48} round={true} />
+                                        </FacebookShareButton>
+                                    </>
                                 ) : null
+
                             )}
-   
+
                         </div>
                     ))}
                 </div>
