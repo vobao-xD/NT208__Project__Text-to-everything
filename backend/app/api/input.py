@@ -59,7 +59,28 @@ async def speech_to_text(file: UploadFile = File(...)):
 # 3. Chuyển image sang texttext
 @router.post("/input/image")
 async def input_image(file: UploadFile = File(...)):
-    return {"Text:Chưa làm"}
+    # Kiểm tra định dạng file
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File phải là hình ảnh")
+    
+    try:
+        # Đọc nội dung file hình ảnh
+        contents = await file.read()
+        # Sử dụng Image.open từ PIL để mở hình ảnh
+        image = Image.open(io.BytesIO(contents))
+        
+        # Trích xuất văn bản từ hình ảnh
+        extracted_text = pytesseract.image_to_string(image, lang="eng+vie")  # Hỗ trợ tiếng Anh và tiếng Việt
+        
+        # Kiểm tra nếu không trích xuất được văn bản
+        if not extracted_text.strip():
+            return {"text": "Không thể trích xuất văn bản từ hình ảnh"}
+        
+        return {"text": extracted_text.strip()}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi xử lý hình ảnh: {str(e)}")
+        
 
 # 4. Chuyển âm thanh của video sang texttext
 @router.post("/input/video")
