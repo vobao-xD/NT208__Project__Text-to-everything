@@ -71,7 +71,7 @@ const Generate = () => {
                     speed: "0"
                 };
             } else if (selectedOption === "2") {
-                apiUrl = "http://localhost:8000/text-to-image/quick";
+                apiUrl = "http://localhost:8000/text-to-image/";
                 requestBody = {
                     prompt: text,
                     steps: 0
@@ -206,27 +206,29 @@ const Generate = () => {
                                     <>
                                         <audio controls src={message.content.audio_url} />
                                         <EmailShareButton subject='My content was created by Nhom1, check it out!'
-                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white' }}>
-                                            <EmailIcon size={48} round={true} />
+                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white', margin: '5px'}}>
+                                            <EmailIcon size={32} round={true} />
                                         </EmailShareButton>
 
-                                        <FacebookShareButton hashtag='#AI'>
-                                            <FacebookIcon size={48} round={true} />
+                                        
+                                        {/*How am I suppose to upload this Base64 blob to server?*/}
+                                        <FacebookShareButton hashtag='#AI' style={{ color: 'white', margin: '5px'}}>
+                                            <FacebookIcon size={32} round={true} />
                                         </FacebookShareButton>
                                     </>
 
                                 ) : message.option === "2" ? (
                                     <><img
-                                        src={`data:image/png;base64,${message.content.image_base64}`}
+                                        src={`data:image/png;base64,${message.content.image_url}`}
                                         alt="Generated"
-                                        style={{ maxWidth: '100%' }} />
+                                        style={{ maxWidth: '70%', maxHeight: '70%', borderRadius: '10px' }} />
                                         <EmailShareButton subject='My content was created by Nhom1, check it out!'
                                             body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white' }}>
-                                            <EmailIcon size={48} round={true} />
+                                            <EmailIcon size={32} round={true} />
                                         </EmailShareButton>
 
                                         <FacebookShareButton hashtag='#AI'>
-                                            <FacebookIcon size={48} round={true} />
+                                            <FacebookIcon size={32} round={true} />
                                         </FacebookShareButton>
 
                                     </>
@@ -236,11 +238,11 @@ const Generate = () => {
                                         <video controls width="100%" src={message.content.video_url} />
                                         <EmailShareButton subject='My content was created by Nhom1, check it out!'
                                             body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white' }}>
-                                            <EmailIcon size={48} round={true} />
+                                            <EmailIcon size={32} round={true} />
                                         </EmailShareButton>
 
                                         <FacebookShareButton hashtag='#AI'>
-                                            <FacebookIcon size={48} round={true} />
+                                            <FacebookIcon size={32} round={true} />
                                         </FacebookShareButton>
                                     </>
                                 ) : null
