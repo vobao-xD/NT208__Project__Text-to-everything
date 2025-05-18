@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from googletrans import Translator
 from db.schemas import TTIPrompt
+import secrets
 
 load_dotenv()
 
@@ -64,7 +65,11 @@ class TextToImageService:
         successCode = response.status_code
         if successCode == 200:
             image = json.loads(response.text)['result']['image']
-            return image
+            image_bytes = base64.b64decode(image)
+            file_name = "./img/" + base64.b64encode(secrets.token_bytes(12), b"-_").decode() + ".png"
+            with open(file_name, "wb") as f:
+                f.write(image_bytes)
+            return file_name.removeprefix('./')
         else:
             return f"Error {response.status_code}: {response.text}"
         

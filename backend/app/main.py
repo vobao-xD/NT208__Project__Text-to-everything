@@ -25,6 +25,13 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
+try:
+    os.mkdir("img")
+except FileExistsError:
+    print("The 'img' directory is already exist so no need to create it")
+
+app.mount("/img", StaticFiles(directory="img"), name="static")
+
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "super-secret-key"))
 
 if not os.path.exists("static"):
