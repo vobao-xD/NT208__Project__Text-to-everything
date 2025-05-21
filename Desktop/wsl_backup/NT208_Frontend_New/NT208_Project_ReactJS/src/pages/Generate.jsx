@@ -151,7 +151,7 @@ const Generate = () => {
                                     </>
                                 ) : message.option === "2" ? (
                                     <><img
-                                        src={`data:image/png;base64,${message.content.image_url}`}
+                                        src={`http://localhost:8000/${message.content.image_url}`}
                                         alt="Generated"
                                         style={{ maxWidth: '70%', maxHeight: '70%', borderRadius: '10px' }} />
                                         <EmailShareButton subject='My content was created by Nhom1, check it out!'
