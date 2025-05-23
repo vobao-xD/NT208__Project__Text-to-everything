@@ -19,18 +19,21 @@ app = FastAPI()
 
 # Configure CORS for the app
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    CORSMiddleware, 
+    allow_origins=["*"], 
+    allow_credentials=True, 
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
-# Configure session middleware
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET_KEY", secrets.token_hex(32))
-)
+try:
+    os.mkdir("img")
+except FileExistsError:
+    print("The 'img' directory is already exist so no need to create it")
+
+app.mount("/img", StaticFiles(directory="img"), name="static")
+
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "super-secret-key"))
 
 if not os.path.exists("static"):
     os.makedirs("static")

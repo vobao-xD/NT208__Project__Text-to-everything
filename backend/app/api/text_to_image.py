@@ -10,6 +10,6 @@ def text_to_image(prompt: schemas.TTIPrompt):
     Chuyển văn bản thành hình ảnh bằng AI (nhanh)
     """
     image = service.textToImage(prompt)
-    return {"image_base64" : image}
+    return {"image_url" : image}
 
     
