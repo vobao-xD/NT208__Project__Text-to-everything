@@ -70,3 +70,6 @@ class PermissionCheckRequest(BaseModel):
 class PermissionResult(BaseModel):
     allowed: bool
     reason: Optional[str] = None
+
+class QuestionRequest(BaseModel):
+    question: str

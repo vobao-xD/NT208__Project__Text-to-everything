@@ -49,6 +49,24 @@ def guess_ai_intent(user_input):
             r'\b(elevenlabs|murf|play\.ht|resemble\.ai|descript|sound|âm thanh|nhạc nền|beat|melody|harmony|nhịp điệu)\b',
             r'\b(chuyển.*?(văn bản|text).*?(thành|sang).*?(speech|giọng nói|giọng đọc|âm thanh|audio|voice))\b',
             r'\b(text-to-speech|tts|speech-to-text|stt|voice cloning|nhân bản giọng nói)\b'
+        ],
+        'chatbot': [
+            r'\b(tạo|làm|phát triển|xây dựng|thiết kế).*?(chatbot|trợ lý ảo|bot|trợ lý|AI trò chuyện|AI giao tiếp)\b',
+            r'\b(chatbot|trợ lý ảo|bot|trợ lý|AI trò chuyện|AI giao tiếp|trả lời tự động|conversational AI)\b',
+            r'\b(dialogflow|rasa|botpress|wit\.ai|trò chuyện|chat|đối thoại|interact|interaction)\b',
+            r'\b(hỗ trợ khách hàng|customer support|trả lời câu hỏi|FAQ bot|live chat)\b'
+        ],
+        'improve_image': [
+            r'\b(cải thiện|nâng cấp|tăng chất lượng|chỉnh sửa|optimize|tối ưu hóa|enhance|retouch).*?(ảnh|hình|hình ảnh|image)\b',
+            r'\b(xóa nền|remove background|tăng độ phân giải|upscale|sharpen|làm nét|denoise|khử nhiễu|restore|khôi phục).*?(ảnh|hình|hình ảnh)\b',
+            r'\b(photoshop|lightroom|canva|fotor|pixlr|ảnh chất lượng thấp|low quality image)\b',
+            r'\b(nâng cấp ảnh cũ|old photo restoration|colorize|lên màu|ảnh đen trắng|black and white)\b'
+        ],
+        'create_avatar': [
+            r'\b(tạo|tạo ra|vẽ|thiết kế).*?(avatar|hình đại diện|nhân vật|character|profile picture|ảnh đại diện)\b',
+            r'\b(avatar|hình đại diện|nhân vật|character|profile picture|ảnh đại diện|3d avatar|cartoon avatar|animated avatar)\b',
+            r'\b(bitmoji|zepeto|toonme|avatarify|cartoonize|hoạt hình hóa|nhân vật ảo)\b',
+            r'\b(tạo nhân vật cho|create character for|avatar cho|avatar for).*?(game|trò chơi|mạng xã hội|social media)\b'
         ]
     }
     
@@ -68,7 +86,7 @@ def guess_ai_intent(user_input):
     
     # Xác định ý định chính
     if sum(intent_matches.values()) == 0:
-        return "generate_unknown"
+        return "generate_answer"
     else:
         # Trả về ý định có số lượng match nhiều nhất
         primary_intent = intent_matches.most_common(1)[0][0]

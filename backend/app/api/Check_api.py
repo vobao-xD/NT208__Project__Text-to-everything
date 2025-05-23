@@ -1,6 +1,6 @@
 from fastapi import APIRouter,HTTPException,requests,Depends
 from requests import Session
-from api.auth import get_current_user
+from api.auth import Auth
 from db.models import User
 from db.database import get_db
 from db.schemas import PermissionCheckRequest,PermissionResult
@@ -27,7 +27,7 @@ def check_permission(user: User, permission: str) -> PermissionResult:
 @router.post("/check-permissions")
 async def check_permissions(
     request: PermissionCheckRequest,
-    current_user: User=Depends(get_current_user),
+    current_user: User=Depends(Auth.get_current_user),
     db: Session= Depends(get_db)
 ):
     result=[]
