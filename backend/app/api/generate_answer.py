@@ -1,10 +1,13 @@
 from fastapi import APIRouter
 from openai import OpenAI
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 router = APIRouter()
-
+api_key = os.getenv("GENERATE_ANSWER_API_KEY")
 client = OpenAI(
-    api_key="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",
+    api_key=api_key,
     base_url="https://openrouter.ai/api/v1"
 )
 
