@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Sidebar = ({selectedOption, setSelectedOption, setChatHistory, chatHistory, conversations, setConversations, setCurrentConversationId}) => {
+const Sidebar = ({
+    selectedOption, 
+    setSelectedOption, 
+    setChatHistory, 
+    chatHistory, 
+    conversations, 
+    setConversations, 
+    setCurrentConversationId,
+    currentConversationId
+}) => {
     const navigate = useNavigate();
     
     const handleNewChat = () => {
@@ -10,7 +19,7 @@ const Sidebar = ({selectedOption, setSelectedOption, setChatHistory, chatHistory
             const newConversation = {
                 id: Date.now(),
                 messages: [...chatHistory],
-                title: chatHistory[0].content.substring(0, 30) + '...'
+                title: chatHistory[0].image_url ? 'Image Conversation' : (chatHistory[0].content || 'New Conversation')
             };
             setConversations(prev => [...prev, newConversation]);
         }
@@ -48,6 +57,7 @@ const Sidebar = ({selectedOption, setSelectedOption, setChatHistory, chatHistory
                         <option value="4">Create AI Avatar</option>
                         <option value="5">Improve Image Quality</option>
                         <option value="6">AI Chatbox</option>
+                        <option value="7">Auto analyze</option>
                     </select>
                 </div>
 
