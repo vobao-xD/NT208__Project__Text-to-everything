@@ -72,10 +72,11 @@ const Generate = () => {
                 "generate_text": "6",
                 "generate_image": "2",
                 "generate_video": "3",
-                "generate_code": "6",
+                "generate_code": "8",
                 "generate_speech": "1",
                 "generate_answer": "7"
             };
+            // đánh dấu
 
             if (data.intent_analysis && actionMap[data.intent_analysis]) {
                 setSelectedOption(actionMap[data.intent_analysis]);
@@ -219,7 +220,7 @@ const Generate = () => {
                         "generate_text": "6",
                         "generate_image": "2",
                         "generate_video": "3",
-                        "generate_code": "6",
+                        "generate_code": "8",
                         "generate_speech": "1",
                         "generate_answer": "7"
                     };
@@ -292,11 +293,20 @@ const Generate = () => {
                 headers = {
                     "Content-Type": "application/json"
                 };
+            } else if (currentOption === "8") {
+                apiUrl = " http://127.0.0.1:8000/text-to-code";
+                requestBody = {
+                    prompt: finalText
+                };
+                headers = {
+                    "Content-Type": "application/json"
+                };
             } else {
                 alert("Tính năng này chưa được hỗ trợ!");
                 setIsLoading(false);
                 return;
             }
+            // đánh dấu
 
             const response = await fetch(apiUrl, {
                 method: "POST",
@@ -335,6 +345,12 @@ const Generate = () => {
                     botMessage = {
                         type: 'bot',
                         content: { text: data.answer },
+                        option: currentOption
+                    };
+                } else if (currentOption === "8") {
+                    botMessage = {
+                        type: 'bot',
+                        content: { text: data.code },
                         option: currentOption
                     };
                 } else {
@@ -535,9 +551,10 @@ const Generate = () => {
                         <option value="5">Improve Image Quality</option>
                         <option value="6">AI Chatbox</option>
                         <option value="7">Answer Question</option>
-                        <option value="8">Speech to Text</option>
-                        <option value="9">Video to Text</option>
-                        <option value="10">File to Text</option>
+                        <option value="8">Generate code</option>
+                        <option value="9">Speech to Text</option>
+                        <option value="10">Video to Text</option>
+                        <option value="11">File to Text</option>
                     </select>
                 </div>
 
@@ -700,7 +717,7 @@ const Generate = () => {
                                             <FacebookIcon size={48} round={true} />
                                         </FacebookShareButton>
                                     </>
-                                ) : (message.option === "6" || message.option === "7" || message.option === "8" || message.option === "9" || message.option === "10") ? (
+                                ) : (message.option === "6" || message.option === "7" || message.option === "8" || message.option === "9" || message.option === "10" || message.option === "11") ? (
                                     <div className="text-response">
                                         {message.content.text}
                                     </div>
@@ -798,7 +815,7 @@ const Generate = () => {
                                     Hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)
                                 </span>
                             </div>
-                        ) : selectedOption === "8" ? (
+                        ) : selectedOption === "9" ? (
                             <div style={{ 
                                 display: 'flex', 
                                 flexDirection: 'column', 
@@ -812,7 +829,7 @@ const Generate = () => {
                                     Hãy chọn file (.wav,.mp3) để chuyển thành văn bản...
                                 </span>
                             </div>
-                        ) : selectedOption === "9" ? (
+                        ) : selectedOption === "10" ? (
                             <div style={{ 
                                 display: 'flex', 
                                 flexDirection: 'column', 
@@ -826,7 +843,7 @@ const Generate = () => {
                                     Hãy chọn file video (.mp4) để chuyển thành văn bản...
                                 </span>
                             </div>
-                        ) : selectedOption === "10" ? (
+                        ) : selectedOption === "11" ? (
                             <div style={{ 
                                 display: 'flex', 
                                 flexDirection: 'column', 
