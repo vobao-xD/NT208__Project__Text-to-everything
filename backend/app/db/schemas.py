@@ -73,3 +73,8 @@ class PermissionResult(BaseModel):
 
 class QuestionRequest(BaseModel):
     question: str
+
+#################### Text to Code ####################
+
+class TTCRequest(BaseModel):
+    prompt: str
