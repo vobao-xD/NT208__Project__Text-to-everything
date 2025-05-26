@@ -15,13 +15,13 @@ import os
 router = APIRouter()
 
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe' #Có cách nào khác hay hơn ko, đâu biết đc sau này chạy Windows hay Linux đâu
 
 # === 1. Chuẩn hóa đầu vào sang văn bản ===
 @router.post("/input/text")
 async def input_text(text: str):
     return {"text": text}
-# 2. Chuyển speech qua texttext
+# 2. Chuyển speech qua text
 @router.post("/input/speech")
 async def speech_to_text(file: UploadFile = File(...)):
     
@@ -35,10 +35,10 @@ async def speech_to_text(file: UploadFile = File(...)):
 
     try:
         
-        if ext == "mp3":
+        if ext == "mp3" and file.content_type == "audio/mpeg":
             audio = AudioSegment.from_file(input_path, format="mp3")
             audio.export(output_path, format="wav")
-        elif ext == "wav":
+        elif ext == "wav" and file.content_type == "audio/wav":
             output_path = input_path
         else:
             return {"error": "Chỉ hỗ trợ file .mp3 hoặc .wav"}
@@ -85,13 +85,15 @@ async def input_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Lỗi khi xử lý hình ảnh: {str(e)}")
 
 
-# 4. Chuyển âm thanh của video sang texttext
+# 4. Chuyển âm thanh của video sang text
 @router.post("/input/video")
 async def input_video(file: UploadFile = File(...)):
-    with open("temp_video.mp4", "wb") as f:
+    video_path_name = f"temp_{uuid.uuid4()}"
+    with open(f"{video_path_name}.mp4", "wb") as f:
         f.write(await file.read())
-    video = VideoFileClip("temp_video.mp4")
-    audio_path = "extracted_audio.wav"
+
+    video = VideoFileClip(f"{video_path_name}.mp4")
+    audio_path = f"{video_path_name}.wav"
     video.audio.write_audiofile(audio_path)
     recognizer = sr.Recognizer()
     with sr.AudioFile(audio_path) as source:
@@ -100,27 +102,31 @@ async def input_video(file: UploadFile = File(...)):
         text = recognizer.recognize_google(audio, language="vi-VN")
     except:
         text = "[Không nhận diện được giọng nói từ video]"
+    finally:
+        for ext in [".mp4",".wav"]:
+            if os.path.exists(video_path_name + ext):
+                os.remove(video_path_name + ext)
     return {"text": text}
 
-# 5. Chuyển text trong file ra texttext
-@router.post("/input/file")
+# 5. Chuyển text trong file ra text
+@router.post("/input/document")
 async def input_file(file: UploadFile = File(...)):
     content = await file.read()
     filename = file.filename.lower()
     text = ""
     if filename.endswith(".txt"):
         text = content.decode("utf-8")
-    elif filename.endswith(".pdf"):
+    elif filename.endswith(".pdf") and file.content_type == "application/pdf":
         reader = PyPDF2.PdfReader(io.BytesIO(content))
         text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-    elif filename.endswith(".docx"):
+    elif filename.endswith(".docx") and file.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         doc = docx.Document(io.BytesIO(content))
         text = "\n".join([para.text for para in doc.paragraphs])
     else:
-        return {"error": "Unsupported file type"}
+        return {"error": "Unsupported file type:"}
     return {"text": text}
 
-# 6. Phân tích yêu cầu của người dùngdùng
+# 6. Phân tích yêu cầu của người dùng
 @router.post("/analyze")
 async def analyze_text(input: TextInput):
     result = guess_ai_intent(input.user_text)
