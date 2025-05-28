@@ -89,3 +89,8 @@ class TextInput(BaseModel):
 
 class ChatRequest(BaseModel):
     prompt: str
+
+#################### Text to Code ####################
+
+class TTCRequest(BaseModel):
+    prompt: str
