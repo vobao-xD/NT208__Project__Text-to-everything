@@ -36,3 +36,4 @@ paddleocr
 paddlepaddle
 pydub
 deep-translator
+pytesseract
