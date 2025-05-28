@@ -28,3 +28,22 @@ class Transaction(Base):
     plan = Column(String, nullable=False)
     status = Column(String, nullable=False)
     created_at = Column(DateTime, default=func.now())
+
+class Generator(Base):
+    __tablename__ = "generator"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, unique=True, nullable=False, index=True)
+    input_type = Column(String, nullable=False, index=True)
+
+
+class Request(Base):
+    __tablename__ = "request"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    generator_id = Column(UUID(as_uuid=True), ForeignKey("generator.id"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    input_type = Column(String, ForeignKey("generator.input_type"), nullable=False, index=True)
+    text_prompt = Column(String, nullable=True)
+    input_file_name = Column(String, nullable=True)
+
+
+    

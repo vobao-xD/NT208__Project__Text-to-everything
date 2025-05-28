@@ -1,5 +1,5 @@
 from fastapi import APIRouter,HTTPException,requests,Depends
-from requests import Session
+from sqlalchemy.orm import Session
 from api.auth import Auth
 from db.models import User
 from db.database import get_db
@@ -10,9 +10,11 @@ router=APIRouter()
 def check_permission(user: User, permission: str) -> PermissionResult:
     # Định nghĩa quyền theo role
     permission_rules = {
-        "enhance_image": ["plus", "pro"],
-        "premium_feature": ["pro"],
+        "enhance_image": ["plus", "pro", "admin"],
+        "premium_feature": ["pro", "admin"],
         # Thêm các quyền/tính năng khác ở đây
+        "speech_to_text": ["plus","pro", "admin"],
+        "text_to_video": ["plus","pro", "admin"]
     }
     
     allowed_roles = permission_rules.get(permission, [])

@@ -47,7 +47,7 @@ class TextToImageService:
         :param prompt: Văn bản cần chuyển thành hình ảnh (bắt buộc), giới hạn tối đa 2048 ký tự\n
         :param num_steps: Số bước cần để tạo ảnh, mặc định là 4, tối đa là 8. Càng cao càng chính xác nhưng sẽ tạo lâu hơn\n
         :return: Ảnh được định dạng bằng Base64\n
-        >>> getImageQuick("cyberpunk cat")
+        >>> getImage("cyberpunk cat")
         [some Base64 strings...]
         """
         if prompt is None:

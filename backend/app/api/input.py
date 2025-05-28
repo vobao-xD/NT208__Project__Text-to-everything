@@ -12,10 +12,11 @@ from services.analyzeInput import guess_ai_intent
 import speech_recognition as sr
 from pydub import AudioSegment
 import os
+import uuid
 
 router = APIRouter()
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe' #Có cách nào khác hay hơn ko, đâu biết đc sau này chạy Windows hay Linux đâu
+pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
 # === 1. Chuẩn hóa đầu vào sang văn bản ===
 @router.post("/input/text")

@@ -6,14 +6,14 @@ import io
 router=APIRouter()
 
 @router.post('/enhance')
-async def enchane(file: UploadFile=File(...)):
+async def enhance_image(file: UploadFile=File(...)):
     if not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400,detail="File phải là hình ảnh")
     try:
         image_data=await file.read()
         image=Image.open(io.BytesIO(image_data)).convert('RGB')
 
-        #1 CẢI thiện độ sáng
+        #1 Cải thiện độ sáng
         enhancer=ImageEnhance.Sharpness(image)
         image=enhancer.enhance(2.0)
 
@@ -21,7 +21,7 @@ async def enchane(file: UploadFile=File(...)):
         enhancer=ImageEnhance.Brightness(image)
         image=enhancer.enhance(1.1)
 
-        #3 Điều chỉn độ tương phản
+        #3 Điều chỉnh độ tương phản
         enhancer=ImageEnhance.Contrast(image)
         image=enchane_image=enhancer.enhance(1.2)
 

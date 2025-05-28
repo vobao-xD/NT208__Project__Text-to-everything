@@ -206,6 +206,7 @@ class Auth:
         return RedirectResponse(url=f"{FRONTEND_URL}/login")
     
 # Này là méo gì vậy ??? :)))
+# Ai biết gì đâu :)))
 # async def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 #     user = db.query(User).filter(User.email == form_data.username).first()
 #     if not user or user.provider != "form" or not bcrypt.checkpw(form_data.password.encode(), user.password.encode()):

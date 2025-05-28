@@ -14,7 +14,7 @@ router = APIRouter()
 api_key = os.getenv("TEXT_TO_CODE_API_KEY")
 
 
-@router.post("/text-to-code",response_model=dict)
+@router.post("/",response_model=dict)
 async def text_to_code(request: schemas.TTCRequest):
     try:
         code = await service.text_to_code(request.prompt)

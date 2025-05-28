@@ -74,6 +74,7 @@ async def callback(request: Request, db=Depends(get_db)):
         order_id=data.get("order_id")
 
         if not all ([transaction_status is not None,user_id,plan]):
+            #Ông tướng nào viết code khó hiểu vậy???
             raise HTTPException(status_code=400,detail="Thiếu thông tin ")
         
         raw_signature = (

@@ -20,7 +20,7 @@ class TextToCodeService:
         data = {
         "model": "openai/gpt-3.5-turbo",
         "messages": [
-            {"role": "system", "content": "You are a helpful assistant that writes code."},
+            {"role": "system", "content": "Bạn là một lập trình viên xuất chúng và tinh thông mọi ngôn ngữ lập trình."},
             {"role": "user", "content": prompt}
         ]
     }
