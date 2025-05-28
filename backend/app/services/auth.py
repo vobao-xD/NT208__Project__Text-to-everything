@@ -78,7 +78,7 @@ class Auth:
         request.session["state"] = state
 
         try:
-            return await oauth.create_client(provider).authorize_redirect(request, redirect_uri, state=state)
+            return await getattr(oauth, provider).authorize_redirect(request, redirect_uri, state=state)
         except Exception as e:
             logging.error(f"Redirect failed for {provider}: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Không thể chuyển hướng đến {provider}")
