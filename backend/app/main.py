@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from api import router
 from db import init_db
-import logging 
+import logging
 import os
 
 # Load environment variables from .env file

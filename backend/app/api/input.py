@@ -7,13 +7,13 @@ import io
 from moviepy import VideoFileClip
 import PyPDF2
 import docx
-from db.models import *
+from db.schemas import *
 from services.analyzeInput import guess_ai_intent
 import speech_recognition as sr
 from pydub import AudioSegment
 import os
-router = APIRouter()
 
+router = APIRouter()
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 

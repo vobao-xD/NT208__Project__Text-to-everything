@@ -1,13 +1,18 @@
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
+from pydantic import HttpUrl
 
 #################### Authentication ####################
 
+class UserBase(BaseModel):
+    email: str
+    name: str
+    avatar: Optional[HttpUrl] = None
+    provider: str
+    role: str
 
 #################### Text to image ####################
-
-
 
 class TTIPrompt(BaseModel):
     prompt: str
@@ -22,8 +27,8 @@ class TTSClientRequest(BaseModel):
 
 class RequestBase(BaseModel):
     input_type: str  # text, audio, filee
-    input_text: str | None = None
-    input_audio_url: str | None = None
+    input_text: Optional[str] = None
+    input_audio_url: Optional[str] = None
     output_type: str  # speech, image, video
 
 class RequestCreate(RequestBase):
@@ -39,7 +44,7 @@ class RequestResponse(RequestBase):
 
 class ResponseBase(BaseModel):
     output_type: str
-    output_url: str
+    output_url: HttpUrl
     model_used: str
 
 class ResponseCreate(ResponseBase):
@@ -54,6 +59,7 @@ class ResponseResponse(ResponseBase):
         from_attributes = True
 
 #################### Text to video ####################
+
 class TextToVideoRequest(BaseModel):
     prompt: str
     negative_prompt: str | None = None
@@ -64,6 +70,7 @@ class TextToVideoRequest(BaseModel):
     frames: int = 64
 
 #################### Speech to text ####################
+
 class PermissionCheckRequest(BaseModel):
     permissions: List[str]
 
@@ -73,3 +80,12 @@ class PermissionResult(BaseModel):
 
 class QuestionRequest(BaseModel):
     question: str
+
+#################### Tu tu ####################
+
+    
+class TextInput(BaseModel):
+    user_text: str
+
+class ChatRequest(BaseModel):
+    prompt: str
