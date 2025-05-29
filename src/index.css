@@ -115,6 +115,7 @@
 
 .footer_content {
   flex: 2;
+  margin-bottom: 0 !important;
 }
 
 .navbar {
@@ -165,7 +166,7 @@
 }
 
 .body_title>h1 {
-  margin: 40px auto 5px;
+  margin: 40px auto 0;
   font-weight: lighter;
 }
 
@@ -311,19 +312,27 @@
 
 #btn_complex {
   display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 #submit_btn {
-  margin: 20px;
-  padding: 10px;
-  background: linear-gradient(135deg, #50e2ff, #3999ff);
-  color: #000;
+  margin: auto;
+  margin-right: 20px;
+  padding: 0;
+  /* background: linear-gradient(135deg, #50e2ff, #3999ff); */
+  background: #000;
+  color: #fff;
   font-weight: bold;
-  border-radius: 10px;
+  border-radius: 50%;
+  height: 80px;
+  width: 80px;
+  border: none;
 }
 
 #submit_btn:hover {
   background: linear-gradient(135deg, #3999ff, #50e2ff);
+  cursor: pointer;
 }
 
 #play_button {
@@ -850,8 +859,9 @@ body.signin-page p {
 }
 
 .upload-btn {
-  background: linear-gradient(135deg, #3999ff, #50e2ff);
-  color: #000;
+  /* background: linear-gradient(135deg, #3999ff, #50e2ff); */
+  background: #000;
+  color:#06f0e8;
   border: none;
   border-radius: 8px;
   width: 60%;
@@ -868,6 +878,7 @@ body.signin-page p {
 }
 
 .upload-btn:hover {
+  color: #000;
   background: linear-gradient(135deg, #50e2ff, #3999ff);
   box-shadow: 0 4px 16px rgba(33, 150, 243, 0.25);
 }
@@ -953,3 +964,73 @@ body.signin-page p {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.fixed-button-advanced {
+  background: linear-gradient(135deg, #3999ff, #50e2ff);
+  color: black;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+.fixed-button-advanced:hover{
+  background: linear-gradient(135deg, #50e2ff, #3999ff);
+  cursor: pointer;
+}
+.rainbow-button {
+  position: relative;
+  padding: 12px 24px;
+  font-size: 16px;
+  color: #000;
+  background-color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1;
+  overflow: hidden;
+  transition: color 0.3s ease;
+}
+
+/* Tạo lớp phát sáng viền */
+.rainbow-button::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(
+      45deg,
+      red,
+      orange,
+      yellow,
+      green,
+      cyan,
+      blue,
+      violet,
+      red
+  );
+  z-index: -1;
+  background-size: 400%;
+  border-radius: 10px;
+  filter: blur(6px); /* tạo hiệu ứng mờ mờ */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: rainbow 8s linear infinite;
+}
+
+.rainbow-button:hover::before {
+  opacity: 1;
+}
+
+@keyframes rainbow {
+  0% {
+      background-position: 0% 50%;
+  }
+  50% {
+      background-position: 100% 50%;
+  }
+  100% {
+      background-position: 0% 50%;
+  }
+}
+

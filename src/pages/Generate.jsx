@@ -594,7 +594,7 @@ const Generate = () => {
                 <div className="header_content content-item">
                     <div className="fixed-button-container">
                         <button 
-                            className={`fixed-button ${isLoading ? 'disabled' : ''}`} 
+                            className={`rainbow-button fixed-button-advanced ${isLoading ? 'disabled' : ''}`} 
                             onClick={() => navigate('/advanced')}
                             disabled={isLoading}
                         >
@@ -665,7 +665,7 @@ const Generate = () => {
                                         <img
                                             src={message.content.image_url}
                                             alt="Generated"
-                                            style={{ maxWidth: '100%' }}
+                                            style={{ maxWidth: '100%', borderRadius: '10px' }}
                                         />
                                         <EmailShareButton 
                                             subject='My content was created by Nhom1, check it out!'
@@ -684,7 +684,7 @@ const Generate = () => {
                                     <>
                                         <video controls width="100%" src={message.content.video_url} />
                                         <EmailShareButton subject='My content was created by Nhom1, check it out!'
-                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white' }}>
+                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white',borderRadius: '10px' }}>
                                             <EmailIcon size={48} round={true} />
                                         </EmailShareButton>
 
@@ -729,26 +729,14 @@ const Generate = () => {
                 </div>
 
                 <div className="footer_content content-item">
-                    <div id="btn_complex">
+                    <div id="btn_complex" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                         {selectedOption === "0" ? (
-                            <div style={{ 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center', 
-                                gap: '10px', 
-                                width: '100%',
-                                margin: '20px auto'
-                            }}>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    width: '100%', 
-                                    gap: '10px',
-                                    alignItems: 'center'
-                                }}>
+                            // 
+                            <>
                                     <textarea
                                         className={`input ${isLoading ? 'disabled' : ''}`}
                                         rows="4"
-                                        placeholder="Mô tả những gì bạn muốn tạo"
+                                        placeholder="Mô tả những gì bạn muốn tạo, hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)"
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && !e.shiftKey) {
                                                 e.preventDefault();
@@ -772,15 +760,17 @@ const Generate = () => {
                                         style={{
                                             padding: '10px',
                                             borderRadius: '50%',
-                                            width: '40px',
-                                            height: '40px',
+                                            height: '20px',
+                                            marginRight: '10px',
+                                            width: '20px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             cursor: 'pointer',
                                             background: 'linear-gradient(45deg, #ff00ff, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff)',
                                             border: 'none',
-                                            color: 'black'
+                                            color: 'black',
+                                            fontSize: '25px'
                                         }}
                                     >
                                         +
@@ -794,27 +784,14 @@ const Generate = () => {
                                             textarea.value = '';
                                         }}
                                         disabled={isLoading}
-                                        style={{
-                                            marginLeft: '0',
-                                            height: '40px',
-                                            minWidth: '80px',
-                                            background: 'linear-gradient(180deg, #4fc3f7, #1976d2)',
-                                            color: 'black',
-                                            borderRadius: '10px',
-                                            border: 'none',
-                                            fontWeight: 'bold',
-                                            fontSize: '16px',
-                                            boxShadow: '2px 2px 0 #222',
-                                            cursor: 'pointer'
-                                        }}
+                                        
                                     >
                                         Create
                                     </button>
-                                </div>
-                                <span style={{ color: "#fff" }}>
-                                    Hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)
-                                </span>
-                            </div>
+                            </>
+                                /* </div>
+
+                            </div> */
                         ) : selectedOption === "9" ? (
                             <div style={{ 
                                 display: 'flex', 
