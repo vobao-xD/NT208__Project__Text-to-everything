@@ -30,17 +30,23 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI()
 
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# Configure session middleware with a secret key
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "super-secret-key"))
+
 # Configure CORS for the app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Sau này thay bằng frontend URL
+    allow_origins=origins,  # Sau này thay bằng frontend URL
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-CSRF-Token"],
 )
 
-# Configure session middleware with a secret key
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "super-secret-key"))
 
 # Create img directory for storing images
 if not os.path.exists("img"):

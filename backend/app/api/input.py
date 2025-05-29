@@ -1,5 +1,6 @@
 from PIL import Image
 from fastapi import APIRouter, UploadFile, File,HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pytesseract
 import speech_recognition as sr
@@ -13,6 +14,7 @@ import speech_recognition as sr
 from pydub import AudioSegment
 import os
 import uuid
+import fitz
 
 router = APIRouter()
 
@@ -112,20 +114,36 @@ async def input_video(file: UploadFile = File(...)):
 # 5. Chuyển text trong file ra text
 @router.post("/input/document")
 async def input_file(file: UploadFile = File(...)):
-    content = await file.read()
-    filename = file.filename.lower()
-    text = ""
-    if filename.endswith(".txt"):
-        text = content.decode("utf-8")
-    elif filename.endswith(".pdf") and file.content_type == "application/pdf":
-        reader = PyPDF2.PdfReader(io.BytesIO(content))
-        text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-    elif filename.endswith(".docx") and file.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        doc = docx.Document(io.BytesIO(content))
-        text = "\n".join([para.text for para in doc.paragraphs])
-    else:
-        return {"error": "Unsupported file type:"}
+    filename = file.filename
+    extension = filename.split(".")[-1].lower()
+
+    try:
+        if extension == "txt":
+            content = await file.read()
+            try:
+                text = content.decode("utf-8")
+            except UnicodeDecodeError:
+                text = content.decode("latin-1")
+        elif extension == "pdf":
+            text = extract_text_from_pdf(file)
+        elif extension == "docx":
+            text = extract_text_from_docx(file)
+        else:
+            return JSONResponse(status_code=400, content={"error": "File type not supported."})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
     return {"text": text}
+
+def extract_text_from_pdf(file: UploadFile):
+    file.file.seek(0)
+    with fitz.open(stream=file.file.read(), filetype="pdf") as doc:
+        return "\n".join([page.get_text() for page in doc])
+
+def extract_text_from_docx(file: UploadFile):
+    file.file.seek(0)
+    doc = docx.Document(io.BytesIO(file.file.read()))
+    return "\n".join(p.text for p in doc.paragraphs)
 
 # 6. Phân tích yêu cầu của người dùng
 @router.post("/analyze")

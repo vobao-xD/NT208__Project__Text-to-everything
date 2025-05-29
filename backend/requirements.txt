@@ -37,3 +37,4 @@ paddlepaddle
 pydub
 deep-translator
 pytesseract
+fitz
