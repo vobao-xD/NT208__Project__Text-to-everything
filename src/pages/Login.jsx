@@ -69,11 +69,11 @@ const Login = () => {
     };
 
     const handleGoogleLogin = () => {
-        window.location.href = "http://localhost:8000/api/auth/google";
+        window.location.href = "http://localhost:8000/auth/google";
     };
 
     const handleGithubLogin = () => {
-        window.location.href = "http://localhost:8000/api/auth/github";
+        window.location.href = "http://localhost:8000/auth/github";
     };
 
     return (

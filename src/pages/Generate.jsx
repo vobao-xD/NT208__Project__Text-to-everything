@@ -124,7 +124,7 @@ const Generate = () => {
                 apiUrl = "http://127.0.0.1:8000/input/speech";
                 fileType = "audio";
             } else if (["txt", "doc", "docx", "pdf"].includes(fileExtension)) {
-                apiUrl = "http://127.0.0.1:8000/input/file";
+                apiUrl = "http://127.0.0.1:8000/input/document";
                 fileType = "document";
             } else {
                 alert("Loại file không được hỗ trợ.");
