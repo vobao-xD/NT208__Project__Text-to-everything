@@ -41,7 +41,7 @@ app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY",
 # Configure CORS for the app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Sau này thay bằng frontend URL
+    allow_origins=["*"],  # Sau này thay bằng frontend URL
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-CSRF-Token"],
