@@ -20,12 +20,10 @@ ALGORITHM = "HS256"
 @router.get("/api/user-info")
 async def get_user_info(request: Request):
     token = request.cookies.get("access_token")
-    print(f"Received token: {token}")  # Debug log
     if not token:
         raise HTTPException(status_code=401, detail="No token provided")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print(f"Token payload: {payload}")  # Debug log
         email = payload.get("sub")
         if not email:
             raise HTTPException(status_code=401, detail="Invalid token: email not found")

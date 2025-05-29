@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from pydantic import HttpUrl
 
@@ -94,3 +94,15 @@ class ChatRequest(BaseModel):
 
 class TTCRequest(BaseModel):
     prompt: str
+
+#################### Payment ####################
+class PaymentRequest(BaseModel):
+    amount: int
+    email: str
+    plan: str
+    billing_cycle: str = Field(alias="billingCycle")
+    current_role: str = Field(alias="currentRole")
+    current_billing_cycle: str = Field(alias="currentBillingCycle")
+class UserSubscription(BaseModel):
+    role: str
+    billingCycle: Optional[str] = "monthly"

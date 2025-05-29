@@ -1,19 +1,21 @@
+from sched import scheduler
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from api import router
+from services.check_expired_subscriptions import check_expired_subscriptions
 from db import init_db
 import logging
 import os
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Load environment variables from .env file
 load_dotenv()
-
 # Initialize the database if it doesn't exist
 init_db()
-
+scheduler = BackgroundScheduler()
 # Cấu hình logging
 logging.basicConfig(
     level=logging.INFO,  # Mức log tối thiểu (INFO trở lên)
@@ -64,7 +66,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include API routes
 app.include_router(router)
+@app.on_event("startup")
+async def startup_event():
+    scheduler.add_job(check_expired_subscriptions, "interval", days=1)
+    scheduler.start()
 
+@app.on_event("shutdown")
+async def shutdown_event():
+    scheduler.shutdown()
 # Main entry point
 if __name__ == "__main__":
     import uvicorn
