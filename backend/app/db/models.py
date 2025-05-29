@@ -14,7 +14,7 @@ class User(Base):
     name = Column(String(100), nullable=False)  
     avatar = Column(String(2048), nullable=True)
     provider = Column(String, nullable=False, default="google")
-    role = Column(String, nullable=False, default="basic")
+    role = Column(String, nullable=False, default="free")
     created_at = Column(DateTime, default=func.now())
 
 # ==================== Khác ==================== 
