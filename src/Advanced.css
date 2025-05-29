@@ -130,3 +130,10 @@ h2{
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
+.btn.disabled-btn::after {
+  background-color: white !important; /* nền trắng */
+}
+
+.btn.disabled-btn {
+  color: black !important; /* chữ đen */
+}

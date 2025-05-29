@@ -1,7 +1,55 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import "../Advanced.css";
+import { useNavigate } from 'react-router-dom';
 
 const Advanced = () => {
+  const navigate = useNavigate();
+
+  useEffect( () => {
+    async function fetchRole() {
+      const email = localStorage.getItem("email");
+      if (!email) {
+        alert("No email found in localStorage");
+        return;
+      }
+      const freeButton = document.getElementById('free-button');
+      const plusButton = document.getElementById('plus-button');
+      const proButton = document.getElementById('pro-button');
+      const response = await fetch(`http://localhost:8000/role?email=${email}`, {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      if (data === "basic") {
+        freeButton.disabled = true;
+        freeButton.textContent = 'Đã sử dụng';
+        freeButton.style.cursor = 'not-allowed';
+        freeButton.style.color = 'black';
+        freeButton.style.backgroundColor = 'white';
+        freeButton.classList.add('disabled-btn');
+      } else if (data === "plus") {
+        freeButton.disabled = true;
+        freeButton.textContent = 'Đã sử dụng';
+        freeButton.style.cursor = 'not-allowed';
+        freeButton.style.color = 'black';
+        freeButton.style.backgroundColor = 'white';
+        freeButton.classList.add('disabled-btn');  
+        } else if (data === "pro") {
+        freeButton.disabled = true;
+        freeButton.textContent = 'Đã sử dụng';
+        freeButton.style.cursor = 'not-allowed';
+        freeButton.style.color = 'black';
+        freeButton.style.backgroundColor = 'white';
+        freeButton.classList.add('disabled-btn');
+        }
+
+      }
+    fetchRole();
+  }, []);
+
   const handlePayment = async (plan) => {
     let amount;
     if (plan === "plus") {
@@ -9,7 +57,7 @@ const Advanced = () => {
     } else if (plan === "pro") {
       amount = 200000;
     } else {
-      alert("Gói không hợp lệ!");
+      navigate('/generate');
       return;
     }
     
@@ -49,7 +97,14 @@ const Advanced = () => {
             <li>✅ Lưu trữ 24 giờ</li>
             <li>✅ Truy cập chatbot AI (giới hạn số lần)</li>
           </ul>
-          <button className="btn" style={{ marginTop: '100px' }}>Dùng thử miễn phí</button>
+          <button 
+            id="free-button"
+            className="btn" 
+            style={{ marginTop: '100px' }}
+            onClick={() => handlePayment('free')}
+          >
+            Dùng thử miễn phí
+          </button>
         </div>
         
         <div className="plan plus">
@@ -64,9 +119,10 @@ const Advanced = () => {
             <li>✅ Lưu trữ nội dung trong 7 ngày</li>
             <li>✅ Không có quảng cáo</li>
           </ul>
-          <button 
+          <button
+            id="plus-button"
             className="btn upgrade" 
-            style={{marginTop:'48px'}}
+            style={{ marginTop: '48px' }}
             onClick={() => handlePayment('plus')}
           >
             Chuyển sang Plus
@@ -86,6 +142,7 @@ const Advanced = () => {
             <li>✅ API riêng để tích hợp dự án</li>
           </ul>
           <button 
+            id="pro-button"
             className="btn upgrade" 
             style={{ marginTop: '91px' }} 
             onClick={() => handlePayment('pro')}

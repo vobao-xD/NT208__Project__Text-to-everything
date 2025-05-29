@@ -22,12 +22,29 @@ const Generate = () => {
     const fileInputRef = useRef(null);
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-/*         if (!token) {
-            navigate("/login");
-            return;
-        } */
-    }, [navigate]);
+        console.log("Cookies:", document.cookie);
+        const fetchUserInfo = async () => {
+          try {
+            const response = await fetch('http://localhost:8000/api/user-info', {
+              method: "GET",
+              credentials: 'include',
+            });
+      
+            const data = await response.json();
+      
+            if (data.email) {
+              localStorage.setItem('email', data.email);
+            } else {
+              alert("Không tìm thấy email!");
+            }
+          } catch (error) {
+            console.error("Lỗi khi lấy email:", error);
+          }
+        };
+      
+        fetchUserInfo();
+      }, [navigate]);
+      
 
     const handleNewChat = () => {
         if (chatHistory.length > 0) {
@@ -811,9 +828,6 @@ const Generate = () => {
                                         Create
                                     </button>
                                 </div>
-                                <span style={{ color: "#fff" }}>
-                                    Hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)
-                                </span>
                             </div>
                         ) : selectedOption === "9" ? (
                             <div style={{ 
