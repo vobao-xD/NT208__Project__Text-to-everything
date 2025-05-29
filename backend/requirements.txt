@@ -38,4 +38,8 @@ pydub
 deep-translator
 pytesseract
 fitz
+<<<<<<< HEAD
 apscheduler
+=======
+pymupdf
+>>>>>>> e034eb255bbd61b9283328179160fdc27da444b9
