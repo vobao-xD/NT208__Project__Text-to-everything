@@ -29,11 +29,12 @@ def save_chat(
             input_type=detail.input_type,
             text_prompt=detail.text_prompt,
             input_file_name=detail.input_file_name,
-            generator_id=detail.generator_id,
 
             output_type=detail.output_type,
             output_text=detail.output_text,
             output_url=detail.output_url,
+        
+            generator_id=detail.generator_id  
         )
         db.add(new_detail)
 
@@ -52,10 +53,12 @@ def add_detail_to_chat(id: str, detail: ChatDetailCreate, db: Session = Depends(
         input_type=detail.input_type,
         text_prompt=detail.text_prompt,
         input_file_name=detail.input_file_name,
-        generator_id=detail.generator_id,
+
         output_type=detail.output_type,
         output_text=detail.output_text,
         output_url=detail.output_url,
+
+        generator_id=detail.generator_id,
     )
     db.add(new_detail)
     db.commit()
