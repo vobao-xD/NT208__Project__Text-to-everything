@@ -729,10 +729,12 @@ const Generate = () => {
                 </div>
 
                 <div className="footer_content content-item">
-                    <div id="btn_complex" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                    <div id="btn_complex" style={{position: 'relative', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                         {selectedOption === "0" ? (
                             // 
                             <>
+                            
+                         
                                     <textarea
                                         className={`input ${isLoading ? 'disabled' : ''}`}
                                         rows="4"
@@ -744,16 +746,17 @@ const Generate = () => {
                                                 e.target.value = '';
                                             }
                                         }}
+                                        onFocus={() => {
+                                            const uploadBtn = document.querySelector('.file-upload-btn');
+                                            if (uploadBtn) uploadBtn.style.display = 'none';
+                                        }}
+                                        onBlur={() => {
+                                            const uploadBtn = document.querySelector('.file-upload-btn');
+                                            if (uploadBtn) uploadBtn.style.display = 'flex';
+                                        }}
                                         disabled={isLoading}
                                     />
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileSelect}
-                                        style={{ display: 'none' }}
-                                        accept=".mp4,.wav,.mp3,.pdf,.doc,.docx,.txt"
-                                    />
-                                    <button
+                                     <button
                                         className={`file-upload-btn ${isLoading ? 'disabled' : ''}`}
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={isLoading}
@@ -761,7 +764,9 @@ const Generate = () => {
                                             padding: '10px',
                                             borderRadius: '50%',
                                             height: '20px',
-                                            marginRight: '10px',
+                                            marginLeft: '2%',
+                                            marginRight: '20px',
+                                            marginBottom: '3%',
                                             width: '20px',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -770,11 +775,13 @@ const Generate = () => {
                                             background: 'linear-gradient(45deg, #ff00ff, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff)',
                                             border: 'none',
                                             color: 'black',
-                                            fontSize: '25px'
+                                            fontSize: '25px',
+                                            position: 'absolute'
                                         }}
                                     >
                                         +
                                     </button>
+                                    <div class="glow-wrapper">
                                     <button
                                         id="submit_btn"
                                         className={isLoading ? 'disabled' : ''}
@@ -788,10 +795,17 @@ const Generate = () => {
                                     >
                                         Create
                                     </button>
+                                    </div>
+                                <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileSelect}
+                                        style={{ display: 'none' }}
+                                        accept=".mp4,.wav,.mp3,.pdf,.doc,.docx,.txt"
+                                    />
+                            
                             </>
-                                /* </div>
-
-                            </div> */
+                            
                         ) : selectedOption === "9" ? (
                             <div style={{ 
                                 display: 'flex', 
@@ -863,6 +877,7 @@ const Generate = () => {
                                     }}
                                     disabled={isLoading}
                                 />
+                                 <div class="glow-wrapper">
                                 <button
                                     id="submit_btn"
                                     className={isLoading ? 'disabled' : ''}
@@ -875,6 +890,7 @@ const Generate = () => {
                                 >
                                     Create
                                 </button>
+                                </div>
                             </>
                         )}
                     </div>
