@@ -1,7 +1,8 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel,HttpUrl
 from datetime import datetime
-from pydantic import HttpUrl
+from uuid import UUID
+from enum import Enum
 
 #################### Authentication ####################
 
@@ -94,3 +95,44 @@ class ChatRequest(BaseModel):
 
 class TTCRequest(BaseModel):
     prompt: str
+
+###################### Chat Detail ######################
+
+class InputType(str,Enum):
+    text = "text"
+    image = "image"
+    audio = "audio"
+    video = "video"
+    file = "file"
+
+class ChatDetailBase(BaseModel):
+    input_type: InputType
+    text_prompt: Optional[str] = None
+    input_file_name: Optional[str] = None
+
+class ChatDetailCreate(ChatDetailBase):
+    generator_id: UUID 
+
+class ChatDetailResponse(ChatDetailBase):
+    id: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+##################### Chat History #####################
+
+class ChatHistoryBase(BaseModel):
+    pass  
+
+class ChatCreate(ChatHistoryBase):
+    details: List[ChatDetailCreate]
+    
+class ChatHistoryResponse(ChatHistoryBase):
+    id: UUID
+    user_id: UUID
+    created_at: datetime
+    details: List[ChatDetailResponse] = []
+
+    class Config:
+        from_attributes = True

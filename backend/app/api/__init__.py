@@ -9,7 +9,7 @@ router.include_router(text_to_speech.router, prefix="/text-to-speech", tags=["Te
 router.include_router(text_to_image.router, prefix="/text-to-image", tags=["Text-to-Image"])
 router.include_router(text_to_video.router, prefix="/text-to-video", tags=["Text-to-Video"])
 router.include_router(text_to_code.router,prefix="/text-to-code",tags=["Text to Code"])
-router.include_router(history.router, prefix="/history", tags=["History"])
+router.include_router(history.router, prefix="", tags=["History"])
 # router.include_router(login.router,prefix="",tags=["login"])
 router.include_router(MOMO.router,prefix="",tags=["Payment"])
 router.include_router(input.router,prefix="",tags=["Xử lý input"])
