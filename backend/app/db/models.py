@@ -71,4 +71,10 @@ class ChatDetail(Base):
     created_at = Column(DateTime, default=func.now())
     generator = relationship("Generator")
 
+    # Output fields
+    output_type = Column(String, nullable=True)
+    output_text = Column(Text, nullable=True)
+    output_url = Column(String, nullable=True)
+    
+
     

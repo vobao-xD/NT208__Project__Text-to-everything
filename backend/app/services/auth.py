@@ -137,6 +137,8 @@ class Auth:
 
             # Tạo access token
             access_token = create_access_token(data={"sub": user.email})
+            print("ENCODE SECRET_KEY:", SECRET_KEY)
+            print("ENCODE access_token:", access_token)
 
             # Redirect về frontend (không cần truyền email qua query parameter)
             redirect_url = f"{FRONTEND_URL}/generate"
@@ -160,7 +162,11 @@ class Auth:
             raise HTTPException(status_code=500, detail=f"{provider} login failed: {str(e)}")
 
     @staticmethod
-    async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    async def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+
+        # Nếu không có token từ header, thử lấy từ cookie
+        if not token:
+            token = request.cookies.get("access_token")
 
         credentials_exception = HTTPException(
             status_code=401,
@@ -170,6 +176,8 @@ class Auth:
         
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            print("DECODE SECRET_KEY:", SECRET_KEY)
+            print("DECODE token:", token)
             email: str = payload.get("sub")
             exp = payload.get("exp")
 
