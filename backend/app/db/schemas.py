@@ -179,3 +179,45 @@ class FileTextToAnswerResponse(BaseModel):
     file_details: Dict[str, Any] = Field(description="Details of the processed file (filename, content_type, size).")
     model_used: Optional[str] = Field(None, description="The specific AI model that generated the answer.")
     usage: Optional[Dict[str, Any]] = Field(None, description="Token usage statistics from the OpenAI API call.")
+
+
+###################### Chat Detail ######################
+
+class InputType(str,Enum):
+    text = "text"
+    image = "image"
+    audio = "audio"
+    video = "video"
+    file = "file"
+
+class ChatDetailBase(BaseModel):
+    input_type: InputType
+    text_prompt: Optional[str] = None
+    input_file_name: Optional[str] = None
+
+class ChatDetailCreate(ChatDetailBase):
+    generator_id: UUID 
+
+class ChatDetailResponse(ChatDetailBase):
+    id: UUID
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+##################### Chat History #####################
+
+class ChatHistoryBase(BaseModel):
+    pass  
+
+class ChatCreate(ChatHistoryBase):
+    details: List[ChatDetailCreate]
+    
+class ChatHistoryResponse(ChatHistoryBase):
+    id: UUID
+    user_id: UUID
+    created_at: datetime
+    details: List[ChatDetailResponse] = []
+
+    class Config:
+        from_attributes = True
