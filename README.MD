@@ -75,6 +75,7 @@ PostgreSQL Database                                                       File S
 │
 External AI APIs (OpenAI, Stability AI, ElevenLabs, Google Cloud
 
+```
 
 **Luồng hoạt động cơ bản:**
 
