@@ -24,6 +24,7 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tess
 @router.post("/input/text")
 async def input_text(text: str):
     return {"text": text}
+
 # 2. Chuyển speech qua text
 @router.post("/input/speech")
 async def speech_to_text(file: UploadFile = File(...)):

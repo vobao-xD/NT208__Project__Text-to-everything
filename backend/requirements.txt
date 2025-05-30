@@ -38,3 +38,6 @@ pydub
 deep-translator
 pytesseract
 fitz
+pymupdf
+runwayml
+apscheduler

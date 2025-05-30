@@ -85,19 +85,17 @@ class Auth:
 
     @staticmethod
     async def provider_callback(request: Request, provider: str, db: Session = Depends(get_db)):
-        
-        # Kiểm tra provider
         if provider not in ["google", "github"]:
             raise HTTPException(status_code=400, detail="Provider không được hỗ trợ")
 
-        try:         
+        try:
             # Chống CSRF
             callback_state = request.session.get("state")
             received_state = request.query_params.get("state")
             if not callback_state or callback_state != received_state:
-                logging.error(f"State mismatch for google: expected {callback_state}, received {received_state}")
-                raise HTTPException(status_code=400, detail=f"Invalid state parameter for google: CSRF Warning!")
-        
+                logging.error(f"State mismatch for {provider}: expected {callback_state}, received {received_state}")
+                raise HTTPException(status_code=400, detail=f"Invalid state parameter for {provider}: CSRF Warning!")
+
             # Lấy token từ provider
             token = await getattr(oauth, provider).authorize_access_token(request)
 
@@ -107,8 +105,8 @@ class Auth:
                 user_response = await getattr(oauth, provider).get("user", token=token)
                 user_info = user_response.json()
             if not user_info:
-                    raise HTTPException(status_code=400, detail=f"Failed to fetch user info for {provider}")
-            
+                raise HTTPException(status_code=400, detail=f"Failed to fetch user info for {provider}")
+
             # Trích xuất thông tin user
             email = user_info["email"]
             if not email:
@@ -136,21 +134,27 @@ class Auth:
                 user.avatar = avatar
             db.commit()
             db.refresh(user)
-            
-            # Tạo access token và trả về frontend
+
+            # Tạo access token
             access_token = create_access_token(data={"sub": user.email})
-            response = RedirectResponse(url=f"{FRONTEND_URL}/generate")
+
+            # Redirect về frontend (không cần truyền email qua query parameter)
+            redirect_url = f"{FRONTEND_URL}/generate"
+            response = RedirectResponse(url=redirect_url)
+
+            # Thiết lập cookie với access_token
             response.set_cookie(
-                    key="access_token",
-                    value=access_token,
-                    httponly=True,
-                    secure=ENV=="production",
-                    samesite="lax",
-                    max_age=COOKIE_MAX_AGE,
-                    path="/"
-                )
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                secure=ENV == "production",
+                samesite="lax",
+                max_age=COOKIE_MAX_AGE,
+                path="/"
+            )
+
             return response
-        
+
         except Exception as e:
             logging.error(f"{provider} login failed: {str(e)}")
             raise HTTPException(status_code=500, detail=f"{provider} login failed: {str(e)}")
@@ -204,54 +208,3 @@ class Auth:
         request.session.clear()
         logging.info("User logged out successfully")
         return RedirectResponse(url=f"{FRONTEND_URL}/login")
-    
-# Này là méo gì vậy ??? :)))
-# Ai biết gì đâu :)))
-# async def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.email == form_data.username).first()
-#     if not user or user.provider != "form" or not bcrypt.checkpw(form_data.password.encode(), user.password.encode()):
-#         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-#     access_token = create_access_token(data={"sub": user.id})
-#     response = Response()
-#     response.set_cookie(
-#         key="access_token",
-#         value=access_token,
-#         httponly=True,
-#         secure=ENV == "production",
-#         samesite="lax",
-#         max_age=COOKIE_MAX_AGE,
-#         path="/"
-#     )
-#     return {"message": "Login successful"}
-
-# async def register(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-#     existing_user = db.query(User).filter(User.email == form_data.username).first()
-#     if existing_user:
-#         raise HTTPException(status_code=400, detail="Email already registered")
-    
-#     hashed_password = bcrypt.hashpw(form_data.password.encode(), bcrypt.gensalt()).decode()
-#     user_id = f"form_{secrets.token_hex(16)}"
-#     user = User(
-#         id=user_id,
-#         email=form_data.username,
-#         name=form_data.username,
-#         password=hashed_password,
-#         provider="form",
-#     )
-#     db.add(user)
-#     db.commit()
-#     db.refresh(user)
-    
-#     access_token = create_access_token(data={"sub": user.id})
-#     response = Response()
-#     response.set_cookie(
-#         key="access_token",
-#         value=access_token,
-#         httponly=True,
-#         secure=ENV == "production",
-#         samesite="lax",
-#         max_age=COOKIE_MAX_AGE,
-#         path="/"
-#     )
-#     return {"message": "Registration successful"}
