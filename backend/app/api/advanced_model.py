@@ -29,138 +29,185 @@ DOCUMENT_MIME_TYPES_FOR_ASSISTANT = [
 ]
 ASSISTANT_ID_WITH_FILE_SEARCH = os.environ.get("OPENAI_FILE_SEARCH_ASSISTANT_ID")
 
+async def _handle_text_only_input(
+    client: AsyncOpenAI, 
+    text: str, 
+    model_override: Optional[str] = None
+) -> Dict[str, Any]:
+    """Handle text-only queries without any file input."""
+    model = model_override or "gpt-4o"
+    
+    try:
+        response = await client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "user", "content": text}
+            ],
+            max_tokens=1000
+        )
+        
+        return {
+            "answer": response.choices[0].message.content,
+            "model_used": model,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "total_tokens": response.usage.total_tokens if response.usage else 0
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process text query: {str(e)}"
+        )
+
+
 async def _handle_image_input(
     client: AsyncOpenAI,
-    question: str,
-    file_content_b64: str,
-    mime_type: str,
-    vision_model_override: Optional[str] = None, # New parameter
+    text: str,
+    b64_content: str,
+    content_type: str,
+    vision_model_override: Optional[str] = None,
     detail_level: str = "auto",
-    max_tokens: int = 300,
+    max_tokens: int = 300
 ) -> Dict[str, Any]:
-    messages_payload = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": question},
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:{mime_type};base64,{file_content_b64}",
-                        "detail": detail_level,
+    """Handle image input with vision model."""
+    model = vision_model_override or "gpt-4o"
+    
+    try:
+        # Prepare the message with image
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": text or "What do you see in this image?"
                     },
-                },
-            ],
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{content_type};base64,{b64_content}",
+                            "detail": detail_level
+                        }
+                    }
+                ]
+            }
+        ]
+        
+        response = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=max_tokens
+        )
+        
+        return {
+            "answer": response.choices[0].message.content,
+            "model_used": model,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "total_tokens": response.usage.total_tokens if response.usage else 0
+            }
         }
-    ]
-    model_to_use = vision_model_override or "gpt-4o" # Use override if provided, else default
+        
+    except Exception as e:
+        print(f"Vision model error: {str(e)}")
+        raise Exception(f"Vision model processing failed: {str(e)}")
 
-    completion = await client.chat.completions.create(
-        model=model_to_use,
-        messages=messages_payload,
-        max_tokens=max_tokens,
-    )
-    answer = completion.choices[0].message.content or "No answer returned."
-    return {
-        "answer": answer,
-        "model_used": completion.model, # Actual model used
-        "usage": completion.usage.model_dump() if completion.usage else None,
-    }
 
 async def _handle_document_input(
     client: AsyncOpenAI,
-    question: str,
-    uploaded_file_for_openai: tuple,
+    text: str,
+    file_data: tuple,
     assistant_id: str,
-    assistant_model_override: Optional[str] = None, # New parameter
-    # max_tokens_assistant: Optional[int] = 1000 # max_tokens is not directly set on run for answer length
+    assistant_model_override: Optional[str] = None
 ) -> Dict[str, Any]:
-    if not assistant_id:
-        raise HTTPException(status_code=500, detail="File Search Assistant ID is not configured.")
-
+    """Handle document input with assistant file search."""
     try:
-        file_object = await client.files.create(
-            file=uploaded_file_for_openai, purpose="assistants"
+        filename, file_bytes = file_data
+        
+        # Upload file to OpenAI
+        file_obj = await client.files.create(
+            file=(filename, file_bytes),
+            purpose="assistants"
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to upload file to OpenAI: {str(e)}")
-
-    thread_id_to_delete: Optional[str] = None
-    try:
-        thread = await client.beta.threads.create()
-        thread_id_to_delete = thread.id # Mark for deletion
-
-        await client.beta.threads.messages.create(
-            thread_id=thread.id,
-            role="user",
-            content=question,
-            attachments=[{"file_id": file_object.id, "tools": [{"type": "file_search"}]}]
+        
+        # Create thread with the file
+        thread = await client.beta.threads.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": text,
+                    "attachments": [
+                        {
+                            "file_id": file_obj.id,
+                            "tools": [{"type": "file_search"}]
+                        }
+                    ]
+                }
+            ]
         )
-
+        
+        # Run the assistant
         run_params = {
             "thread_id": thread.id,
-            "assistant_id": assistant_id,
+            "assistant_id": assistant_id
         }
+        
         if assistant_model_override:
-            run_params["model"] = assistant_model_override # Add model override if provided
-
-        run = await client.beta.threads.runs.create_and_poll(**run_params)
-
-        answer_content = "No answer generated or run failed."
-        model_used_in_run = run.model # Actual model used by the run
-        usage_data = run.usage.model_dump() if run.usage else None
-
-        if run.status == 'completed':
-            messages_page = await client.beta.threads.messages.list(
-                thread_id=thread.id, order="desc", limit=5
+            run_params["model"] = assistant_model_override
+            
+        run = await client.beta.threads.runs.create(**run_params)
+        
+        # Wait for completion
+        while run.status in ["queued", "in_progress"]:
+            await asyncio.sleep(1)
+            run = await client.beta.threads.runs.retrieve(
+                thread_id=thread.id,
+                run_id=run.id
             )
-            for msg in messages_page.data:
-                if msg.role == "assistant":
-                    for content_block in msg.content:
-                        if content_block.type == "text":
-                            answer_content = content_block.text.value
-                            # Citation handling (optional, same as before)
-                            if content_block.text.annotations:
-                                citations = []
-                                for index, annotation in enumerate(content_block.text.annotations):
-                                    answer_content = answer_content.replace(annotation.text, f' [{index}]')
-                                    if (file_citation := getattr(annotation, 'file_citation', None)):
-                                        try:
-                                            cited_file = await client.files.retrieve(file_citation.file_id)
-                                            citations.append(f'[{index}] {file_citation.quote} - (from {cited_file.filename})')
-                                        except Exception:
-                                            citations.append(f'[{index}] {file_citation.quote} - (citation from uploaded file)')
-                                if citations:
-                                    answer_content += "\n\nCitations:\n" + "\n".join(citations)
-                            break 
-                    if answer_content != "No answer generated or run failed.":
-                        break
-        elif run.status == 'failed':
-            answer_content = f"Run failed. Last error: {run.last_error.message if run.last_error else 'Unknown error'}"
-        else:
-            answer_content = f"Run did not complete as expected. Status: {run.status}"
-            if run.required_action: # E.g. if it stopped for tool calls not submitted
-                 answer_content += f". Required action: {run.required_action.type}"
-
-
-    finally:
-        # Clean up uploaded file
-        try:
-            await client.files.delete(file_object.id)
-        except Exception:
-            pass # Log if necessary
-        # Clean up thread
-        if thread_id_to_delete:
+        
+        if run.status == "completed":
+            # Get the response
+            messages = await client.beta.threads.messages.list(thread_id=thread.id)
+            latest_message = messages.data[0]
+            
+            answer = ""
+            for content in latest_message.content:
+                if hasattr(content, 'text'):
+                    answer += content.text.value
+            
+            # Clean up
             try:
-                await client.beta.threads.delete(thread_id_to_delete)
-            except Exception:
-                pass # Log if necessary
-
-    return {
-        "answer": answer_content,
-        "model_used": model_used_in_run,
-        "usage": usage_data,
-    }
+                await client.files.delete(file_obj.id)
+                await client.beta.threads.delete(thread.id)
+            except:
+                pass  # Ignore cleanup errors
+            
+            return {
+                "answer": answer,
+                "model_used": run.model or assistant_model_override or "default",
+                "usage": {
+                    "prompt_tokens": run.usage.prompt_tokens if run.usage else 0,
+                    "completion_tokens": run.usage.completion_tokens if run.usage else 0,
+                    "total_tokens": run.usage.total_tokens if run.usage else 0
+                } if run.usage else None
+            }
+        else:
+            # Clean up on failure
+            try:
+                await client.files.delete(file_obj.id)
+                await client.beta.threads.delete(thread.id)
+            except:
+                pass
+            
+            raise Exception(f"Assistant run failed with status: {run.status}")
+            
+    except Exception as e:
+        print(f"Document processing error: {str(e)}")
+        raise Exception(f"Document processing failed: {str(e)}")
 
 async def get_openai_client(request: Request):
     client = request.app.state.openai_client_instance
@@ -442,80 +489,133 @@ async def enhance(payload: EnhanceTextRequest,client=Depends(get_openai_client))
 async def smart_file_text_to_answer(
     request: Request,
     text: str = Form(..., description="The text query or question related to the file."),
-    file: UploadFile = File(..., description="The file to analyze (image, PDF, DOCX, TXT, etc.)."),
-    vision_model_override: Optional[str] = Form(None, description="Optional: Override vision model (e.g., 'gpt-4o-mini', 'gpt-4-turbo'). Defaults to 'gpt-4o'."),
+    file: Optional[UploadFile] = File(None, description="Optional: The file to analyze (image, PDF, DOCX, TXT, etc.)."),
+    vision_model_override: Optional[str] = Form("gpt-4o", description="Optional: Override vision model (e.g., 'gpt-4o-mini', 'gpt-4-turbo'). Defaults to 'gpt-4o'."),
     detail_vision: Optional[str] = Form("auto", description="Detail level for vision model ('auto', 'low', 'high')."),
     max_tokens_vision: Optional[int] = Form(300, description="Max tokens for vision model answer."),
-    assistant_model_override: Optional[str] = Form(None, description="Optional: Override assistant's model for this run (e.g., 'gpt-3.5-turbo', 'gpt-4o'). Ensures compatibility with file_search."),
+    assistant_model_override: Optional[str] = Form("gpt-4o", description="Optional: Override assistant's model for this run (e.g., 'gpt-3.5-turbo', 'gpt-4o'). Ensures compatibility with file_search."),
     client: AsyncOpenAI = Depends(get_openai_client)
 ):
-    filename = file.filename or "uploaded_file"
-    content_type = file.content_type
-    file_bytes = await file.read()
-    await file.seek(0)
-
-    if not file_bytes:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
-
-    file_details = {
-        "filename": filename,
-        "content_type": content_type,
-        "size": len(file_bytes)
-    }
-
-    if content_type == "application/octet-stream" and filename:
-        guessed_type, _ = mimetypes.guess_type(filename)
-        if guessed_type:
-            content_type = guessed_type
-            file_details["content_type"] = content_type
-
+    # Validate input: require either text or file
+    if not text.strip() and not file:
+        raise HTTPException(
+            status_code=400, 
+            detail="Either text query or file must be provided."
+        )
+    # Initialize response data
     result_data: Dict[str, Any] = {}
-    processed_by = "unknown"
+    processed_by = "text_only"
     error_message: Optional[str] = None
-
+    file_details = None
+    
     try:
-        if content_type in IMAGE_MIME_TYPES:
-            processed_by = "vision_model"
-            b64_content = base64.b64encode(file_bytes).decode("utf-8")
-            result_data = await _handle_image_input(
-                client, text, b64_content, content_type, 
-                vision_model_override=vision_model_override, 
-                detail_level=detail_vision, 
-                max_tokens=max_tokens_vision
-            )
-        elif content_type in DOCUMENT_MIME_TYPES_FOR_ASSISTANT:
-            processed_by = "assistant_file_search"
-            current_assistant_id = ASSISTANT_ID_WITH_FILE_SEARCH
-            if not current_assistant_id:
-                raise HTTPException(status_code=501, detail="Document processing (File Search Assistant ID) is not configured on the server.")
+        # Handle text-only requests
+        if not file:
+            if not text.strip():
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Text query cannot be empty when no file is provided."
+                )
             
-            file_for_openai_upload = (filename, file_bytes)
-            result_data = await _handle_document_input(
-                client, text, file_for_openai_upload, current_assistant_id,
-                assistant_model_override=assistant_model_override
-                # max_tokens_assistant=max_tokens_assistant # Not directly used in run create for answer length
+            # Process text-only query
+            result_data = await _handle_text_only_input(
+                client, text, 
+                model_override=assistant_model_override or vision_model_override
             )
+            processed_by = "text_only"
+            
         else:
-            error_message = f"Unsupported file type: {content_type}. Supported image types: {IMAGE_MIME_TYPES}. Supported document types for search: {DOCUMENT_MIME_TYPES_FOR_ASSISTANT}."
-            raise HTTPException(status_code=415, detail=error_message)
+            # Handle file-with-text requests
+            filename = file.filename or "uploaded_file"
+            content_type = file.content_type
+            file_bytes = await file.read()
+            await file.seek(0)
+
+            if not file_bytes:
+                raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+            file_details = {
+                "filename": filename,
+                "content_type": content_type,
+                "size": len(file_bytes)
+            }
+
+            # Guess content type if needed
+            if content_type == "application/octet-stream" and filename:
+                guessed_type, _ = mimetypes.guess_type(filename)
+                if guessed_type:
+                    content_type = guessed_type
+                    file_details["content_type"] = content_type
+
+            # Process based on file type
+            if content_type in IMAGE_MIME_TYPES:
+                processed_by = "vision_model"
+                try:
+                    b64_content = base64.b64encode(file_bytes).decode("utf-8")
+                    print(f"Processing image: {filename}, size: {len(file_bytes)} bytes, content_type: {content_type}")
+                    
+                    result_data = await _handle_image_input(
+                        client, text, b64_content, content_type, 
+                        vision_model_override=vision_model_override, 
+                        detail_level=detail_vision, 
+                        max_tokens=max_tokens_vision
+                    )
+                except Exception as img_error:
+                    print(f"Error processing image: {str(img_error)}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to process image: {str(img_error)}"
+                    )
+                
+            elif content_type in DOCUMENT_MIME_TYPES_FOR_ASSISTANT:
+                processed_by = "assistant_file_search"
+                current_assistant_id = ASSISTANT_ID_WITH_FILE_SEARCH
+                if not current_assistant_id:
+                    raise HTTPException(
+                        status_code=501, 
+                        detail="Document processing (File Search Assistant ID) is not configured on the server."
+                    )
+                
+                try:
+                    print(f"Processing document: {filename}, size: {len(file_bytes)} bytes, content_type: {content_type}")
+                    file_for_openai_upload = (filename, file_bytes)
+                    result_data = await _handle_document_input(
+                        client, text, file_for_openai_upload, current_assistant_id,
+                        assistant_model_override=assistant_model_override
+                    )
+                except Exception as doc_error:
+                    print(f"Error processing document: {str(doc_error)}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to process document: {str(doc_error)}"
+                    )
+                
+            else:
+                supported_types = f"Images: {IMAGE_MIME_TYPES}. Documents: {DOCUMENT_MIME_TYPES_FOR_ASSISTANT}"
+                error_message = f"Unsupported file type: {content_type}. Supported types - {supported_types}"
+                raise HTTPException(status_code=415, detail=error_message)
 
     except HTTPException as e:
-        # Log e here if needed, e.g., print(f"Caught HTTPException: {e.detail}")
-        # Return structure that matches FileTextToAnswerResponse for client consistency
+        # Log the error for debugging
+        print(f"HTTPException in smart_file_text_to_answer: {e.detail}")
         return FileTextToAnswerResponse(
             answer=result_data.get("answer", "Processing failed due to HTTP error."),
             processed_by=processed_by if processed_by != "unknown" else "error_handler",
             file_details=file_details,
             model_used=result_data.get("model_used"),
             usage=result_data.get("usage"),
-            error=str(e.detail) # Use the detail from the HTTPException
+            error=str(e.detail)
         )
+        
     except Exception as e:
-        print(f"An unexpected error occurred in smart_file_text_to_answer: {str(e)}") # Basic logging
-        # logger.error("Error in smart_file_text_to_answer", exc_info=True) # More detailed logging
+        import traceback
+        error_traceback = traceback.format_exc()
+        print(f"Unexpected error in smart_file_text_to_answer: {str(e)}")
+        print(f"Full traceback: {error_traceback}")
+        
         error_message = f"An unexpected internal error occurred: {str(e)}"
         return FileTextToAnswerResponse(
-            answer="Failed due to an internal server error.",
+            answer=f"Processing failed. Error: {str(e)}",
             processed_by="error_handler",
             file_details=file_details,
             error=error_message
@@ -527,7 +627,7 @@ async def smart_file_text_to_answer(
         file_details=file_details,
         model_used=result_data.get("model_used"),
         usage=result_data.get("usage"),
-        error=error_message # Should be None if successful
+        error=error_message
     )
 TASK_LIST_DESCRIPTION = """
 Here are the available task types and their keys:
