@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from . import auth, text_to_speech, text_to_image, text_to_video, general, history,MOMO,input,ChatBotContent,enhance,Check_api,generate_answer,text_to_code,role
+from . import auth, text_to_speech, text_to_image, text_to_video, general, history,MOMO,input,ChatBotContent,enhance,Check_api,generate_answer,text_to_code,role,advanced_model
 
 router = APIRouter()
 
@@ -18,3 +18,4 @@ router.include_router(enhance.router,prefix="",tags=["Enhance"])
 router.include_router(Check_api.router,prefix="",tags=["Check Permission"])
 router.include_router(generate_answer.router,prefix="",tags=["Generate Answer"])
 router.include_router(role.router,prefix="",tags=["Role"])
+router.include_router(advanced_model.router,prefix="",tags=["Advanced Model"])

@@ -86,7 +86,7 @@ class QuestionRequest(BaseModel):
     
 class TextInput(BaseModel):
     user_text: str
-
+    max_tokens: Optional[int] = 150
 class ChatRequest(BaseModel):
     prompt: str
 
@@ -106,3 +106,57 @@ class PaymentRequest(BaseModel):
 class UserSubscription(BaseModel):
     role: str
     billingCycle: Optional[str] = "monthly"
+
+#################### Advanced Model ####################
+class TextToCodeRequest(BaseModel):
+    prompt:str
+    language:Optional[str] = "python"
+    max_tokens:Optional[int] = 150
+
+class TextToImageRequest(BaseModel):
+    model: Optional[str]="dall-e-3"
+    prompt: str
+    n: Optional[int] = 1
+    size: Optional[str] = "1024x1024" # DALL-E 3 supports 1024x1024, 1792x1024, or 1024x1792
+    quality: Optional[str] = "standard" # "standard" or "hd" for DALL-E 3
+    style: Optional[str] = "vivid" # "vivid" or "natural" for DALL-E 3
+    response_format: Optional[str] = "url" # "url" or "b64_json"
+
+
+class TextToAudioRequest(BaseModel):
+    text: str
+    voice: Optional[str] = "alloy" # Example default voice
+    model: Optional[str] = "gpt-4o-mini-tts"
+    response_format: Optional[str] = "mp3" # e.g., mp3, opus, aac, flac, wav, pcm
+    speed: Optional[float] = 1.0 # Speed of speech, 0.25 to 4.0
+    # 'instructions' for gpt-4o-mini-tts, e.g., "Speak in a cheerful tone."
+    instructions: Optional[str] = None
+
+class GenerateAnswerRequest(BaseModel):
+    question: str
+    context: Optional[str] = None
+    max_tokens: Optional[int] = 500
+
+class ChatMessage(BaseModel):
+    role: str # "user" or "assistant"
+    content: str
+
+class ChatbotContentRequest(BaseModel):
+    history: List[ChatMessage] = []
+    user_input: str
+    system_prompt: Optional[str] = "You are a helpful and friendly chatbot."
+    max_tokens: Optional[int] = 500
+
+class EnhanceTextRequest(BaseModel):
+    text: str
+    instruction: str # e.g., "Make this text more formal and professional."
+    max_tokens: Optional[int] = 1000 # Ensure enough tokens for original + enhanced text
+
+class RunwayTextToVideoRequest(BaseModel):
+    prompt_text: str = Field(..., example="A majestic eagle soaring over snow-capped mountains.")
+    prompt_image_url: str = Field(..., description="URL of the initial image to guide video generation.", example="https://example.com/your-image.png")
+    model: Optional[str] = Field("gen4_turbo", description="RunwayML model to use (e.g., gen4_turbo, gen3a_turbo).", example="gen4_turbo")
+    ratio: Optional[str] = Field("1280:720", description="Aspect ratio of the output video.", example="16:9") # Example, check Runway docs for valid ratios per model
+    duration: Optional[int] = Field(5, description="Duration of the video in seconds (e.g., 5 or 10).", example=5)
+    seed: Optional[int] = Field(None, description="Seed for generation for reproducibility.")
+    # Add other RunwayML specific parameters as needed, e.g., motion, camera_motion
