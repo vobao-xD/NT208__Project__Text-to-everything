@@ -47,14 +47,16 @@ Dưới đây là các tính năng nổi bật của nền tảng "Text to Every
 |🧑‍🔧 Quản lý người dùng & Phân quyền |	Hệ thống tài khoản người dùng với các vai trò (roles) khác nhau như Admin, User. Có kế hoạch cho các gói tài khoản miễn phí và trả phí với các giới hạn và quyền lợi riêng.|
 
 ### 🧑‍💻 Kiến trúc hệ thống
-Hệ thống "Text to Everything" được thiết kế theo kiến trúc module, bao gồm các thành phần chính sau:
 
+Hệ thống **Text to Everything** được thiết kế theo kiến trúc module, bao gồm các thành phần chính sau:
+
+```
 Client (Giao diện người dùng - React/HTML/CSS/JS)
 │
 │ (HTTP/WebSocket Requests)
 ▼
 FastAPI Backend (Python)
-│ ───────────────────────────────────────────────────────────────────────────-┐
+│ ────────────────────────────────────────────────────────────────────────────┐
 │ (Logic xử lý, Quản lý tác vụ, Xác thực, API Gateway)                        │
 │                                                                             │
 ├─► Text-to-Image Service (Tích hợp AI Model)                                 │
@@ -65,14 +67,13 @@ FastAPI Backend (Python)
 └─► Content Generation Service (Tích hợp AI Model)                            │
 │                                                                             │
 │ (Truy vấn & Lưu trữ dữ liệu)                                                │
-▼                                                                            ▼
+▼                                                                             ▼
 PostgreSQL Database                                                       File Storage
 (Dữ liệu người dùng, metadata nội dung, cấu hình)                      (Lưu trữ file ảnh, video, âm thanh)
 ▲
 │ (Có thể giao tiếp trực tiếp hoặc qua Backend)
 │
-External AI APIs (OpenAI, Stability AI, ElevenLabs, Google Cloud AI, etc.)
-(Các mô hình AI bên thứ ba được tích hợp để mở rộng khả năng)
+External AI APIs (OpenAI, Stability AI, ElevenLabs, Google Cloud
 
 
 **Luồng hoạt động cơ bản:**
@@ -210,64 +211,66 @@ Sau khi hoàn tất các bước trên, bạn có thể khởi chạy FastAPI se
 
 ```bash
 uvicorn main:app --reload
+```
 main:app: main là tên file Python chứa FastAPI app instance (thường là main.py), và app là tên của FastAPI instance đó (ví dụ: app = FastAPI()).
 --reload: Tự động tải lại server khi có thay đổi trong code (chỉ dùng cho môi trường development).
 Ứng dụng sẽ chạy tại địa chỉ http://localhost:8000 (hoặc cổng mặc định của Uvicorn).
 
 ### 🧪 API Documentation
 FastAPI tự động tạo tài liệu API tương tác dựa trên chuẩn OpenAPI (trước đây là Swagger). Bạn có thể truy cập tài liệu này tại:
-
+```http
 👉 http://localhost:8000/docs (Giao diện Swagger UI)
-
+```
 Hoặc giao diện thay thế:
-
+```http
 👉 http://localhost:8000/redoc (Giao diện ReDoc)
-
+```
 Tài liệu này cung cấp chi tiết về tất cả các endpoints, tham số yêu cầu, định dạng phản hồi, và cho phép bạn thử nghiệm API trực tiếp từ trình duyệt.
 
 Một số endpoints quan trọng (ví dụ):
 
-Authentication:
+**Authentication**:
 
-POST /auth/register: Đăng ký tài khoản người dùng mới.
-Request body: { "email": "user@example.com", "password": "string" }
-POST /auth/login: Đăng nhập, nhận về JWT access token.
-Request body: { "username": "user@example.com", "password": "string" } (sử dụng form data)
-GET /users/me: Lấy thông tin người dùng hiện tại (yêu cầu JWT).
-Text-to-Image:
+* **POST /auth/register**: Đăng ký tài khoản người dùng mới.
+  Request body: { "email": "user@example.com", "password": "string" }
+* **POST /auth/login**: Đăng nhập, nhận về JWT access token.
+  Request body: { "username": "user@example.com", "password": "string" } (sử dụng form data)
+* **GET /users/me**: Lấy thông tin người dùng hiện tại (yêu cầu JWT).
+**Text-to-Image**:
 
-POST /generate/text-to-image: Tạo hình ảnh từ mô tả văn bản.
-Request body: { "prompt": "A beautiful sunset over mountains", "style": "photorealistic", "num_images": 1 }
-Response: URL hoặc dữ liệu hình ảnh.
-Text-to-Speech:
+* **POST /generate/text-to-image**: Tạo hình ảnh từ mô tả văn bản.
+     Request body: { "prompt": "A beautiful sunset over mountains", "style":     "photorealistic", "num_images": 1 }
+  Response: URL hoặc dữ liệu hình ảnh.
+**Text-to-Speech**:
 
-POST /generate/text-to-speech: Tạo file âm thanh giọng nói từ văn bản.
-Request body: { "text": "Xin chào thế giới!", "voice_id": "vi-VN-Standard-A", "language_code": "vi-VN" }
-Response: URL hoặc dữ liệu file âm thanh.
-Speech-to-Text:
+* **POST /generate/text-to-speech**: Tạo file âm thanh giọng nói từ văn bản.
+   Request body: { "text": "Xin chào thế giới!", "voice_id": "vi-VN-Standard-A",  "language_code": "vi-VN" }
+   Response: URL hoặc dữ liệu file âm thanh.
+**Speech-to-Text**:
 
-POST /transcribe/speech-to-text: Upload file âm thanh và chuyển đổi thành văn bản.
-Request: File âm thanh (multipart/form-data).
-Response: { "transcript": "Nội dung văn bản được chuyển đổi." }
-Content Generation (Story/Script):
+* **POST /transcribe/speech-to-text**: Upload file âm thanh và chuyển đổi thành văn bản.
+   Request: File âm thanh (multipart/form-data).
+   Response: { "transcript": "Nội dung văn bản được chuyển đổi." }
+   Content Generation (Story/Script):
 
-POST /generate/story: Yêu cầu AI viết truyện hoặc kịch bản dựa trên gợi ý.
-Request body: { "prompt": "Write a short story about a robot discovering music.", "genre": "sci-fi", "length": "short" }
-Response: { "story_text": "..." }
-File Management (Ví dụ cho người dùng đã đăng nhập):
+* **POST /generate/story**: Yêu cầu AI viết truyện hoặc kịch bản dựa trên gợi ý.
+   Request body: { "prompt": "Write a short story about a robot discovering music.  ", "genre": "sci-fi", "length": "short" }
+   Response: { "story_text": "..." }
+**File Management (Ví dụ cho người dùng đã đăng nhập)**:
 
-GET /user/files: Lấy danh sách các file đã tạo bởi người dùng.
-GET /user/files/{file_id}: Lấy thông tin chi tiết một file.
-DELETE /user/files/{file_id}: Xóa một file.
-Lưu ý: Các endpoints và cấu trúc request/response trên chỉ là ví dụ. Tham khảo /docs để có thông tin chính xác và đầy đủ nhất. Hầu hết các endpoint yêu cầu tạo nội dung hoặc truy cập dữ liệu người dùng sẽ cần Authorization: Bearer <YOUR_ACCESS_TOKEN> trong header.
+* **GET /user/files**: Lấy danh sách các file đã tạo bởi người dùng.
+* **GET /user/files/{file_id}**: Lấy thông tin chi tiết một file.
+* **DELETE /user/files/{file_id}**: Xóa một file.
+**Lưu ý**: Các endpoints và cấu trúc request/response trên chỉ là ví dụ. Tham khảo /docs để có thông tin chính xác và đầy đủ nhất. Hầu hết các endpoint yêu cầu tạo nội dung hoặc truy cập dữ liệu người dùng sẽ cần Authorization: Bearer <YOUR_ACCESS_TOKEN> trong header.
 
 ### 👤 Tài khoản và phân quyền
 Hệ thống hỗ trợ các loại tài khoản và cơ chế phân quyền sau:
 
 User (Người dùng thông thường):
 
-Đăng ký: Miễn phí.
-Quyền lợi:
+**Đăng ký**: **Miễn phí**
+
+**Quyền lợi**:
 Sử dụng các tính năng tạo nội dung cơ bản (Text-to-Image, Text-to-Speech, v.v.).
 Lưu trữ và quản lý nội dung đã tạo trong không gian cá nhân.
 Giới hạn:
@@ -276,18 +279,18 @@ Giới hạn dung lượng lưu trữ.
 Thời gian xử lý yêu cầu có thể chậm hơn so với tài khoản Pro.
 Pro (Người dùng trả phí):
 
-Đăng ký: Yêu cầu đăng ký gói dịch vụ trả phí (hàng tháng/năm).
-Quyền lợi:
+**Đăng ký**: Yêu cầu đăng ký gói dịch vụ trả phí (hàng tháng/năm).
+**Quyền lợi**:
 Sử dụng không giới hạn hoặc giới hạn cao hơn nhiều đối với các tính năng AI.
 Dung lượng lưu trữ lớn hơn.
 Ưu tiên xử lý yêu cầu AI, thời gian phản hồi nhanh hơn.
 Truy cập các tính năng AI nâng cao hoặc các mô hình AI chất lượng cao hơn (nếu có).
 Hỗ trợ khách hàng ưu tiên.
-Giới hạn: Ít hoặc không có giới hạn so với tài khoản User.
-Admin (Quản trị viên):
+**Giới hạn**: Ít hoặc không có giới hạn so với tài khoản User.
+**Admin (Quản trị viên)**:
 
-Truy cập: Được cấp quyền bởi hệ thống.
-Quyền lợi:
+**Truy cập**: Được cấp quyền bởi hệ thống.
+**Quyền lợi**:
 Quản lý toàn bộ hệ thống người dùng (xem, sửa, xóa tài khoản, cấp quyền).
 Theo dõi và quản lý số lượt sử dụng tài nguyên AI của toàn hệ thống.
 Cấu hình các giới hạn cho từng loại tài khoản.
@@ -298,7 +301,7 @@ Cơ chế phân quyền đảm bảo rằng người dùng chỉ có thể truy 
 ### 📊 Demo hoặc ảnh minh họa
 (Phần này nên được cập nhật với hình ảnh thực tế của giao diện ứng dụng và các sản phẩm đầu ra từ AI để minh họa rõ ràng hơn về khả năng của dự án.)
 
-Ví dụ về cách nhúng ảnh (thay thế bằng link ảnh thực tế):
+**Ví dụ về cách nhúng ảnh (thay thế bằng link ảnh thực tế)**:
 
 Giao diện tạo hình ảnh từ văn bản:
 Mô tả: Giao diện cho phép người dùng nhập mô tả (prompt), chọn phong cách, và các tùy chọn khác để tạo hình ảnh.
@@ -320,36 +323,54 @@ Hoặc GIF minh họa một tính năng cụ thể:
 ### 📝 TODOs
 Danh sách các tính năng và cải tiến dự kiến cho các phiên bản tiếp theo:
 
-Ưu tiên cao:
+**Ưu tiên cao**:
 
 [ ] Hoàn thiện API đăng ký / đăng nhập / quản lý tài khoản người dùng.
+
 [ ] Tích hợp hoàn chỉnh module Text-to-Image với ít nhất một mô hình AI (ví dụ: Stable Diffusion).
+
 [ ] Tích hợp hoàn chỉnh module Text-to-Speech với hỗ trợ giọng đọc tiếng Việt chất lượng cao.
+
 [ ] Xây dựng giao diện người dùng cơ bản (React/Vue/HTML) cho các tính năng cốt lõi.
-Ưu tiên trung bình:
+
+**Ưu tiên trung bình**:
 
 [ ] Tích hợp module Speech-to-Text.
+
 [ ] Phát triển tính năng AI Avatar Animation (kết hợp TTS và chuyển động avatar).
+
 [ ] Xây dựng Dashboard quản lý nội dung cho người dùng (lưu trữ, xem lại, tải xuống).
 [ ] Triển khai hệ thống phân quyền chi tiết cho User/Pro/Admin.
+
 [ ] Tối ưu hóa hiệu suất xử lý các tác vụ AI (cân nhắc sử dụng message queue như Celery).
-Ưu tiên thấp / Ý tưởng tương lai:
+
+**Ưu tiên thấp / Ý tưởng tương lai**:
 
 [ ] Phát triển module Bot sáng tạo nội dung (viết truyện, kịch bản).
-[ ] Tích hợp module Text-to-Video (phiên bản cơ bản).
-[ ] Hỗ trợ nhiều mô hình AI hơn cho mỗi tính năng, cho phép người dùng lựa chọn.
-[ ] Xây dựng trang quản trị (Admin Panel) đầy đủ tính năng.
-[ ] Hỗ trợ thanh toán cho tài khoản Pro.
-[ ] Cải thiện UX/UI dựa trên phản hồi người dùng.
-[ ] Viết tài liệu hướng dẫn sử dụng chi tiết cho người dùng cuối.
-[ ] Tăng cường bảo mật cho hệ thống.
-[ ] Nghiên cứu và tích hợp các mô hình AI mới nhất.
-### 💡 Đóng góp
-Chúng tôi rất hoan nghênh và khuyến khích sự đóng góp từ cộng đồng để phát triển "Text to Everything" ngày càng tốt hơn! Dưới đây là một số cách bạn có thể tham gia:
 
-Báo lỗi (Reporting Bugs):
+[ ] Tích hợp module Text-to-Video (phiên bản cơ bản).
+
+[ ] Hỗ trợ nhiều mô hình AI hơn cho mỗi tính năng, cho phép người dùng lựa chọn.
+
+[ ] Xây dựng trang quản trị (Admin Panel) đầy đủ tính năng.
+
+[ ] Hỗ trợ thanh toán cho tài khoản Pro.
+
+[ ] Cải thiện UX/UI dựa trên phản hồi người dùng.
+
+[ ] Viết tài liệu hướng dẫn sử dụng chi tiết cho người dùng cuối.
+
+[ ] Tăng cường bảo mật cho hệ thống.
+
+[ ] Nghiên cứu và tích hợp các mô hình AI mới nhất.
+
+### 💡 Đóng góp
+**Chúng tôi rất hoan nghênh và khuyến khích sự đóng góp từ cộng đồng để phát triển "Text to Everything" ngày càng tốt hơn! Dưới đây là một số cách bạn có thể tham gia**:
+
+**Báo lỗi (Reporting Bugs)**:
 
 Nếu bạn phát hiện lỗi hoặc hành vi không mong muốn, vui lòng tạo một "Issue" trên GitHub repository của dự án.
+
 Khi báo lỗi, cố gắng cung cấp thông tin chi tiết nhất có thể: các bước để tái hiện lỗi, môi trường bạn đang sử dụng (hệ điều hành, phiên bản trình duyệt, phiên bản Python, v.v.), thông báo lỗi cụ thể, và ảnh chụp màn hình (nếu có).
 Đề xuất tính năng mới (Suggesting Enhancements):
 
@@ -357,16 +378,23 @@ Nếu bạn có ý tưởng về một tính năng mới hoặc cải tiến cho
 Mô tả rõ ràng về tính năng bạn đề xuất và lợi ích mà nó mang lại.
 Đóng góp mã nguồn (Contributing Code):
 
-Fork repository: Tạo một bản sao (fork) của dự án về tài khoản GitHub của bạn.
-Clone repository: Sao chép repository đã fork về máy của bạn: git clone https://github.com/YOUR_USERNAME/text-to-everything.git
-Tạo nhánh mới (Create a new branch): Tạo một nhánh mới cho mỗi tính năng hoặc bản sửa lỗi bạn thực hiện: git checkout -b feature/ten_tinh_nang hoặc git checkout -b bugfix/mo_ta_loi.
-Viết mã và commit: Thực hiện các thay đổi của bạn. Hãy đảm bảo tuân thủ coding style của dự án (nếu có). Viết commit message rõ ràng và súc tích.
-Push lên nhánh của bạn: git push origin feature/ten_tinh_nang.
-Tạo Pull Request (PR): Mở một Pull Request từ nhánh của bạn trên repository đã fork sang nhánh main (hoặc develop) của repository gốc.
-Trong mô tả PR, giải thích rõ những thay đổi bạn đã thực hiện và tại sao.
-Nếu PR của bạn giải quyết một Issue nào đó, hãy liên kết đến Issue đó (ví dụ: "Closes #123").
-Vui lòng đảm bảo rằng code của bạn đã được test (nếu có thể) và không làm hỏng các tính năng hiện có.
-Cải thiện tài liệu (Improving Documentation):
+    Fork repository: Tạo một bản sao (fork) của dự án về tài khoản GitHub của bạn.
+    Clone repository: Sao chép repository đã fork về máy của bạn: git clone https://github.com/YOUR_USERNAME/text-to-everything.git
+
+    Tạo nhánh mới (Create a new branch): Tạo một nhánh mới cho mỗi tính năng hoặc bản sửa lỗi bạn thực hiện: git checkout -b feature/ten_tinh_nang hoặc git checkout -b bugfix/mo_ta_loi.
+
+    Viết mã và commit: Thực hiện các thay đổi của bạn. Hãy đảm bảo tuân thủ coding style của dự án (nếu có). Viết commit message rõ ràng và súc tích.
+
+    Push lên nhánh của bạn: git push origin feature/ten_tinh_nang.
+
+    Tạo Pull Request (PR): Mở một Pull Request từ nhánh của bạn trên repository đã fork sang nhánh main (hoặc develop) của repository gốc.
+
+    Trong mô tả PR, giải thích rõ những thay đổi bạn đã thực hiện và tại sao.
+    Nếu PR của bạn giải quyết một Issue nào đó, hãy liên kết đến Issue đó (ví dụ: "Closes #123").
+
+*Vui lòng đảm bảo rằng code của bạn đã được test (nếu có thể) và không làm hỏng các tính năng hiện có.*
+
+**Cải thiện tài liệu (Improving Documentation)**:
 
 Tài liệu tốt rất quan trọng. Nếu bạn thấy bất kỳ phần nào trong README, API docs, hoặc các tài liệu khác cần được cải thiện, làm rõ hơn, hoặc sửa lỗi chính tả/ngữ pháp, đừng ngần ngại tạo PR.
 Góp ý về UX/UI:
@@ -387,8 +415,12 @@ Giấy phép MIT là một giấy phép phần mềm tự do nguồn mở permis
 ### 📞 Liên hệ
 Nếu bạn có bất kỳ câu hỏi, góp ý, hoặc muốn thảo luận về dự án, vui lòng liên hệ qua các kênh sau:
 
-📧 Email: yourname@example.com
-💼 LinkedIn: https://linkedin.com/in/yourname
-🌐 Website cá nhân/dự án: https://yourwebsite.com
+📧 Email: group1@gmail.com
+
+💼 LinkedIn: https://linkedin.com/in/group1
+
+🌐 Website cá nhân/dự án: https://group1.com
+
 🐙 GitHub Issues: Đối với các vấn đề kỹ thuật hoặc báo lỗi, vui lòng tạo một Issue trực tiếp trên repository của dự án.
-Chúng tôi luôn sẵn lòng lắng nghe và hợp tác!
+
+**Chúng tôi luôn sẵn lòng lắng nghe và hợp tác!**
