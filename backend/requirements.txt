@@ -41,3 +41,5 @@ fitz
 pymupdf
 runwayml
 apscheduler
+tools
+frontend
