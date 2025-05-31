@@ -41,12 +41,12 @@
   flex: 1;
   color: white;
   z-index: 1;
-  top: 0;
   left: 0;
   overflow-y: auto;
   border-radius: 0 8px 8px 0;
   animation: slideIn 1s ease-in-out;
   box-sizing: border-box;
+  text-align: center;
 }
 
 @keyframes slideIn {
@@ -202,11 +202,11 @@
 }
 
 .sidebar_title>h2 {
-  margin: 30px 0 30px 30px;
+  margin: 30px 0 30px 0px;
 }
 
 .choices {
-  margin-left: 42.5px;
+  margin-left: 0px;
 }
 
 .options {
@@ -252,7 +252,7 @@
   cursor: pointer;
   font-size: 1.1em;
   border: none;
-  margin: 0 0 20px 42.5px;
+  margin: 0 0 20px 0px;
   padding: 10px;
   border-radius: 10px;
 }
@@ -467,6 +467,7 @@
   outline: none;
   border-radius: 10px;
   background-color: rgb(29, 29, 29);
+  padding: 10px;
   color: white;
 }
 
@@ -518,7 +519,10 @@
 
 /* Định dạng chung cho trang đăng nhập */
 .signin-page {
-  background: linear-gradient(45deg, black, #242424);
+  /*background: linear-gradient(45deg, black, #242424);*/
+  background-image: url(https://r4.wallpaperflare.com/wallpaper/152/135/757/abstract-dark-texture-wallpaper-68d65caadfec0799ae40d90292d92ba0.jpg);
+  background-repeat: no-repeat;
+  background-size: cover;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -545,7 +549,7 @@
 .signin-container h1 {
   margin-bottom: 35px;
   text-align: center;
-  font-size: 28px;
+  font-size: 36px;
   font-weight: bold;
   color: #00CDAC;
 }
@@ -596,7 +600,7 @@ body.signin-page p {
 }
 
 .social-buttons {
-  margin-top: 20px;
+  padding: 0px;
   display: flex;
   justify-content: center;
   gap: 20px;
@@ -620,6 +624,11 @@ body.signin-page p {
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.Google, .Github {
+  margin-top: 10px;
+  border-radius: 10px;
 }
 
 .social-buttons img {
@@ -1130,25 +1139,24 @@ body.signin-page p {
   transform: scale(1.55);
 }
 .footer_content{
-  background-size: 50%; /* hoặc contain */
-  background-position:top;
+  background-size: cover; /* hoặc contain */
+  background-position:bottom;
   background-repeat: no-repeat;
   /* background: black; */
-  /* background-image:url('https://img.freepik.com/premium-vector/abstract-black-tech-concept-banners_88343-5538.jpg?ga=GA1.1.326086185.1748537268&w=740'); */
+ 
 }
 .sidebar{
-  background-size: 1500px,1500px; /* hoặc contain */
+  background-size: cover;
   background-position: middle, left;
   background-repeat: no-repeat;
-  background-image:url('https://img.freepik.com/free-vector/dark-background-geometric-style_23-2147519820.jpg?ga=GA1.1.326086185.1748537268&semt=ais_hybrid&w=740');
+  background-image:url('https://r4.wallpaperflare.com/wallpaper/25/81/104/digital-art-abstract-minimalism-black-wallpaper-cd61cf34f431d32b183973c25df8716a.jpg');
 }
 .content{
   background: black;
 }
 
 .conservation{
-background-color: black;
-
+  background-color: black;
 }
 .header_content{
   background-image:url('https://img.freepik.com/premium-vector/abstract-black-tech-concept-banners_88343-5538.jpg?ga=GA1.1.326086185.1748537268&w=740');

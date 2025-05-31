@@ -132,7 +132,7 @@ const Login = () => {
                         disabled={isLoading}
                     >
                         <FaGithub size={24} />
-                        Github
+                        GitHub
                     </button>
                     <button
                         className="btn Google"
