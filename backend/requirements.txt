@@ -43,3 +43,10 @@ runwayml
 apscheduler
 tools
 frontend
+libgl1
+ffmpeg
+tesseract-ocr
+libsndfile1
+libsm6
+libxext6
+libxrender-dev
