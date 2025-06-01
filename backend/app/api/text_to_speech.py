@@ -2,7 +2,7 @@ import re
 from fastapi import APIRouter, HTTPException
 from services.ai_services import TextToSpeechService as service
 from db.schemas import TTSRequest, TTSResponse
-from backend.app.services.auth_service import Auth
+from backend.app.services.authentication_and_authorization import Auth
 import httpx
 
 router = APIRouter()

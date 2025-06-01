@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session,joinedload
 from db.database import get_db
 from db.models import ChatHistory, ChatDetail, Generator
 from db.schemas import ChatCreate, ChatHistoryResponse, ChatDetailCreate, ChatDetailResponse
-from backend.app.services.auth_service import Auth
+from backend.app.services.authentication_and_authorization import Auth
 
 router = APIRouter()
 

@@ -11,8 +11,8 @@ class UserBase(BaseModel):
     email: str
     name: str
     avatar: Optional[HttpUrl] = None
-    provider: str
-    role: str
+    provider: str = "unknown"
+    role: str = "free"
     expires_at: Optional[datetime] = None
 
 #################### Text to speech ####################
@@ -113,7 +113,7 @@ class PermissionResult(BaseModel):
 class QuestionRequest(BaseModel):
     question: str
 
-#################### Tu tu ####################
+#################### What is this??? ####################
 
 class TextInput(BaseModel):
     user_text: str
@@ -211,52 +211,63 @@ class FileTextToAnswerResponse(BaseModel):
     model_used: Optional[str] = Field(None, description="The specific AI model that generated the answer.")
     usage: Optional[Dict[str, Any]] = Field(None, description="Token usage statistics from the OpenAI API call.")
 
-###################### Chat Detail ######################
+###################### Chat History ######################
 
-class InputType(str,Enum):
+class InputType(str, Enum):
     text = "text"
-    image = "image"
-    audio = "audio"
-    video = "video"
     file = "file"
 
-class ChatDetailBase(BaseModel):
-    input_type: InputType
-    text_prompt: Optional[str] = None
-    input_file_name: Optional[str] = None
+class OutputType(str, Enum):
+    text = "text"
+    audio = "audio"
+    image = "image"
+    video = "video"
 
-    output_type: Optional[str] = None
-    output_text: Optional[str] = None
-    output_url: Optional[HttpUrl] = None
+class ChatDetailBase(BaseModel):
+    input_type: InputType = Field(..., description="Loại input: text hoặc file")
+    text_prompt: Optional[str] = Field(None, description="Nội dung text input", max_length=1000)
+    input_file_path: Optional[str] = Field(None, description="Đường dẫn file input", max_length=1024)
+    output_type: OutputType = Field(..., description="Loại output: text, audio, image, video")
+    output_content: Optional[str] = Field(None, description="Nội dung text output", max_length=10000)
+    output_file_path: Optional[str] = Field(None, description="Đường dẫn file output", max_length=1024)
+
+    @validator("input_type")
+    def validate_input_type(cls, v):
+        if v not in [InputType.text, InputType.file]:
+            raise ValueError("input_type phải là 'text' hoặc 'file'")
+        return v
+
+    @validator("output_type")
+    def validate_output_type(cls, v):
+        if v not in [OutputType.text, OutputType.audio, OutputType.image, OutputType.video]:
+            raise ValueError("output_type phải là 'text', 'audio', 'image', hoặc 'video'")
+        return v
 
 class ChatDetailCreate(ChatDetailBase):
-    generator_id: UUID 
+    generator_id: UUID = Field(..., description="ID của generator")
 
 class ChatDetailResponse(ChatDetailBase):
-    id: UUID
-    created_at: datetime
+    id: UUID = Field(..., description="ID của chat detail")
+    chat_history_id: UUID = Field(..., description="ID của phiên chat")
+    generator_id: UUID = Field(..., description="ID của generator")
+    created_at: datetime = Field(..., description="Thời gian tạo")
 
     class Config:
-        from_attributes = True
-
-##################### Chat History #####################
+        from_attributes = True  # Ánh xạ từ model SQLAlchemy
 
 class ChatHistoryBase(BaseModel):
-    pass  
+    user_id: UUID = Field(..., description="ID của user")
 
-class ChatCreate(ChatHistoryBase):
-    details: List[ChatDetailCreate]
-    
+class ChatHistoryCreate(ChatHistoryBase):
+    chat_details: List[ChatDetailCreate] = Field(..., description="Danh sách chi tiết chat")
+
 class ChatHistoryResponse(ChatHistoryBase):
-    id: UUID
-    user_id: UUID
-    created_at: datetime
-    details: List[ChatDetailResponse] = []
+    id: UUID = Field(..., description="ID của phiên chat")
+    created_at: datetime = Field(..., description="Thời gian tạo")
+    chat_details: List[ChatDetailResponse] = Field(default_factory=list, description="Danh sách chi tiết chat")
 
     class Config:
-        from_attributes = True
+        from_attributes = True  # Ánh xạ từ model SQLAlchemy
 
-class userInfo(BaseModel):
-    email:str
-    role:str
-    expire:datetime
+class ChatHistoryListResponse(BaseModel):
+    chat_histories: List[ChatHistoryResponse] = Field(..., description="Danh sách các phiên chat")

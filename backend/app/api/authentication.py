@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Response
-from services.auth_service import Auth
+from backend.app.services.authentication_and_authorization import Auth
 from starlette.requests import Request
 
 router = APIRouter()

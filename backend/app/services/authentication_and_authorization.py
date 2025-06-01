@@ -1,38 +1,37 @@
-from fastapi import HTTPException, Depends, Response, APIRouter, Request
-from core.security import create_access_token, SECRET_KEY, ALGORITHM
+from fastapi import HTTPException, Depends, Response, Request
+from jose import JWTError, jwt, ExpiredSignatureError
 from authlib.integrations.starlette_client import OAuth
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
+from datetime import datetime, timedelta
 from starlette.requests import Request
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
-from db.models import User
-from datetime import datetime
-from jose import jwt, JWTError
-from db import get_db
+from typing import Optional
 import logging
 import secrets
 import os
 
-load_dotenv()
+from db import get_db
+from db.models import User
 
 # Environment variables
+load_dotenv()
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
-
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
-
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+ALGORITHM = "HS256" 
 ACCESS_TOKEN_EXPIRE_MINUTES = 3000
 COOKIE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-ENV = os.getenv("ENV", "development")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+ENV = os.getenv("ENV")
 
-# Initialize 
+# Initialize
 oauth = OAuth()
-
 oauth.register(
     name="google",
     client_id=GOOGLE_CLIENT_ID,
@@ -45,7 +44,6 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",     
 )
-
 oauth.register(
     name="github",
     client_id=GITHUB_CLIENT_ID,
@@ -56,52 +54,7 @@ oauth.register(
     redirect_uri=GITHUB_REDIRECT_URI,
     client_kwargs={"scope": "user:email"},
 )
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-router = APIRouter()
-
-# Ultilities
-async def check_authen_and_author(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-        credentials_exception = HTTPException(
-            status_code=401,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-        
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            email: str = payload.get("sub")
-            role: str = payload.get("role")
-            exp = payload.get("exp")
-
-            if email is None or role is None:
-                raise credentials_exception
-            if exp and datetime.utcnow().timestamp() > exp:
-                logging.warning(f"Token expired for email: {email}")
-                raise HTTPException(
-                    status_code=401,
-                    detail="Token has expired",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-            
-            user = db.query(User).filter(User.email == email).first()
-            if not user:
-                logging.error(f"User not found for email: {email}")
-                raise credentials_exception
-            if user.role != role:
-                logging.error(f"Role mismatch for email: {email}")
-                raise credentials_exception
-            return user
-        except JWTError as e:
-            logging.error(f"JWT decode error: {str(e)}")
-            raise credentials_exception
-
-def require_role(required_role: str):
-        async def role_checker(user: User = Depends(check_authen_and_author)):
-            if user.role != required_role and user.role != "admin":
-                raise HTTPException(status_code=403, detail=f"Requires {required_role} role")
-            return user
-        return role_checker
 
 class Auth:
     @staticmethod
@@ -178,7 +131,7 @@ class Auth:
             db.refresh(user)
 
             # Tạo access token
-            access_token = create_access_token(data={"sub": user.email, "role" : user.role})
+            access_token = Auth.create_access_token(data={"sub": user.email, "role" : user.role})
 
             # Redirect về frontend (không cần truyền email qua query parameter)
             redirect_url = f"{FRONTEND_URL}/generate"
@@ -215,3 +168,79 @@ class Auth:
         request.session.clear()
         logging.info("User logged out successfully")
         return RedirectResponse(url=f"{FRONTEND_URL}/login")
+    
+    @staticmethod
+    def create_access_token(data: dict, scope: str = "default", expires_delta: Optional[timedelta] = None):
+        to_encode = data.copy()
+        to_encode["scope"] = scope
+        to_encode["role"] = data.get("role", "basic")  # Thêm role vào payload
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        to_encode.update({"exp": expire})
+        logging.info(f"Creating JWT for user: {data.get('sub')} with role: {to_encode['role']}")
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        logging.debug("JWT created successfully")
+        return encoded_jwt
+
+    @staticmethod
+    def decode_access_token(token: str):
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            email = payload.get("sub")
+            role = payload.get("role")
+            scope = payload.get("scope")
+            if email is None or role is None:
+                raise HTTPException(status_code=401, detail="Invalid token payload")
+            return {"email": email, "role": role, "scope": scope}
+        except ExpiredSignatureError:
+            logging.error("Token has expired")
+            raise HTTPException(status_code=401, detail="Token has expired")
+        except JWTError as e:
+            logging.error(f"Invalid token: {str(e)}")
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+    @staticmethod
+    async def check_authen_and_author(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+        credentials_exception = HTTPException(
+            status_code=401,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            email: str = payload.get("sub")
+            role: str = payload.get("role")
+            exp = payload.get("exp")
+
+            if email is None or role is None:
+                raise credentials_exception
+            if exp and datetime.utcnow().timestamp() > exp:
+                logging.warning(f"Token expired for email: {email}")
+                raise HTTPException(
+                    status_code=401,
+                    detail="Token has expired",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                logging.error(f"User not found for email: {email}")
+                raise credentials_exception
+            if user.role != role:
+                logging.error(f"Role mismatch for email: {email}")
+                raise credentials_exception
+            return user
+        except JWTError as e:
+            logging.error(f"JWT decode error: {str(e)}")
+            raise credentials_exception
+
+    @staticmethod
+    def check_role(required_role: str):
+        async def role_checker(user: User = Depends(Auth.check_authen_and_author)):
+            if user.role != required_role and user.role != "admin":
+                raise HTTPException(status_code=403, detail=f"Requires {required_role} role")
+            return user
+        return role_checker

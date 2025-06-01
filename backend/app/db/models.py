@@ -1,8 +1,8 @@
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, func, ForeignKey, Text
+from sqlalchemy import Column, String, Boolean, Integer, DateTime, ForeignKey, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
-import uuid
 from sqlalchemy.orm import relationship
+import uuid
 
 Base = declarative_base()
 
@@ -10,7 +10,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    name = Column(String(100), nullable=False)  
+    name = Column(String(100), nullable=False)
     avatar = Column(String(2048), nullable=True)
     provider = Column(String, nullable=False, default="unknown")
     role = Column(String, nullable=False, default="free")
@@ -19,14 +19,14 @@ class User(Base):
     billing_cycle = Column(String, default="monthly")
     notification_sent = Column(Boolean, default=False)
 
-    chats = relationship("ChatHistory", back_populates="user", cascade="all, delete-orphan")
+    chat_histories = relationship("ChatHistory", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
 
 class Transaction(Base):
     __tablename__ = "transactions"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     order_id = Column(String, unique=True, nullable=False, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
     amount = Column(Integer, nullable=False)
     plan = Column(String, nullable=False)
     status = Column(String, nullable=False)
@@ -34,42 +34,38 @@ class Transaction(Base):
     expires_at = Column(DateTime, nullable=True)
     billing_cycle = Column(String, default="monthly")
 
+    user = relationship("User", back_populates="transactions")
+
 class Generator(Base):
-    __tablename__ = "generator"
+    __tablename__ = "generators"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, unique=True, nullable=False, index=True)
-    input_type = Column(String, nullable=False, index=True)
-    output_type = Column(String, nullable=False, index=True)
+    name = Column(String, nullable=False, unique=True)  # e.g., text2image, text2speech
+    input_type = Column(String, nullable=False)         # e.g., text, file
+    output_type = Column(String, nullable=False)        # e.g., audio, image, video
+
     chat_details = relationship("ChatDetail", back_populates="generator")
 
-class Request(Base):
-    __tablename__ = "request"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    generator_id = Column(UUID(as_uuid=True), ForeignKey("generator.id"), nullable=False, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
-    input_type = Column(String, ForeignKey("generator.input_type"), nullable=False, index=True)
-    text_prompt = Column(String, nullable=True)
-    input_file_name = Column(String, nullable=True)
-
 class ChatHistory(Base):
-    __tablename__ = 'chat_history'
+    __tablename__ = "chat_histories"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=func.now())
-    user = relationship("User", back_populates="chats")
-    details = relationship("ChatDetail", backref="chat_history", cascade="all, delete-orphan")
+
+    user = relationship("User", back_populates="chat_histories")
+    chat_details = relationship("ChatDetail", back_populates="chat_history", cascade="all, delete-orphan")
 
 class ChatDetail(Base):
-    __tablename__ = 'chat_detail'
+    __tablename__ = "chat_details"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    chat_history_id = Column(UUID(as_uuid=True), ForeignKey('chat_history.id'), nullable=False, index=True)
-    generator_id = Column(UUID(as_uuid=True), ForeignKey('generator.id'), nullable=False, index=True)
-    input_type = Column(String, nullable=False, index=True)
-    text_prompt = Column(String, nullable=True)
-    input_file_name = Column(String, nullable=True)
+    chat_history_id = Column(UUID(as_uuid=True), ForeignKey("chat_histories.id"), nullable=False, index=True)
+    generator_id = Column(UUID(as_uuid=True), ForeignKey("generators.id"), nullable=False, index=True)
+    input_type = Column(String, nullable=False)
+    text_prompt = Column(Text, nullable=True)
+    input_file_path = Column(String(1024), nullable=True)
     output_type = Column(String, nullable=False)
-    output_content = Column(Text, nullable=True)
-    output_file_path = Column(String(255), nullable=True)
+    output_content = Column(Text, nullable=True)             # nếu là dạng text
+    output_file_path = Column(String(1024), nullable=True)   # nếu là file (audio/image/video)
     created_at = Column(DateTime, default=func.now())
 
+    chat_history = relationship("ChatHistory", back_populates="chat_details")
     generator = relationship("Generator", back_populates="chat_details")

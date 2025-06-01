@@ -3,10 +3,9 @@ from dotenv import load_dotenv
 from fastapi import Depends, HTTPException
 import httpx
 from db.schemas import UserBase, TTSRequest
-from backend.app.services.auth_service import Auth
+from backend.app.services.authentication_and_authorization import Auth
 from sqlalchemy.orm import Session
 from db import get_db
-from core.security import create_access_token
 
 load_dotenv()
 
@@ -65,6 +64,3 @@ class TextToSpeechService:
                 raise HTTPException(status_code=504, detail="Request to viXTTS timed out after 10 minutes")
             except httpx.RequestError as e:
                 raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
-
-
-        
