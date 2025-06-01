@@ -195,6 +195,10 @@ class ChatDetailBase(BaseModel):
     text_prompt: Optional[str] = None
     input_file_name: Optional[str] = None
 
+    output_type: Optional[str] = None
+    output_text: Optional[str] = None
+    output_url: Optional[HttpUrl] = None
+
 class ChatDetailCreate(ChatDetailBase):
     generator_id: UUID 
 

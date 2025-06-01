@@ -68,7 +68,18 @@ class ChatDetail(Base):
     input_type = Column(String, nullable=False, index=True)
     text_prompt = Column(String, nullable=True)
     input_file_name = Column(String, nullable=True)
+
+    output_type = Column(String, nullable=True)
+    output_text = Column(Text, nullable=True)
+    output_url = Column(String, nullable=True)
+
     created_at = Column(DateTime, default=func.now())
     generator = relationship("Generator")
+
+    # Output fields
+    output_type = Column(String, nullable=True)
+    output_text = Column(Text, nullable=True)
+    output_url = Column(String, nullable=True)
+    
 
     

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session,joinedload
 from db.database import get_db
 from db.models import ChatHistory, ChatDetail, Generator
-from db.schemas import ChatCreate, ChatHistoryResponse
+from db.schemas import ChatCreate, ChatHistoryResponse, ChatDetailCreate, ChatDetailResponse
 from services.auth import Auth
 
 router = APIRouter()
@@ -29,6 +29,11 @@ def save_chat(
             input_type=detail.input_type,
             text_prompt=detail.text_prompt,
             input_file_name=detail.input_file_name,
+
+            output_type=detail.output_type,
+            output_text=detail.output_text,
+            output_url=detail.output_url,
+        
             generator_id=detail.generator_id  
         )
         db.add(new_detail)
@@ -36,6 +41,29 @@ def save_chat(
     db.commit()
     db.refresh(new_chat)
     return new_chat
+
+@router.post("/chat-history/{id}/add-detail", response_model=ChatDetailResponse)
+def add_detail_to_chat(id: str, detail: ChatDetailCreate, db: Session = Depends(get_db), current_user=Depends(Auth.get_current_user)):
+    chat = db.query(ChatHistory).filter(ChatHistory.id == id, ChatHistory.user_id == current_user.id).first()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    new_detail = ChatDetail(
+        chat_history_id=id,
+        input_type=detail.input_type,
+        text_prompt=detail.text_prompt,
+        input_file_name=detail.input_file_name,
+
+        output_type=detail.output_type,
+        output_text=detail.output_text,
+        output_url=detail.output_url,
+
+        generator_id=detail.generator_id,
+    )
+    db.add(new_detail)
+    db.commit()
+    db.refresh(new_detail)
+    return new_detail
 
 @router.get("/chat-history", response_model=list[ChatHistoryResponse])
 def get_chat_history(
