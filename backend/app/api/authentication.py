@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Response, Depends
-from services.authentication_and_authorization import Auth
+from services.authentication_and_authorization import *
 from starlette.requests import Request
 from sqlalchemy.orm import Session
 from db import get_db
@@ -29,7 +29,7 @@ async def github_login(request: Request):
         **Lưu ý**:
         - Frontend cần xử lý redirect từ GitHub callback.
     """
-    return await Auth.login_with_provider(request, "github")
+    return await login_with_provider(request, "github")
 
 @router.get("/github/callback")
 async def github_callback(request: Request, db: Session = Depends(get_db)):
@@ -61,7 +61,7 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
         **Lưu ý**:
         - Nếu GitHub không cung cấp email công khai, API sẽ gọi `/user/emails` để lấy email verified.
     """
-    return await Auth.provider_callback(request, "github", db)
+    return await provider_callback(request, "github", db)
 
 @router.get("/google") 
 async def google_login(request: Request):
@@ -84,7 +84,7 @@ async def google_login(request: Request):
         **Lưu ý**:
         - Frontend cần xử lý redirect từ Google callback.
     """
-    return await Auth.login_with_provider(request, "google")
+    return await login_with_provider(request, "google")
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
@@ -114,7 +114,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         }
         ```
     """
-    return await Auth.provider_callback(request, "google", db)
+    return await provider_callback(request, "google", db)
 
 @router.get("/logout")
 async def logout(request: Request, response: Response):
@@ -134,4 +134,8 @@ async def logout(request: Request, response: Response):
         **Lưu ý**:
         - Frontend cần xử lý redirect để hiển thị trang đăng nhập.
     """
-    return await Auth.logout(request, response)
+    return await logout(request, response)
+
+@router.get("/get-user-info")
+async def get_user_info(request: Request, db: Session = Depends(get_db)):
+    return await get_user_info(request, db)
