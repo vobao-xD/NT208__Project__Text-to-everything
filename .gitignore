@@ -6,3 +6,4 @@ venv/
 *.code-workspace
 backend/.env
 app.log
+_audio_output/

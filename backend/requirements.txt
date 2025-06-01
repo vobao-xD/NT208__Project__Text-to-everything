@@ -1,4 +1,4 @@
-fastapi[standard]
+fastapi[all]
 uvicorn
 pydantic
 sqlalchemy
@@ -50,3 +50,4 @@ libsndfile1
 libsm6
 libxext6
 libxrender-dev
+aiofiles

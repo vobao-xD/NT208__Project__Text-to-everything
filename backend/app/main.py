@@ -43,20 +43,21 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 
-# origins = [
-#     "http://localhost:5173",
-#     "http://127.0.0.1:5173",
-# ]
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 # Configure session middleware with a secret key
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY"))
 
+# Cấu hình CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["http://localhost:5173"],  # Origin của frontend
+    allow_credentials=True,                   # Cho phép gửi cookie
+    allow_methods=["*"],                      # Cho phép tất cả phương thức (GET, POST, v.v.)
+    allow_headers=["*"],                      # Cho phép tất cả header
 )
 
 # # Create img directory for storing images
