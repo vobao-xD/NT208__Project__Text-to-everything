@@ -857,7 +857,7 @@ const Generate = () => {
                                             if (e.key === 'Enter' && !e.shiftKey) {
                                                 e.preventDefault();
                                                 handleSubmit(inputValue);
-                                                e.target.value = '';
+                                                e.target.value = " ";
                                             }
                                         }}
                                         disabled={isLoading}
@@ -1074,7 +1074,7 @@ const Generate = () => {
                                     }}
                                     disabled={isLoading}
                                 />
-                                 <div class="glow-wrapper">
+                                 <div className="glow-wrapper">
                                 <button
                                     id="submit_btn"
                                     className={isLoading ? 'disabled' : ''}
