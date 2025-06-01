@@ -1,47 +1,71 @@
 import requests
 import os
 from dotenv import load_dotenv
+from fastapi import Depends, HTTPException
+import httpx
+from db.schemas import UserBase, TTSRequest
+from services.auth import Auth
+from sqlalchemy.orm import Session
+from db import get_db
+from core.security import create_access_token
 
 load_dotenv()
 
 class TextToSpeechService:
 
     # Khởi tạo API Key
-    url = 'https://api.fpt.ai/hmi/tts/v5'
-    api_key = os.getenv('TTS_API_KEY')
+    url = os.getenv("TTS_BACKEND_URL")
 
-    # Chuyển văn bản thành giọng nói
     @staticmethod
-    def text_to_speech(text, voice='banmai', speed=''):
-        """
-        Gửi yêu cầu chuyển đổi văn bản thành giọng nói bằng API FPT.AI\n
-        :param text: Văn bản cần chuyển thành giọng nói\n
-        :param voice: Giọng nói sử dụng\n 
-        * banmai : nữ miền Bắc\n
-        * leminh : nam miền Bắc\n
-        * thuminh : nữ miền Bắc\n
-        * minhquang : nam miền Bắc\n
-        * myan : nữ miền Trung\n
-        * linhsan : nữ miền Nam\n
-        * giahuy : nam miền Trung\n
-        * lannhi : nữ miền Nam\n
-        * ngoclam : nữ miền Trung\n
-        :param speed: Tốc độ đọc (-3 đến 3, mặc định là 0)\n
-        :return: URL file âm thanh hoặc thông tin lỗi\n
-        """
+    async def text_to_speech_with_default_voice(
+        request: TTSRequest,
+        current_user: UserBase = Depends(Auth.get_current_user),
+        db: Session = Depends(get_db)
+    ):
+        async with httpx.AsyncClient(timeout=600.0) as client:
+            try:
+                # Tạo access token cho user
+                access_token = create_access_token(data={"sub": current_user.email})
+                
+                # Gọi endpoint /tts của viXTTS
+                response = await client.post(
+                    f"{TextToSpeechService.url}/tts",
+                    headers={
+                        "Authorization": f"Bearer {access_token}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "text": prompt,
+                        "language": language,
+                        "gender": gender,
+                        "style": style
+                    }
+                )
+                response.raise_for_status()
+                tts_response = response.json()
+                mp3_path = tts_response["file_path"]
+                
+                # Tải file MP3 từ /audio
+                mp3_response = await client.get(
+                    f"{TextToSpeechService.url}/audio/{mp3_path}",
+                    headers={"Authorization": f"Bearer {access_token}"}
+                )
+                mp3_response.raise_for_status()
+                
+                # Lưu file MP3 tạm thời
+                mp3_filename = mp3_path.split("/")[-1]
+                save_path = f"../../_audio_output/{mp3_filename}"
+                with open(save_path, "wb") as f:
+                    f.write(mp3_response.content)
+                
+                return {"success": True, "mp3_file": save_path}
+                
+            except httpx.HTTPStatusError as e:
+                raise HTTPException(status_code=e.response.status_code, detail=e.response.json())
+            except httpx.TimeoutException:
+                raise HTTPException(status_code=504, detail="Request to viXTTS timed out after 10 minutes")
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
 
-        if not TextToSpeechService.api_key:
-            raise ValueError("API key is missing. Please set TTS_API_KEY in .env file")
 
-        headers = {
-            'api-key': TextToSpeechService.api_key,
-            'speed': str(speed),
-            'voice': voice
-        }
-
-        response = requests.post(TextToSpeechService.url, data=text.encode('utf-8'), headers=headers)
-        if response.status_code == 200:
-            return response.json().get('async', "No URL returned")
-        else:
-            return f"Error {response.status_code}: {response.text}"
         

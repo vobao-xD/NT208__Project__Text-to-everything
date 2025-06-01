@@ -4,12 +4,11 @@ from jose import JWTError, jwt, ExpiredSignatureError
 from fastapi import HTTPException
 import logging
 import os
-import secrets
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", secrets.token_hex(32)) # Cần phải sửa lại biến môi trường này trong production, nếu ko reload app là mất tất cả session.
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))  
 

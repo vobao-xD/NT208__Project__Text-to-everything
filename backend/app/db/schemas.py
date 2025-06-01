@@ -1,7 +1,8 @@
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
-from pydantic import HttpUrl
+from pydantic import BaseModel, validator, Field, HttpUrl
+from fastapi import UploadFile, File, Form
 
 #################### Authentication ####################
 
@@ -20,43 +21,40 @@ class TTIPrompt(BaseModel):
 
 #################### Text to speech ####################
 
-class TTSClientRequest(BaseModel):
-    text: str
-    voice: str = "banmai"
-    speed: str = "0"
+class TTSRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=1000, description="Text to convert to speech")
+    language: str = Field(default="Tiếng Việt", description="Language for TTS")
+    gender: str = Field(..., pattern="^(male|female)$", description="Voice gender")
+    style: str = Field(default="default", description="Voice style")
+    
+    @validator('text')
+    def validate_text(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Text cannot be empty")
+        return v.strip()
+    
+    @validator('language')
+    def validate_language(cls, v):
+        if v not in ['Tiếng Việt', 'Vietnamese', 'Tiếng Anh', 'English']:
+            raise ValueError("Only Vietnamese and English languages are supported")
+        return v
 
-class RequestBase(BaseModel):
-    input_type: str  # text, audio, filee
-    input_text: Optional[str] = None
-    input_audio_url: Optional[str] = None
-    output_type: str  # speech, image, video
+class TTSUploadRequest(BaseModel):
+    file: Optional[UploadFile] = File(None, description="Audio file (WAV, MP3, FLAC, OGG). Required if use_existing_reference is false."),
+    prompt: str = Form(..., min_length=1, max_length=1000, description="Text to convert to speech"),
+    language: str = Form(default="Tiếng Việt", description="Language for TTS"),
+    use_existing_reference: bool = Form(False, description="Set to true to use previously uploaded reference audio"),
+    @validator('use_existing_reference')
+    def validate_boolean(cls, v):
+        if not isinstance(v, bool):
+            raise ValueError("use_existing_reference must be a boolean (True/False)")
+        return v
 
-class RequestCreate(RequestBase):
-    pass
-
-class RequestResponse(RequestBase):
-    id: int
-    user_id: int
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class ResponseBase(BaseModel):
-    output_type: str
-    output_url: HttpUrl
-    model_used: str
-
-class ResponseCreate(ResponseBase):
-    pass
-
-class ResponseResponse(ResponseBase):
-    id: int
-    request_id: int
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+class TTSResponse(BaseModel):
+    success: bool
+    file_path: str
+    cost: int
+    timestamp: str
 
 #################### Text to video ####################
 

@@ -141,7 +141,7 @@ class Auth:
             # Redirect về frontend (không cần truyền email qua query parameter)
             redirect_url = f"{FRONTEND_URL}/generate"
             response = RedirectResponse(url=redirect_url)
-
+            return access_token
             # Thiết lập cookie với access_token
             response.set_cookie(
                 key="access_token",

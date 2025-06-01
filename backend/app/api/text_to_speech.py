@@ -1,7 +1,9 @@
 import re
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from services.ai_services import TextToSpeechService as service
-from db import schemas
+from db.schemas import TTSRequest, TTSResponse
+from services.auth import Auth
+import httpx
 
 router = APIRouter()
 
@@ -11,10 +13,6 @@ def extract_audio_text(text: str) -> str:
         return match.group(1)
     return text  
 
-@router.post("/")
-def text_to_speech(prompt: schemas.TTSClientRequest):
-    """
-    Chuyển văn bản thành giọng nói
-    """
-    audio_url = service.text_to_speech(extract_audio_text(prompt.text), prompt.voice, prompt.speed)
-    return {"audio_url": audio_url}  
+@router.post("/text-to-speech/default", response_model=TTSResponse)
+async def _(request: TTSRequest):
+    return service.text_to_speech_with_default_voice(request)
