@@ -21,6 +21,7 @@ const Generate = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
+    const imageInputRef = useRef(null);
     const [userInfo,setUserInfo]=useState({email:' ',role:'free',expire:' '});
     const [retryAfter, setRetryAfter] = useState(0);
     const [isRateLimited, setIsRateLimited] = useState(false);
@@ -888,6 +889,98 @@ const Generate = () => {
                                     >
                                         +
                                     </button>
+                                    <button
+                                        className={`file-upload-btn ${isLoading ? 'disabled' : ''}`}
+                                        onClick={() => imageInputRef.current?.click()}
+                                        disabled={isLoading}
+                                        data-tooltip="Đính kèm tệp"
+                                        style={{
+                                            padding: '10px',
+                                            borderRadius: '50%',
+                                            height: '20px',
+                                            marginLeft: '2%',
+                                            marginRight: '20px',
+                                            marginBottom: '3%',
+                                            width: '20px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'black',
+                                            fontSize: '25px',
+                                            position: 'absolute',
+                                            left: '50px'
+                                        }}
+                                    >
+                                        📎
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref={imageInputRef}
+                                        onChange={handleImageSelect}
+                                        style={{ display: 'none' }}
+                                        accept="image/*"
+                                    />
+                                    {imagePreview && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '-40px',
+                                            left: '4%',
+                                            transform: 'translateX(-50%)',
+                                            width: '50px',
+                                            height: '50px',
+                                            borderRadius: '5px',
+                                            overflow: 'hidden',
+                                            border: 'none'
+                                        }}>
+                                            <img
+                                                src={imagePreview}
+                                                alt="Preview"
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover'
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedFile(null);
+                                                    setImagePreview(null);
+                                                    if (imageInputRef.current) {
+                                                        imageInputRef.current.value = '';
+                                                    }
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '2px',
+                                                    right: '2px',
+                                                    width: '16px',
+                                                    height: '16px',
+                                                    borderRadius: '50%',
+                                                    background: '#ff4444',
+                                                    border: 'none',
+                                                    color: 'white',
+                                                    fontSize: '10px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    padding: 0,
+                                                    lineHeight: 1,
+                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                                    zIndex: 2,
+                                                    transition: 'transform 0.2s ease',
+                                                    ':hover': {
+                                                        transform: 'scale(1.2)'
+                                                    }
+                                                }}
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    )}
                                     <div className="glow-wrapper">
                                     <button
                                         id="submit_btn"
