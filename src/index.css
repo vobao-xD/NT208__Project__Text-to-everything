@@ -1146,10 +1146,10 @@ body.signin-page p {
  
 }
 .sidebar{
-  background-size: cover;
+  background-size: 1500px,1500px; /* hoặc contain */
   background-position: middle, left;
   background-repeat: no-repeat;
-  background-image:url('https://r4.wallpaperflare.com/wallpaper/25/81/104/digital-art-abstract-minimalism-black-wallpaper-cd61cf34f431d32b183973c25df8716a.jpg');
+  background-image:url('https://img.freepik.com/free-vector/dark-background-geometric-style_23-2147519820.jpg?ga=GA1.1.326086185.1748537268&semt=ais_hybrid&w=740');
 }
 .content{
   background: black;
