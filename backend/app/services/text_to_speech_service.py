@@ -1,10 +1,9 @@
-import requests
 import os
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException
 import httpx
 from db.schemas import UserBase, TTSRequest
-from services.auth import Auth
+from backend.app.services.auth_service import Auth
 from sqlalchemy.orm import Session
 from db import get_db
 from core.security import create_access_token

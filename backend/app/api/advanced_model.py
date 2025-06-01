@@ -62,7 +62,6 @@ async def _handle_text_only_input(
             detail=f"Failed to process text query: {str(e)}"
         )
 
-
 async def _handle_image_input(
     client: AsyncOpenAI,
     text: str,
@@ -115,7 +114,6 @@ async def _handle_image_input(
     except Exception as e:
         print(f"Vision model error: {str(e)}")
         raise Exception(f"Vision model processing failed: {str(e)}")
-
 
 async def _handle_document_input(
     client: AsyncOpenAI,

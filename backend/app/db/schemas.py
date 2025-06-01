@@ -1,10 +1,9 @@
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, validator, UploadFile, Form
 from datetime import datetime
+from fastapi import File
 from uuid import UUID
 from enum import Enum
-from fastapi import BaseModel, validator, Field, UploadFile
-from fastapi import UploadFile, File, Form
 
 #################### Authentication ####################
 
@@ -14,20 +13,15 @@ class UserBase(BaseModel):
     avatar: Optional[HttpUrl] = None
     provider: str
     role: str
-
-#################### Text to image ####################
-
-class TTIPrompt(BaseModel):
-    prompt: str
-    steps: int | None = None
+    expires_at: Optional[datetime] = None
 
 #################### Text to speech ####################
 
 class TTSRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=1000, description="Text to convert to speech")
-    language: str = Field(default="Tiếng Việt", description="Language for TTS")
-    gender: str = Field(..., pattern="^(male|female)$", description="Voice gender")
-    style: str = Field(default="default", description="Voice style")
+    text: str = Form(..., min_length=1, max_length=1000, description="Text to convert to speech")
+    language: str = Form(default="Tiếng Việt", description="Language for TTS")
+    gender: str = Form(..., pattern="^(male|female)$", description="Voice gender: 'male' or 'female'")
+    style: str = Form(default="default", description="Voice style: depends on gender")
     
     @validator('text')
     def validate_text(cls, v):
@@ -40,12 +34,45 @@ class TTSRequest(BaseModel):
         if v not in ['Tiếng Việt', 'Vietnamese', 'Tiếng Anh', 'English']:
             raise ValueError("Only Vietnamese and English languages are supported")
         return v
-
+    
+    @validator('gender')
+    def validate_gender(cls, v):
+        if v not in ['male', 'female']:
+            raise ValueError("Gender must be 'male' or 'female'")
+        return v
+    
+    @validator('style')
+    def validate_style(cls, v, values):
+        if 'gender' not in values:
+            raise ValueError("Gender must be specified before style validation")
+        
+        gender = values['gender']
+        male_styles = ['calm', 'cham', 'nhanh', 'default']
+        female_styles = ['calm', 'cham', 'luuloat', 'nhannha', 'default']
+        
+        allowed_styles = male_styles if gender == 'male' else female_styles
+        if v not in allowed_styles:
+            raise ValueError(f"Style must be one of {allowed_styles} for gender '{gender}'")
+        return v
+    
 class TTSUploadRequest(BaseModel):
-    file: Optional[UploadFile] = File(None, description="Audio file (WAV, MP3, FLAC, OGG). Required if use_existing_reference is false."),
-    prompt: str = Form(..., min_length=1, max_length=1000, description="Text to convert to speech"),
-    language: str = Form(default="Tiếng Việt", description="Language for TTS"),
-    use_existing_reference: bool = Form(False, description="Set to true to use previously uploaded reference audio"),
+    text: str = Form(..., min_length=1, max_length=1000, description="Text to convert to speech")
+    language: str = Form(default="Tiếng Việt", description="Language for TTS")
+    file: Optional[UploadFile] = File(None, description="Audio file (WAV, MP3, FLAC, OGG). Required if use_existing_reference is false.")
+    use_existing_reference: bool = Form(False, description="Set to true to use previously uploaded reference audio")
+    
+    @validator('text')
+    def validate_text(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Text cannot be empty")
+        return v.strip()
+    
+    @validator('language')
+    def validate_language(cls, v):
+        if v not in ['Tiếng Việt', 'Vietnamese', 'Tiếng Anh', 'English']:
+            raise ValueError("Only Vietnamese and English languages are supported")
+        return v
+    
     @validator('use_existing_reference')
     def validate_boolean(cls, v):
         if not isinstance(v, bool):
@@ -55,8 +82,13 @@ class TTSUploadRequest(BaseModel):
 class TTSResponse(BaseModel):
     success: bool
     file_path: str
-    cost: int
     timestamp: str
+
+#################### Text to image ####################
+
+class TTIPrompt(BaseModel):
+    prompt: str
+    steps: int | None = None
 
 #################### Text to video ####################
 
@@ -83,10 +115,10 @@ class QuestionRequest(BaseModel):
 
 #################### Tu tu ####################
 
-    
 class TextInput(BaseModel):
     user_text: str
     max_tokens: Optional[int] = 150
+
 class ChatRequest(BaseModel):
     prompt: str
 
@@ -96,6 +128,7 @@ class TTCRequest(BaseModel):
     prompt: str
 
 #################### Payment ####################
+
 class PaymentRequest(BaseModel):
     amount: int
     email: str
@@ -103,11 +136,13 @@ class PaymentRequest(BaseModel):
     billing_cycle: str = Field(alias="billingCycle")
     current_role: str = Field(alias="currentRole")
     current_billing_cycle: str = Field(alias="currentBillingCycle")
+
 class UserSubscription(BaseModel):
     role: str
     billingCycle: Optional[str] = "monthly"
 
 #################### Advanced Model ####################
+
 class TextToCodeRequest(BaseModel):
     prompt:str
     language:Optional[str] = "python"
@@ -121,7 +156,6 @@ class TextToImageRequest(BaseModel):
     quality: Optional[str] = "standard" # "standard" or "hd" for DALL-E 3
     style: Optional[str] = "vivid" # "vivid" or "natural" for DALL-E 3
     response_format: Optional[str] = "url" # "url" or "b64_json"
-
 
 class TextToAudioRequest(BaseModel):
     text: str
@@ -170,14 +204,12 @@ class RequestAdvancedModel(BaseModel):
     image_url:str=None
     file: UploadFile=None
 
-
 class FileTextToAnswerResponse(BaseModel):
     answer: str = Field(description="The answer generated by the AI based on the file and text query.")
     processed_by: str = Field(description="Indicates which AI method was used: 'vision_model' or 'assistant_file_search'.")
     file_details: Dict[str, Any] = Field(description="Details of the processed file (filename, content_type, size).")
     model_used: Optional[str] = Field(None, description="The specific AI model that generated the answer.")
     usage: Optional[Dict[str, Any]] = Field(None, description="Token usage statistics from the OpenAI API call.")
-
 
 ###################### Chat Detail ######################
 

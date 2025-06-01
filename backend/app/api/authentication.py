@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, Response
-from services.auth import Auth
-from db import get_db
+from services.auth_service import Auth
 from starlette.requests import Request
-from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -32,7 +30,7 @@ async def github_login(request: Request):
     return await Auth.login_with_provider(request, "github")
 
 @router.get("/auth/github/callback")
-async def github_callback(request: Request, db: Session = Depends(get_db)):
+async def github_callback(request: Request):
     """
         Xử lý callback từ GitHub, lấy thông tin user, lưu vào database, tạo access token và lưu vào cookie.
 
@@ -61,7 +59,7 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
         **Lưu ý**:
         - Nếu GitHub không cung cấp email công khai, API sẽ gọi `/user/emails` để lấy email verified.
     """
-    return await Auth.provider_callback(request, "github", db)
+    return await Auth.provider_callback(request, "github")
 
 @router.get("/auth/google") 
 async def google_login(request: Request):
@@ -87,7 +85,7 @@ async def google_login(request: Request):
     return await Auth.login_with_provider(request, "google")
 
 @router.get("/auth/google/callback")
-async def google_callback(request: Request, db: Session = Depends(get_db)):
+async def google_callback(request: Request):
     """
         Xử lý callback từ Google sau khi xác thực, lưu user vào database, tạo access token và lưu vào cookie.
 
@@ -114,7 +112,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         }
         ```
     """
-    return await Auth.provider_callback(request, "google", db)
+    return await Auth.provider_callback(request, "google")
 
 @router.get("/auth/logout")
 async def logout(request: Request, response: Response):

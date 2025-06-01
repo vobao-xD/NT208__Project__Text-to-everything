@@ -2,7 +2,6 @@ import contextlib
 from sched import scheduler
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from flask_limiter import RateLimitExceeded
 from grpc import Status
 from openai import AsyncOpenAI
 from starlette.middleware.sessions import SessionMiddleware
@@ -10,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from api import router
-from services.check_expired_subscriptions import check_expired_subscriptions
+from backend.app.services.check_expired_subscriptions_service import check_expired_subscriptions
 from db import init_db
 import logging
 import os
@@ -47,7 +46,7 @@ app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY",
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[*],  
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

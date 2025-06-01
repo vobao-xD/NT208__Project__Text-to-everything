@@ -1,6 +1,6 @@
 from fastapi import APIRouter,HTTPException,requests,Depends
 from sqlalchemy.orm import Session
-from api.auth import Auth
+from backend.app.api.authentication import Auth
 from db.models import User
 from db.database import get_db
 from db.schemas import PermissionCheckRequest,PermissionResult

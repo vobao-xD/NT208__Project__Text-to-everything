@@ -1,12 +1,8 @@
 from fastapi import APIRouter, HTTPException
-import os
-from dotenv import load_dotenv
-from grpc import Status
-import httpx
-from openai import BaseModel
-import requests
-from db import schemas
 from services.ai_services import TextToCodeService as service
+from dotenv import load_dotenv
+from db import schemas
+import os
 
 load_dotenv()
 

@@ -6,23 +6,21 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
-# ==================== User ==================== 
-
 class User(Base):
     __tablename__ = "users"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, index=True, nullable=False)
     name = Column(String(100), nullable=False)  
     avatar = Column(String(2048), nullable=True)
-    provider = Column(String, nullable=False, default="google")
+    provider = Column(String, nullable=False, default="unknown")
     role = Column(String, nullable=False, default="free")
-    chats = relationship("ChatHistory", back_populates="user", cascade="all, delete-orphan")
     created_at = Column(DateTime, default=func.now())
     expires_at = Column(DateTime, nullable=True)
     billing_cycle = Column(String, default="monthly")
     notification_sent = Column(Boolean, default=False)
 
-# ==================== Khác ==================== 
+    chats = relationship("ChatHistory", back_populates="user", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -41,7 +39,8 @@ class Generator(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, unique=True, nullable=False, index=True)
     input_type = Column(String, nullable=False, index=True)
-
+    output_type = Column(String, nullable=False, index=True)
+    chat_details = relationship("ChatDetail", back_populates="generator")
 
 class Request(Base):
     __tablename__ = "request"
@@ -68,18 +67,9 @@ class ChatDetail(Base):
     input_type = Column(String, nullable=False, index=True)
     text_prompt = Column(String, nullable=True)
     input_file_name = Column(String, nullable=True)
-
-    output_type = Column(String, nullable=True)
-    output_text = Column(Text, nullable=True)
-    output_url = Column(String, nullable=True)
-
+    output_type = Column(String, nullable=False)
+    output_content = Column(Text, nullable=True)
+    output_file_path = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=func.now())
-    generator = relationship("Generator")
 
-    # Output fields
-    output_type = Column(String, nullable=True)
-    output_text = Column(Text, nullable=True)
-    output_url = Column(String, nullable=True)
-    
-
-    
+    generator = relationship("Generator", back_populates="chat_details")

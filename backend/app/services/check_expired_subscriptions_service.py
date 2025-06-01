@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logger = logging.getLogger("uvicorn.error")
+
 def send_expiration_email(to_email: str, plan: str, billing_cycle: str):
     from_email = os.getenv("SMTP_USERNAME")
     app_url = os.getenv("APP_URL")
@@ -45,6 +46,7 @@ def send_expiration_email(to_email: str, plan: str, billing_cycle: str):
     except Exception as e:
         print(f"Failed to send email to {to_email}: {e}")
         return False
+
 def check_expired_subscriptions():
     print("Checking expired subscriptions")
     db = next(get_db())

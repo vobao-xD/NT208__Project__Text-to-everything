@@ -12,7 +12,7 @@ import PyPDF2
 import docx
 from dependencies.GetInfo import get_current_user_email, get_current_user_role
 from db.schemas import *
-from services.analyzeInput import guess_ai_intent
+from backend.app.services.input_analyzer_service import guess_ai_intent
 import speech_recognition as sr
 from pydub import AudioSegment
 import os

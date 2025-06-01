@@ -1,4 +1,3 @@
-#text_to_video-service.py
 import os
 import requests
 from dotenv import load_dotenv # type: ignore
