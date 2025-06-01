@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from services.ai_services import TextToImageService as service
+from services import TextToImageService as service
 from db import schemas
 
 router = APIRouter()

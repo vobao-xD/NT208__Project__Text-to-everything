@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from jose import jwt, JWTError
+
 load_dotenv()   
 
 router = APIRouter()

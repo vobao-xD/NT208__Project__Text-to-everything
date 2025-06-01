@@ -14,7 +14,7 @@ from openai import AsyncOpenAI
 import openai
 from runwayml import AsyncRunwayML
 import runwayml
-from openai_client_instance import openai_client_instance
+from services.openai_client_instance import openai_client_instance
 
 from db.schemas import AnalyzeRequest, ChatbotContentRequest, EnhanceTextRequest, FileTextToAnswerResponse, GenerateAnswerRequest, RunwayTextToVideoRequest, TextToAudioRequest, TextToCodeRequest, TextToImageRequest, TextToVideoRequest
 

@@ -130,6 +130,7 @@ class Auth:
             db.commit()
             db.refresh(user)
 
+
             # Tạo access token
             access_token = Auth.create_access_token(data={"sub": user.email, "role" : user.role})
 
@@ -173,7 +174,7 @@ class Auth:
     def create_access_token(data: dict, scope: str = "default", expires_delta: Optional[timedelta] = None):
         to_encode = data.copy()
         to_encode["scope"] = scope
-        to_encode["role"] = data.get("role", "basic")  # Thêm role vào payload
+        to_encode["role"] = data.get("role", "basic")
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
@@ -202,7 +203,7 @@ class Auth:
             raise HTTPException(status_code=401, detail="Invalid token")
 
     @staticmethod
-    async def check_authen_and_author(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    async def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
         credentials_exception = HTTPException(
             status_code=401,
             detail="Could not validate credentials",

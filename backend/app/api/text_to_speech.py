@@ -1,18 +1,14 @@
 import re
-from fastapi import APIRouter, HTTPException
-from services.ai_services import TextToSpeechService as service
+from fastapi import APIRouter, HTTPException, Depends
+from services import TextToSpeechService as service
 from db.schemas import TTSRequest, TTSResponse
-from backend.app.services.authentication_and_authorization import Auth
+from services.authentication_and_authorization import Auth
 import httpx
+from sqlalchemy.orm import Session
+from db import get_db
 
 router = APIRouter()
 
-def extract_audio_text(text: str) -> str:
-    match = re.search(r"['\"](.*?)['\"]", text)
-    if match:
-        return match.group(1)
-    return text  
-
 @router.post("/text-to-speech/default", response_model=TTSResponse)
-async def _(request: TTSRequest):
-    return service.text_to_speech_with_default_voice(request)
+async def _(request: TTSRequest, token: str, db: Session = Depends(get_db)):
+    return service.text_to_speech_with_default_voice(request, token, db)

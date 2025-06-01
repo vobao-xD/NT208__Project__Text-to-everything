@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, Response
-from backend.app.services.authentication_and_authorization import Auth
+from fastapi import APIRouter, Response, Depends
+from services.authentication_and_authorization import Auth
 from starlette.requests import Request
+from sqlalchemy.orm import Session
+from db import get_db
 
 router = APIRouter()
 
-@router.get("/auth/github") 
+@router.get("/github") 
 async def github_login(request: Request):
     """
         Chuyển hướng người dùng đến trang đăng nhập GitHub để xác thực.
@@ -29,8 +31,8 @@ async def github_login(request: Request):
     """
     return await Auth.login_with_provider(request, "github")
 
-@router.get("/auth/github/callback")
-async def github_callback(request: Request):
+@router.get("/github/callback")
+async def github_callback(request: Request, db: Session = Depends(get_db)):
     """
         Xử lý callback từ GitHub, lấy thông tin user, lưu vào database, tạo access token và lưu vào cookie.
 
@@ -59,9 +61,9 @@ async def github_callback(request: Request):
         **Lưu ý**:
         - Nếu GitHub không cung cấp email công khai, API sẽ gọi `/user/emails` để lấy email verified.
     """
-    return await Auth.provider_callback(request, "github")
+    return await Auth.provider_callback(request, "github", db)
 
-@router.get("/auth/google") 
+@router.get("/google") 
 async def google_login(request: Request):
     """
         Chuyển hướng người dùng đến trang đăng nhập Google để xác thực.
@@ -84,8 +86,8 @@ async def google_login(request: Request):
     """
     return await Auth.login_with_provider(request, "google")
 
-@router.get("/auth/google/callback")
-async def google_callback(request: Request):
+@router.get("/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
     """
         Xử lý callback từ Google sau khi xác thực, lưu user vào database, tạo access token và lưu vào cookie.
 
@@ -112,9 +114,9 @@ async def google_callback(request: Request):
         }
         ```
     """
-    return await Auth.provider_callback(request, "google")
+    return await Auth.provider_callback(request, "google", db)
 
-@router.get("/auth/logout")
+@router.get("/logout")
 async def logout(request: Request, response: Response):
     """
         Đăng xuất người dùng, xóa cookie `access_token` và session, chuyển hướng về trang đăng nhập.

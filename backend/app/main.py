@@ -9,12 +9,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from api import router
-from backend.app.services.check_expired_subscriptions import check_expired_subscriptions
+from services.check_expired_subscriptions import check_expired_subscriptions
 from db import init_db
 import logging
 import os
+from flask_limiter import RateLimitExceeded
 from apscheduler.schedulers.background import BackgroundScheduler
-from openai_client_instance import lifespan
+from services.openai_client_instance import lifespan
 from redis import asyncio as aioredis
 from fastapi_limiter import FastAPILimiter
 load_dotenv()

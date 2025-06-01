@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from services.ai_services import TextToCodeService as service
+from services import TextToCodeService as service
 from dotenv import load_dotenv
 from db import schemas
 import os
