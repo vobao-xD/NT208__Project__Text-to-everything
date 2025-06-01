@@ -20,7 +20,10 @@ const Generate = () => {
     const [isManualSelection, setIsManualSelection] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const fileInputRef = useRef(null);
-
+    const [userInfo,setUserInfo]=useState({email:' ',role:'free',expire:' '});
+    const [retryAfter, setRetryAfter] = useState(0);
+    const [isRateLimited, setIsRateLimited] = useState(false);
+    const [inputValue,setInputValue]=useState('');
     useEffect(() => {
         console.log("Cookies:", document.cookie);
         const fetchUserInfo = async () => {
@@ -34,6 +37,9 @@ const Generate = () => {
       
             if (data.email) {
               localStorage.setItem('email', data.email);
+                setUserInfo({email:data.email,
+                    role: data.role||'free',
+                    expire:data.expire||''})
             } else {
               alert("Không tìm thấy email!");
             }
@@ -65,20 +71,43 @@ const Generate = () => {
             setChatHistory(conversation.messages);
             setCurrentConversationId(conversationId);
         }
-    };
+    };  
 
     const handleAutoAnalyze = async (text) => {
         try {
             const response = await fetch("http://127.0.0.1:8000/analyze", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization":`Bearer ${localStorage.getItem("access_token")}`,
+                    'X-User-email':localStorage.getItem("email"),
+                    'X-User-role':userInfo.role
                 },
                 body: JSON.stringify({ user_text: text })
             });
+            if(response.status === 429) {
+                console.log("Rate limit exceeded");
+                const data=await response.json();
+                const retryAfter = response.headers.get('Retry-After');
+                const timeToWait = retryAfter ? parseInt(retryAfter, 10) * 1000 : 5000;
 
+                setRetryAfter(timeToWait);
+                setIsRateLimited(true);
+                alert("Rate limit exceeded. Please try again later.");
+                let timer = setInterval(() => {
+                    setRetryAfter(prev => {
+                        if (prev <= 1) {
+                            clearInterval(timer);
+                            setIsRateLimited(false);
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+            }
             if (!response.ok) {
-                throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+                const errorText = await response.text();
+                throw new Error(`Lỗi API (${response.status}): ${errorText}`);
             }
 
             const data = await response.json();
@@ -754,12 +783,15 @@ const Generate = () => {
                          
                                     <textarea
                                         className={`input ${isLoading ? 'disabled' : ''}`}
+                                        id="textarea"
                                         rows="4"
                                         placeholder="Mô tả những gì bạn muốn tạo, hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)"
+                                        value={inputValue}
+                                        onChange={(e)=>setInputValue(e.target.value)}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && !e.shiftKey) {
                                                 e.preventDefault();
-                                                handleSubmit(e.target.value);
+                                                handleSubmit(inputValue);
                                                 e.target.value = '';
                                             }
                                         }}
@@ -798,14 +830,12 @@ const Generate = () => {
                                     >
                                         +
                                     </button>
-                                    <div class="glow-wrapper">
+                                    <div className="glow-wrapper">
                                     <button
                                         id="submit_btn"
                                         className={isLoading ? 'disabled' : ''}
-                                        onClick={(e) => {
-                                            const textarea = e.target.parentElement.querySelector('textarea');
-                                            handleSubmit(textarea.value);
-                                            textarea.value = '';
+                                        onClick={() => {
+                                                handleSubmit(inputValue);
                                         }}
                                         disabled={isLoading}
                                         
