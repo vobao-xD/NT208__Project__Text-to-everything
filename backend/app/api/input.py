@@ -10,7 +10,6 @@ import io
 from moviepy import VideoFileClip
 import PyPDF2
 import docx
-from services.authentication_and_authorization import Auth
 from db.schemas import *
 from services.input_analyzer import guess_ai_intent
 import speech_recognition as sr
