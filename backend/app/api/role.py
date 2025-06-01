@@ -32,7 +32,7 @@ app = FastAPI()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
-@router.get("/api/user-info")
+@router.get("/user-info")
 async def get_user_info(request: Request,db=Depends(get_db)):
     token = request.cookies.get("access_token")
     if not token:

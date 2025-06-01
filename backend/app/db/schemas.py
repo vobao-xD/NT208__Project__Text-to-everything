@@ -7,6 +7,7 @@ from typing import Optional, Literal
 from datetime import datetime
 import re
 from fastapi import File, UploadFile, Form
+from fastapi.responses import FileResponse
 from uuid import UUID
 from enum import Enum
 
@@ -88,7 +89,11 @@ class TTSResponse(BaseModel):
     success: bool
     file_path: str
     timestamp: str
-    
+
+class TTSError(Exception):
+    """Custom exception for TTS operations"""
+    pass
+
 #################### Text to image ####################
 
 class TTIPrompt(BaseModel):

@@ -3,10 +3,56 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, Depends
 from db.models import ChatDetail, ChatHistory
+from db.schemas import TTSError
 from db import get_db
+from pathlib import Path
+from fastapi import UploadFile
+from main import logging
+import aiofiles
+
 
 class OutputManager:
-    OUTPUT_DIR = "./_output"  # Sử dụng đường dẫn tuyệt đối
+    AUDIO_OUTPUT_DIR = "./_custom_audio_output"  # Sử dụng đường dẫn tuyệt đối
+    DEFAULT_REFERENCE_FILENAME = "reference.wav"
+    ALLOWED_EXTENSIONS = {'wav', 'mp3', 'flac', 'ogg'}
+
+    @staticmethod
+    def get_user_reference_path(user_email: str) -> str:
+        """Get path to user's reference audio file."""
+        secure_user_email = OutputManager.secure_filename(user_email)
+        user_dir = Path(OutputManager.AUDIO_OUTPUT_DIR) / secure_user_email
+        return str(user_dir / OutputManager.DEFAULT_REFERENCE_FILENAME)
+
+    @staticmethod
+    def validate_file_extension(filename: str) -> bool:
+        """Check if file extension is allowed"""
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1].lower() in OutputManager.ALLOWED_EXTENSIONS
+    
+    @staticmethod
+    def secure_filename(filename: str) -> str:
+        """Create a secure filename"""
+        from werkzeug.utils import secure_filename as werkzeug_secure_filename
+        return werkzeug_secure_filename(filename)
+    
+    @staticmethod
+    async def save_uploaded_file(file: UploadFile, user_email: str) -> str:
+        """Save uploaded file securely to user's directory."""
+        secure_user_email = OutputManager.secure_filename(user_email)
+        user_dir = Path(OutputManager.OUTPUT_DIR) / secure_user_email
+        user_dir.mkdir(parents=True, exist_ok=True)
+        
+        save_path = user_dir / OutputManager.DEFAULT_REFERENCE_FILENAME
+        
+        try:
+            async with aiofiles.open(save_path, 'wb') as f:
+                content = await file.read()
+                await f.write(content)
+            logging.info(f"File saved successfully: {save_path}")
+            return str(save_path)
+        except Exception as e:
+            logging.error(f"Failed to save file: {e}")
+            raise TTSError(f"Failed to save uploaded file: {str(e)}")
 
     @staticmethod
     def save_output(
