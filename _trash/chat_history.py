@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session,joinedload
-from db.database import get_db
-from db.models import ChatHistory, ChatDetail, Generator
-from db.schemas import ChatHistoryResponse, ChatDetailCreate, ChatDetailResponse
-from services.authentication_and_authorization import Auth
+# from fastapi import APIRouter, Depends, HTTPException, status
+# from sqlalchemy.orm import Session,joinedload
+# from db.database import get_db
+# from db.models import ChatHistory, ChatDetail, Generator
+# from db.schemas import ChatHistoryResponse, ChatDetailCreate, ChatDetailResponse
+# from services.authentication_and_authorization import Auth
 
-router = APIRouter()
+# router = APIRouter()
 
 # @router.post("/chat-history", response_model=ChatHistoryResponse)
 # def save_chat(

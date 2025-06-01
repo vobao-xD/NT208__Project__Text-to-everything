@@ -1,4 +1,4 @@
-from .authentication_and_authorization import Auth
+from .authentication_and_authorization import *
 from .text_to_speech import TextToSpeechService
 from .text_to_video import TextToVideoService
 from .text_to_image import TextToImageService

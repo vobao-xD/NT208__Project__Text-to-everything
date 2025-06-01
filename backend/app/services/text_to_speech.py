@@ -5,9 +5,13 @@ import httpx
 from db.schemas import UserBase, TTSRequest, TTSResponse, ChatHistoryBase, ChatDetailBase
 from services.authentication_and_authorization import Auth
 from sqlalchemy.orm import Session
+from datetime import datetime
 from pathlib import Path
+from db.models import User
 from uuid import UUID
 from db import get_db
+
+import jwt
 
 load_dotenv()
 
@@ -23,13 +27,20 @@ class TextToSpeechService:
     ) -> TTSResponse:
         async with httpx.AsyncClient(timeout=600.0) as client:
             try:
-                # Tạo access token cho user
-                # current_user = Auth.decode_access_token(token)
-                # if not current_user:
-                #     raise HTTPException(status_code=401, detail="Token không hợp lệ")
                 
-                # access_token = Auth.create_access_token(data={"sub": current_user["email"], "role": current_user["role"]})
-                print(f"WTffffffffff: {access_token}")
+                # user_dict = Auth.decode_and_verify_token(access_token)
+                
+                # user_email = user_dict["email"]
+                # user_role = user_dict["role"]
+                
+                # if not user_email:
+                #     raise HTTPException(status_code=401, detail="Token không hợp lệ")
+
+                # # Lấy user từ database
+                # current_user = db.query(User).filter(User.email == user_email).first()
+                # if not current_user:
+                #     raise HTTPException(status_code=404, detail="User không tồn tại")
+
                 # Gọi endpoint /tts của viXTTS
                 response = await client.post(
                     f"{TextToSpeechService.BASEURL}/tts",
@@ -61,7 +72,7 @@ class TextToSpeechService:
                 mp3_response.raise_for_status()
                 
                 # Tạo thư mục lưu trữ nếu chưa tồn tại
-                output_dir = Path("../../_audio_output")
+                output_dir = Path("../_audio_output")
                 output_dir.mkdir(parents=True, exist_ok=True)
                 
                 # Lưu file MP3
@@ -70,19 +81,22 @@ class TextToSpeechService:
                 with open(save_path, "wb") as f:
                     f.write(mp3_response.content)
 
-                # Lưu lịch sử vào database
-                new_chat = ChatHistoryBase(user_id=current_user["id"])
-                new_detail = ChatDetailBase(
-                    chat_history_id=new_chat.id,
-                    generator_id=UUID("550e8400-e29b-41d4-a716-446655440001"),
-                    input_type="text",
-                    text_prompt=f"{request.text} (language: {request.language}, gender: {request.gender}, style: {request.style})",
-                    output_type="audio",
-                    output_file_path=str(save_path)
-                )
-                db.add(new_chat)
-                db.add(new_detail)
-                db.commit()
+
+
+                # # Lưu lịch sử vào database
+                # new_chat = ChatHistoryBase(user_id=current_user.id)
+                
+                # new_detail = ChatDetailBase(
+                #     chat_history_id=new_chat.id,
+                #     generator_id=UUID("550e8400-e29b-41d4-a716-446655440001"),
+                #     input_type="text",
+                #     text_prompt=f"{request.text} (language: {request.language}, gender: {request.gender}, style: {request.style})",
+                #     output_type="audio",
+                #     output_file_path=str(save_path)
+                # )
+                # db.add(new_chat)
+                # db.add(new_detail)
+                # db.commit()
                 
                 return TTSResponse(
                     success=True,

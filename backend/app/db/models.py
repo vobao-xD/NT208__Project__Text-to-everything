@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Boolean, Integer, DateTime, ForeignKey, T
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from datetime import datetime
 import uuid
 
 Base = declarative_base()
@@ -39,10 +40,9 @@ class Transaction(Base):
 class Generator(Base):
     __tablename__ = "generators"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=False, unique=True)  # e.g., text2image, text2speech
-    input_type = Column(String, nullable=False)         # e.g., text, file
-    output_type = Column(String, nullable=False)        # e.g., audio, image, video
-
+    name = Column(String, nullable=False, unique=True)
+    input_type = Column(String, nullable=False)
+    output_type = Column(String, nullable=False)
     chat_details = relationship("ChatDetail", back_populates="generator")
 
 class ChatHistory(Base):
@@ -50,7 +50,6 @@ class ChatHistory(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=func.now())
-
     user = relationship("User", back_populates="chat_histories")
     chat_details = relationship("ChatDetail", back_populates="chat_history", cascade="all, delete-orphan")
 
@@ -59,13 +58,12 @@ class ChatDetail(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     chat_history_id = Column(UUID(as_uuid=True), ForeignKey("chat_histories.id"), nullable=False, index=True)
     generator_id = Column(UUID(as_uuid=True), ForeignKey("generators.id"), nullable=False, index=True)
-    input_type = Column(String, nullable=False)
+    input_type = Column(String, nullable=False, default="text")
     text_prompt = Column(Text, nullable=True)
     input_file_path = Column(String(1024), nullable=True)
-    output_type = Column(String, nullable=False)
-    output_content = Column(Text, nullable=True)             # nếu là dạng text
-    output_file_path = Column(String(1024), nullable=True)   # nếu là file (audio/image/video)
-    created_at = Column(DateTime, default=func.now())
-
+    output_type = Column(String, nullable=False, default="audio")
+    output_content = Column(Text, nullable=True)
+    output_file_path = Column(String(1024), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
     chat_history = relationship("ChatHistory", back_populates="chat_details")
     generator = relationship("Generator", back_populates="chat_details")

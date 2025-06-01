@@ -70,7 +70,8 @@ app.add_middleware(
 
 # app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# app.include_router(router)
+app.include_router(router)
+
 # @app.on_event("startup")
 # async def startup_event():
 #     redis = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)

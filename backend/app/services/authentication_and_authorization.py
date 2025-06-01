@@ -54,6 +54,7 @@ oauth.register(
     redirect_uri=GITHUB_REDIRECT_URI,
     client_kwargs={"scope": "user:email"},
 )
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 class Auth:
@@ -93,6 +94,7 @@ class Auth:
 
             # Lấy token từ provider
             token = await getattr(oauth, provider).authorize_access_token(request)
+            logging.info(f"---> Provider token: {token}")
 
             if provider == "google":
                 user_info = token.get("userinfo")
@@ -129,7 +131,6 @@ class Auth:
                 user.avatar = avatar
             db.commit()
             db.refresh(user)
-
 
             # Tạo access token
             access_token = Auth.create_access_token(data={"sub": user.email, "role" : user.role})
@@ -182,9 +183,10 @@ class Auth:
 
         to_encode.update({"exp": expire})
         
-        logging.info(f"Creating JWT for user: {data.get('sub')} with role: {to_encode['role']}")
         encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
-        logging.debug(f"JWT created successfully: {encoded_jwt}")
+        logging.info(f"Creating JWT for user: {data.get('sub')} with role: {to_encode['role']}")
+        logging.info(f"JWT created successfully: {encoded_jwt}")
+
         return encoded_jwt
 
     @staticmethod
@@ -196,12 +198,13 @@ class Auth:
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
             email: str = payload.get("sub")
             role: str = payload.get("role")
+            exp: str = payload.get("exp")
 
             if not email:
                 raise HTTPException(status_code=401, detail="Invalid token payload")
             
-            return {"email": email, "role": role}
-            
+            return {"email": email, "role": role, "exp": exp}
+        
         except ExpiredSignatureError:
             raise HTTPException(status_code=401, detail="Token has expired")
         except JWTError:
@@ -240,3 +243,32 @@ class Auth:
                 except:
                     pass
             return None
+        
+    @staticmethod
+    async def get_user_info(request: Request, db: Session) -> dict:
+        token = request.cookies.get("access_token")
+        if not token:
+            raise HTTPException(status_code=401, detail="No token provided")
+        try:
+            payload = Auth.decode_and_verify_token(token)
+            email = payload["sub"]
+            role = payload["role"]
+            expire_at = payload["exp"]
+
+            if not email:
+                raise HTTPException(status_code=401, detail="Invalid token: email not found")
+            
+            user_info = {
+                "email": email,
+                "role": role,
+                "expire": expire_at
+            }
+            logging.info(f"Give frontend this user-info: {user_info}")
+            
+            if not user_info:
+                raise HTTPException(status_code=401,detail="User not found")
+            return user_info
+
+        except Exception as e:
+            print(f"An error occur when getting user information: {str(e)}")  
+            raise HTTPException(status_code=401, detail="Invalid token")
