@@ -221,3 +221,8 @@ class ChatHistoryResponse(ChatHistoryBase):
 
     class Config:
         from_attributes = True
+
+class userInfo(BaseModel):
+    email:str
+    role:str
+    expire:datetime

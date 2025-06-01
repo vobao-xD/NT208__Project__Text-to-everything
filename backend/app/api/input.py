@@ -1,6 +1,8 @@
+from datetime import time, timedelta
 from PIL import Image
-from fastapi import APIRouter, UploadFile, File,HTTPException
+from fastapi import APIRouter, Depends, Request, UploadFile, File,HTTPException,status
 from fastapi.responses import JSONResponse
+from fastapi_limiter import FastAPILimiter
 from pydantic import BaseModel
 import pytesseract
 import speech_recognition as sr
@@ -8,6 +10,7 @@ import io
 from moviepy import VideoFileClip
 import PyPDF2
 import docx
+from dependencies.GetInfo import get_current_user_email, get_current_user_role
 from db.schemas import *
 from services.analyzeInput import guess_ai_intent
 import speech_recognition as sr
@@ -15,9 +18,13 @@ from pydub import AudioSegment
 import os
 import uuid
 import fitz
+from redis import asyncio as aioredis
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter()
-
+REDIS_URL=os.getenv("REDIS_URL")
 pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
 # === 1. Chuẩn hóa đầu vào sang văn bản ===
@@ -148,7 +155,42 @@ def extract_text_from_docx(file: UploadFile):
 
 # 6. Phân tích yêu cầu của người dùng
 @router.post("/analyze")
-async def analyze_text(input: TextInput):
+async def analyze_text(
+    input: TextInput,
+    request: Request,
+    user_email: str = Depends(get_current_user_email),
+    user_role: str = Depends(get_current_user_role)
+):
+    """
+    Phân tích intent của người dùng. Giới hạn 10 lượt/ngày cho role 'free'.
+    """
+    redis_client = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
+
+    if user_role == "free":
+        current_time = datetime.now()
+        today = current_time.date()
+        tomorrow = today + timedelta(days=1)
+        end_of_today_timestamp = int(datetime.combine(tomorrow, time.min).timestamp())
+
+        analyze_count_key = f"analyze_count:{today.isoformat()}:{user_email}"
+
+        used_calls = await redis_client.incr(analyze_count_key)
+
+        if used_calls == 1: 
+            await redis_client.expireat(analyze_count_key, end_of_today_timestamp)
+        
+        if used_calls > 10: # Dùng "> 10" vì đã incr trước đó
+            await redis_client.decr(analyze_count_key)
+            
+            retry_after_seconds = max(0, end_of_today_timestamp - int(current_time.timestamp()))
+            
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Bạn đã sử dụng hết lượt gọi miễn phí. Vui lòng nâng cấp tài khoản để sử dụng thêm.",
+                headers={"Retry-After": str(int(retry_after_seconds))} # Thêm header Retry-After
+            )
+    
+    # Logic xử lý chính
     result = guess_ai_intent(input.user_text)
     return {"intent_analysis": result}
 

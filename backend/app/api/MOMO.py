@@ -20,7 +20,7 @@ router = APIRouter()
 
 MOMO_ENDPOINT = os.getenv("MOMO_ENDPOINT")
 ACCESS_KEY = os.getenv("ACCESS_KEY")
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY_MOMO")
 PARTNER_CODE = "MOMO"
 REDIRECT_URL = os.getenv("REDIRECT_URL")
 IPN_URL = os.getenv("IPN_URL")
