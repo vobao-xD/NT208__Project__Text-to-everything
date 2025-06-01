@@ -9,6 +9,20 @@ from db import get_db
 
 router = APIRouter()
 
-@router.post("/text-to-speech/default", response_model=TTSResponse)
-async def _(request: TTSRequest, token: str, db: Session = Depends(get_db)):
-    return service.text_to_speech_with_default_voice(request, token, db)
+@router.post("/default", response_model=TTSResponse)
+async def text_to_speech_default(
+    request: TTSRequest,
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Gọi API viXTTS để tạo âm thanh từ văn bản với giọng mặc định.
+    """
+    try:
+        return await service.text_to_speech_with_default_voice(
+            request, token, db
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi không xác định: {str(e)}")

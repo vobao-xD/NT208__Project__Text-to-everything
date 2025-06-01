@@ -18,15 +18,18 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from services.openai_client_instance import lifespan
 from redis import asyncio as aioredis
 from fastapi_limiter import FastAPILimiter
+
 load_dotenv()
 
 REDIS_URL=os.getenv("REDIS_URL")
 
 init_db()
-scheduler = BackgroundScheduler()
+
+# scheduler = BackgroundScheduler()
+
 logging.basicConfig(
     level=logging.INFO, 
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="\n %(asctime)s ||| %(name)s ||| %(levelname)s ||| %(message)s ||| \n",
     handlers=[
         logging.StreamHandler(), 
         logging.FileHandler("app.log")
@@ -35,7 +38,10 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(lifespan=lifespan)
+# app = FastAPI(lifespan=lifespan)
+
+app = FastAPI()
+
 
 # origins = [
 #     "http://localhost:5173",
@@ -43,7 +49,7 @@ app = FastAPI(lifespan=lifespan)
 # ]
 
 # Configure session middleware with a secret key
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "LCX9Eu9a1LKbq19YC3aPA1To"))
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,35 +59,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create img directory for storing images
-if not os.path.exists("img"):
-    os.mkdir("img")
+# # Create img directory for storing images
+# if not os.path.exists("img"):
+#     os.mkdir("img")
 
-app.mount("/img", StaticFiles(directory="img"), name="static")
+# app.mount("/img", StaticFiles(directory="img"), name="static")
 
-if not os.path.exists("static"):
-    os.makedirs("static")
+# if not os.path.exists("static"):
+#     os.makedirs("static")
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.include_router(router)
-@app.on_event("startup")
-async def startup_event():
-    redis = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
-    await FastAPILimiter.init(redis)
-    print(f"FastAPI Limiter initialized with Redis at {REDIS_URL}")
-    scheduler.add_job(check_expired_subscriptions, "interval", days=1)
-    scheduler.start()
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=Status.HTTP_429_TOO_MANY_REQUESTS,
-        content={"detail": f"Bạn đã gửi quá nhiều tin nhắn. Hãy thử lại sau {round(exc.retry_after)} giây."}
-    )
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    scheduler.shutdown()
+# app.include_router(router)
+# @app.on_event("startup")
+# async def startup_event():
+#     redis = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
+#     await FastAPILimiter.init(redis)
+#     print(f"FastAPI Limiter initialized with Redis at {REDIS_URL}")
+#     scheduler.add_job(check_expired_subscriptions, "interval", days=1)
+#     scheduler.start()
+# @app.exception_handler(RateLimitExceeded)
+# async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded):
+#     return JSONResponse(
+#         status_code=Status.HTTP_429_TOO_MANY_REQUESTS,
+#         content={"detail": f"Bạn đã gửi quá nhiều tin nhắn. Hãy thử lại sau {round(exc.retry_after)} giây."}
+#     )
+# @app.on_event("shutdown")
+# async def shutdown_event():
+#     scheduler.shutdown()
 
 if __name__ == "__main__":
     import uvicorn

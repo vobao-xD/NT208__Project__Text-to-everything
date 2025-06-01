@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Depends, Response, Request
+from fastapi import HTTPException, Depends, Response, Request, status
 from jose import JWTError, jwt, ExpiredSignatureError
 from authlib.integrations.starlette_client import OAuth
 from fastapi.security import OAuth2PasswordBearer
@@ -23,7 +23,7 @@ GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256" 
 ACCESS_TOKEN_EXPIRE_MINUTES = 3000
 COOKIE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
@@ -154,7 +154,7 @@ class Auth:
         except Exception as e:
             logging.error(f"{provider} login failed: {str(e)}")
             raise HTTPException(status_code=500, detail=f"{provider} login failed: {str(e)}")
-
+    
     @staticmethod
     async def logout(request: Request, response: Response):
         if request.cookies.get("access_token"):
@@ -169,79 +169,74 @@ class Auth:
         request.session.clear()
         logging.info("User logged out successfully")
         return RedirectResponse(url=f"{FRONTEND_URL}/login")
-    
+
     @staticmethod
-    def create_access_token(data: dict, scope: str = "default", expires_delta: Optional[timedelta] = None):
+    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         to_encode = data.copy()
-        to_encode["scope"] = scope
-        to_encode["role"] = data.get("role", "basic")
+        to_encode["role"] = data.get("role", "free")
+        
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
             expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
         to_encode.update({"exp": expire})
+        
         logging.info(f"Creating JWT for user: {data.get('sub')} with role: {to_encode['role']}")
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        logging.debug("JWT created successfully")
+        encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
+        logging.debug(f"JWT created successfully: {encoded_jwt}")
         return encoded_jwt
 
     @staticmethod
-    def decode_access_token(token: str):
+    def decode_and_verify_token(token: str = Depends(oauth2_scheme)) -> dict:
+        """
+        Xác thực token và trả về thông tin user.
+        """
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            email = payload.get("sub")
-            role = payload.get("role")
-            scope = payload.get("scope")
-            if email is None or role is None:
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+            email: str = payload.get("sub")
+            role: str = payload.get("role")
+
+            if not email:
                 raise HTTPException(status_code=401, detail="Invalid token payload")
-            return {"email": email, "role": role, "scope": scope}
+            
+            return {"email": email, "role": role}
+            
         except ExpiredSignatureError:
-            logging.error("Token has expired")
             raise HTTPException(status_code=401, detail="Token has expired")
-        except JWTError as e:
-            logging.error(f"Invalid token: {str(e)}")
+        except JWTError:
             raise HTTPException(status_code=401, detail="Invalid token")
 
     @staticmethod
-    async def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-        credentials_exception = HTTPException(
-            status_code=401,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-        
+    async def get_current_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            email: str = payload.get("sub")
-            role: str = payload.get("role")
-            exp = payload.get("exp")
+            token = None
+            if request.cookies.get("access_token"):
+                token = request.cookies.get("access_token")
+            else:
+                authorization = request.headers.get("Authorization")
+                if authorization and authorization.startswith("Bearer "):
+                    token = authorization.split(" ")[1]
+            
+            if not token:
+                return None
 
-            if email is None or role is None:
-                raise credentials_exception
-            if exp and datetime.utcnow().timestamp() > exp:
-                logging.warning(f"Token expired for email: {email}")
-                raise HTTPException(
-                    status_code=401,
-                    detail="Token has expired",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
+            payload = Auth.verify_token(token)
+            email: str = payload.get("sub")
             
             user = db.query(User).filter(User.email == email).first()
             if not user:
-                logging.error(f"User not found for email: {email}")
-                raise credentials_exception
-            if user.role != role:
-                logging.error(f"Role mismatch for email: {email}")
-                raise credentials_exception
+                logging.warning(f"User not found in database: {email}")
+                return None
+            
             return user
-        except JWTError as e:
-            logging.error(f"JWT decode error: {str(e)}")
-            raise credentials_exception
-
-    @staticmethod
-    def check_role(required_role: str):
-        async def role_checker(user: User = Depends(Auth.check_authen_and_author)):
-            if user.role != required_role and user.role != "admin":
-                raise HTTPException(status_code=403, detail=f"Requires {required_role} role")
-            return user
-        return role_checker
+            
+        except HTTPException:
+            # Try to refresh token if access token is expired
+            refresh_token = request.cookies.get("refresh_token")
+            if refresh_token:
+                try:
+                    return await Auth.refresh_access_token(request, db)
+                except:
+                    pass
+            return None
