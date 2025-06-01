@@ -1036,6 +1036,41 @@ body.signin-page p {
 .file-upload-btn:hover {
   transform: scale(1.5);
 }
+
+.file-upload-btn:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 6px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 3px;
+  font-size: 5px;
+  white-space: pre-line;
+  z-index: 9999;
+  margin-bottom: 5px;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.file-upload-btn:hover::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 3px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+  margin-bottom: -3px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
 .glow-wrapper {
   position: relative;
   display: inline-block;
@@ -1108,7 +1143,7 @@ body.signin-page p {
   background-position:bottom;
   background-repeat: no-repeat;
   /* background: black; */
-  background-image:url('https://r4.wallpaperflare.com/wallpaper/644/305/118/pattern-black-gradient-texture-wallpaper-1be65c2d03e1bf994574abb9dd4c6c70.jpg'); 
+ 
 }
 .sidebar{
   background-size: cover;
@@ -1121,14 +1156,10 @@ body.signin-page p {
 }
 
 .conservation{
-  background-image:url('https://r4.wallpaperflare.com/wallpaper/644/305/118/pattern-black-gradient-texture-wallpaper-1be65c2d03e1bf994574abb9dd4c6c70.jpg');
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: middle;
+  background-color: black;
 }
 .header_content{
-  background-image:url('https://r4.wallpaperflare.com/wallpaper/644/305/118/pattern-black-gradient-texture-wallpaper-1be65c2d03e1bf994574abb9dd4c6c70.jpg');
-  box-shadow: 0 0 8px 2px rgba(174, 0, 255, 0.6);
-  background-size: cover;
-  background-position: top;
+  background-image:url('https://img.freepik.com/premium-vector/abstract-black-tech-concept-banners_88343-5538.jpg?ga=GA1.1.326086185.1748537268&w=740');
+  background-size: 100%;
+  background-position: midlle;
  }
