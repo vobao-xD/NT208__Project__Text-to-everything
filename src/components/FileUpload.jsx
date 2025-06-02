@@ -14,7 +14,14 @@ const FileUpload = ({ onFileSend, accept = ".mp3,.wav,.mp4", disabled = false })
   return (
     <>
       <button 
-        onClick={() => inputRef.current.click()} 
+        onClick={() => {
+          const role = localStorage.getItem("role");
+          if (role === "free") {
+            alert("Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!");
+            return;
+          }
+          inputRef.current.click();
+        }}
         className={`upload-btn ${disabled ? 'disabled' : ''}`}
         disabled={disabled}
       >
