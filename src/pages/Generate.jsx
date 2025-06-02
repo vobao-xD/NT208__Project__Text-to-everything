@@ -1074,7 +1074,7 @@ const Generate = () => {
                                     }}
                                     disabled={isLoading}
                                 />
-                                 <div class="glow-wrapper">
+                                 <div className="glow-wrapper">
                                 <button
                                     id="submit_btn"
                                     className={isLoading ? 'disabled' : ''}
