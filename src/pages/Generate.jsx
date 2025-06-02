@@ -4,9 +4,6 @@ import {
     EmailShareButton, EmailIcon,
     FacebookShareButton, FacebookIcon
 } from "react-share";
-// FileUpload component của bạn có thể cần được điều chỉnh lại hoặc loại bỏ
-// nếu bạn chỉ dùng input file tiêu chuẩn.
-// import FileUpload from '../components/FileUpload';
 
 const Generate = () => {
     const navigate = useNavigate();
@@ -41,7 +38,7 @@ const Generate = () => {
                         expire: data.expire || ''
                     });
                     // Tự động chọn model dựa trên role
-                    if (data.role === 'pro') { 
+                    if (data.role === 'pro') { // THAY VIP BẰNG PRO
                         setSelectedApiModel("1.1");
                     } else {
                         setSelectedApiModel("1.0");
