@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -8,16 +10,35 @@ const Home = () => {
         if (localStorage.getItem("isLoggedIn") === "true") {
             navigate('/generate');
         } else {
-            alert("Bạn cần đăng nhập trước khi sử dụng tính năng này!");
+        toast.error('Bạn cần đăng nhập trước khi sử dụng tính năng này!', {
+                position: 'top-right',
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                theme: 'colored',
+            });
             navigate('/login');
         }
     };
 
     return (
         <div className="full-container">
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                closeOnClick
+                pauseOnHover
+                draggable
+                stacked
+                theme="dark"
+            />
             <div className="sidebar">
                 <div className="sidebar_text">
                     <h2>Sidebar</h2>
+                    
                     <span>TRANG CHỦ</span>
                 </div>
             </div>
@@ -33,6 +54,7 @@ const Home = () => {
                         <h1>CHÀO MỪNG BẠN ĐẾN VỚI [...]</h1>
                         <h3>Slogan</h3>
                     </div>
+
                     <div className="body_description">
                         <h3 className="description_prompt">Tôi có thể giúp gì được cho bạn?</h3>
                         <ul className="description_prompt">
