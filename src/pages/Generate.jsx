@@ -28,6 +28,11 @@ const Generate = () => {
     const [retryAfter, setRetryAfter] = useState(0);
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [inputValue,setInputValue]=useState('');
+    const [role,setRole]=useState('');
+    const [selectedMode, setSelectedMode] = useState("1");
+    const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
+    const [isManualMode, setIsManualMode] = useState(false);
+
     useEffect(() => {
         const init = async () => {
           try {
@@ -52,14 +57,16 @@ const Generate = () => {
             const data2 = await res2.json();
             localStorage.setItem("role", data2.role);
             localStorage.setItem("billingCycle", data2.billingCycle || "monthly");
+            
+            // Chỉ set role state sau khi đã lấy và lưu role vào localStorage
+            setRole(data2.role);
           } catch (err) {
             console.error("Lỗi khi khởi tạo:", err);
           }
         };
       
         init();
-      }, [navigate]);
-      const role = localStorage.getItem("role");
+    }, [navigate]);
     const handleNewChat = () => {
         if (chatHistory.length > 0) {
             const newConversation = {
@@ -81,6 +88,18 @@ const Generate = () => {
         }
     };  
 
+    const handleModeChange = (e) => {
+        const newMode = e.target.value;
+        if (newMode === "1.1" && role !== "pro") {
+            toast.error("Chỉ tài khoản Pro mới được phép sử dụng chế độ 1.1. Vui lòng nâng cấp lên Pro để sử dụng tính năng này!", {
+                closeButton: true,
+                onClose: () => navigate('/advanced')
+            });
+            return;
+        }
+        setSelectedMode(newMode);
+    };
+
     const handleAutoAnalyze = async (text) => {
         try {
             const response = await fetch("http://127.0.0.1:8000/analyze", {
@@ -101,7 +120,7 @@ const Generate = () => {
 
                 setRetryAfter(timeToWait);
                 setIsRateLimited(true);
-                alert("Rate limit exceeded. Please try again later.");
+                toast.error("hết lượt miễn phí. Vui lòng thử laị sau.");
                 let timer = setInterval(() => {
                     setRetryAfter(prev => {
                         if (prev <= 1) {
@@ -130,22 +149,43 @@ const Generate = () => {
                 "generate_speech": "1",
                 "generate_answer": "7"
             };
-            // đánh dấu
 
             if (data.intent_analysis && actionMap[data.intent_analysis]) {
-                setSelectedOption(actionMap[data.intent_analysis]);
+                const selectedAction = actionMap[data.intent_analysis];
+                
+                // Kiểm tra quyền trước khi set option
+                if (selectedAction === "3" && role !== "pro") {
+                    toast.error("Chỉ tài khoản Pro mới được phép sử dụng chức năng Text to Video. Vui lòng nâng cấp lên Pro để sử dụng tính năng này!", {
+                        closeButton: true,
+                        onClose: () => navigate('/advanced')
+                    });
+                    return {
+                        success: false
+                    };
+                }
+
                 return {
                     success: true,
                     intent_analysis: data.intent_analysis,
-                    prompt: text
+                    prompt: text,
+                    action: selectedAction
                 };
             }
+
+            // Fallback khi không phân tích được
+            setShowFunctionDropdown(true);
+            toast.error("Không thể phân tích yêu cầu của bạn. Vui lòng chọn chức năng thủ công.", {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40',
+                ariaLabel: 'Error',
+            });
             return {
                 success: false,
-                error: "Không thể xác định chức năng phù hợp"
+                error: "Không thể phân tích yêu cầu"
             };
         } catch (error) {
             console.error("Lỗi khi phân tích:", error);
+            setShowFunctionDropdown(true);
             return {
                 success: false,
                 error: error.message
@@ -284,13 +324,6 @@ const Generate = () => {
                 className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
                 ariaLabel: 'Error',
             })
-            // alert("Vui lòng nhập nội dung trước khi gửi.");
-            return;
-        }
-
-        if (selectedOption === "3" && role !== "pro") {
-            alert("Chỉ tài khoản Pro mới được phép sử dụng chức năng Text to Video. Vui lòng nâng cấp lên Pro để sử dụng tính năng này!");
-            navigate('/advanced');
             return;
         }
 
@@ -341,215 +374,201 @@ const Generate = () => {
                     option: "12"
                 };
                 setChatHistory(prev => [...prev, botMessage]);
-            } else {
-                // Nếu đang ở chế độ Auto Analyze
-                if (selectedOption === "0") {
-                    const analyzeResult = await handleAutoAnalyze(text);
-                    if (analyzeResult.success) {
-                        // Lấy option mới từ actionMap dựa trên intent_analysis
-                        const actionMap = {
-                            "generate_text": "6",
-                            "generate_image": "2",
-                            "generate_video": "3",
-                            "generate_code": "8",
-                            "generate_speech": "1",
-                            "generate_answer": "7"
-                        };
-                        currentOption = actionMap[analyzeResult.intent_analysis];
-                        finalText = analyzeResult.prompt;
-                        
-                        // Thêm thông báo về chức năng đã được chọn
-                        setChatHistory(prev => [
-                            ...prev,
-                            {
-                                type: 'bot',
-                                content: { text: `[AutoAnalyze đã xác định chức năng phù hợp]` },
-                                option: "0"
-                            }
-                        ]);
-                    } else {
-                        toast.error(analyzeResult.error || "Không thể phân tích yêu cầu của bạn. Vui lòng chọn chức năng thủ công.",{
-                                closeButton: true,
-                                className: 'p-0 w-[400px] border border-red-600/40',
-                                ariaLabel: 'Error',
-                            }
-                        );
-                        setIsLoading(false);
-                        return;
-                    }
-                }
-
-                console.log("Current Option:", currentOption);
                 
-                let apiUrl;
-                let requestBody = {};
-                let videoUrl = null;
-                let headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`
-                };
+                // Reset về Auto Analyze sau khi xử lý xong
+                setSelectedOption("0");
+                
+                // Reset file và preview
+                setSelectedFile(null);
+                setImagePreview(null);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+                if (imageInputRef.current) {
+                    imageInputRef.current.value = '';
+                }
+                
+                setIsLoading(false);
+                return;
+            }
 
-                if (currentOption === "1") {
-                    apiUrl = "http://localhost:8000/text-to-speech";
-                    requestBody = {
-                        text: finalText,
-                        voice: "banmai",
-                        speed: "0"
-                    };
-                } else if (currentOption === "2") {
-                    if (role === "pro") {
-                        apiUrl = "http://127.0.0.1:8000/advanced/text-to-image";
-                        requestBody = {
-                            prompt: finalText,
-                            n: 1,
-                            size: "1024x1024", 
-                            quality: "standard",
-                            style: "vivid",
-                            response_format: "url"
-                        };
-                    } else {
-                        apiUrl = "http://localhost:8000/text-to-image/";
-                        requestBody = {
-                            prompt: finalText,
-                            steps: 0
-                        };
-                    };
-                 
-                } else if (currentOption === "3") {
-                    apiUrl = "http://localhost:8000/text-to-video";
-                    requestBody = {
-                        prompt: finalText,
-                        negative_prompt: "blurry, low quality, distorted",
-                        guidance_scale: 5.0,
-                        fps: 16,
-                        steps: 30,
-                        seed: 123456,
-                        frames: 64
-                    }
-                } else if (currentOption === "6") {
-                    const role = localStorage.getItem("role");
-                    if (role === "pro") {
-                        apiUrl = "http://127.0.0.1:8000/advanced/chatbot-content";
-                        requestBody = {
-                            user_input: finalText,
-                            history: [],
-                            system_prompt: "You are a helpful and friendly chatbot.",
-                            max_tokens: 500
-                        };
-                    } else {
-                        apiUrl = "http://127.0.0.1:8000/chatbot/content";
-                        requestBody = {
-                            prompt: finalText
-                        };
-                    }
-                }  else if (currentOption === "7") {
-                    const role = localStorage.getItem("role");
-                    if (role === "pro") {
-                        apiUrl = "http://127.0.0.1:8000/advanced/generate-answer";
-                        requestBody = {
-                            question: finalText,
-                            context: "string",
-                            max_tokens: 500
-                        };
-                    } else {
-                        apiUrl = "http://127.0.0.1:8000/generate_answer";
-                        requestBody = {
-                            question: finalText
-                        };
-                    }
-                } else if (currentOption === "8") {
-                    if (role === "pro") {
-                        apiUrl = "http://127.0.0.1:8000/advanced/text-to-code";
-                        requestBody = {
-                            prompt: finalText,
-                            language: "python",
-                            max_tokens: 150
-                        };
-                    } else {
-                        apiUrl = "http://127.0.0.1:8000/text-to-code";
-                        requestBody = {
-                            prompt: finalText
-                        };
-                    }
+            // Nếu đang ở chế độ Auto Analyze
+            if (selectedOption === "0") {
+                const analyzeResult = await handleAutoAnalyze(text);
+                if (analyzeResult.success) {
+                    currentOption = analyzeResult.action;
+                    finalText = analyzeResult.prompt;
                 } else {
-                    toast.error("Tính năng này chưa được hỗ trợ!",{
-                                closeButton: true,
-                                className: 'p-0 w-[400px] border border-red-600/40',
-                                ariaLabel: 'Error',
-                            });
                     setIsLoading(false);
                     return;
                 }
-                // đánh dấu
+            }
 
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: headers,
-                    body: JSON.stringify(requestBody)
-                });
+            console.log("Current Option:", currentOption);
+            
+            let apiUrl;
+            let requestBody = {};
+            let videoUrl = null;
+            let headers = {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+            };
 
-                if (!response.ok) {
-                    throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
-                }
-
-                let botMessage;
-                if (currentOption === "3") {
-                    const blob = await response.blob();
-                    videoUrl = URL.createObjectURL(blob);
-                    botMessage = {
-                        type: 'bot',
-                        content: { video_url: videoUrl },
-                        option: currentOption
+            // Xử lý API URL dựa trên mode và role
+            if (currentOption === "1") {
+                apiUrl = selectedMode === "1.1" && role === "pro" ? "http://127.0.0.1:8000/advanced/text-to-speech" : "http://localhost:8000/text-to-speech";
+                requestBody = {
+                    text: finalText,
+                    voice: "banmai",
+                    speed: "0"
+                };
+            } else if (currentOption === "2") {
+                if (selectedMode === "1.1" && role === "pro") {
+                    apiUrl = "http://127.0.0.1:8000/advanced/text-to-image";
+                    requestBody = {
+                        prompt: finalText,
+                        n: 1,
+                        size: "1024x1024",
+                        quality: "standard",
+                        style: "vivid",
+                        response_format: "url"
                     };
                 } else {
-                    const data = await response.json();
-                    if (currentOption === "6") {
+                    apiUrl = "http://localhost:8000/text-to-image/";
+                    requestBody = {
+                        prompt: finalText,
+                        steps: 0
+                    };
+                }
+            } else if (currentOption === "3") {
+                apiUrl = "http://localhost:8000/text-to-video";
+                requestBody = {
+                    prompt: finalText,
+                    negative_prompt: "blurry, low quality, distorted",
+                    guidance_scale: 5.0,
+                    fps: 16,
+                    steps: 30,
+                    seed: 123456,
+                    frames: 64
+                }
+            } else if (currentOption === "6") {
+                if (selectedMode === "1.1" && role === "pro") {
+                    apiUrl = "http://127.0.0.1:8000/advanced/chatbot-content";
+                    requestBody = {
+                        user_input: finalText,
+                        history: [],
+                        system_prompt: "You are a helpful and friendly chatbot.",
+                        max_tokens: 500
+                    };
+                } else {
+                    apiUrl = "http://127.0.0.1:8000/chatbot/content";
+                    requestBody = {
+                        prompt: finalText
+                    };
+                }
+            } else if (currentOption === "7") {
+                if (selectedMode === "1.1" && role === "pro") {
+                    apiUrl = "http://127.0.0.1:8000/advanced/generate-answer";
+                    requestBody = {
+                        question: finalText,
+                        context: "string",
+                        max_tokens: 500
+                    };
+                } else {
+                    apiUrl = "http://127.0.0.1:8000/generate_answer";
+                    requestBody = {
+                        question: finalText
+                    };
+                }
+            } else if (currentOption === "8") {
+                if (selectedMode === "1.1" && role === "pro") {
+                    apiUrl = "http://127.0.0.1:8000/advanced/text-to-code";
+                    requestBody = {
+                        prompt: finalText,
+                        language: "python",
+                        max_tokens: 150
+                    };
+                } else {
+                    apiUrl = "http://127.0.0.1:8000/text-to-code";
+                    requestBody = {
+                        prompt: finalText
+                    };
+                }
+            } else {
+                toast.error("Tính năng này chưa được hỗ trợ!",{
+                    closeButton: true,
+                    className: 'p-0 w-[400px] border border-red-600/40',
+                    ariaLabel: 'Error',
+                });
+                setIsLoading(false);
+                return;
+            }
+
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+            }
+
+            let botMessage;
+            if (currentOption === "3") {
+                const blob = await response.blob();
+                videoUrl = URL.createObjectURL(blob);
+                botMessage = {
+                    type: 'bot',
+                    content: { video_url: videoUrl },
+                    option: currentOption
+                };
+            } else {
+                const data = await response.json();
+                if (currentOption === "6") {
+                    botMessage = {
+                        type: 'bot',
+                        content: { text: data.response },
+                        option: currentOption
+                    };
+                } else if (currentOption === "2") {
+                    if (selectedMode === "1.1" && role === "pro") {
                         botMessage = {
                             type: 'bot',
-                            content: { text: data.response },
-                            option: currentOption
-                        };
-                    } else if (currentOption === "2") {
-                        if (role === "pro") {
-                            botMessage = {
-                                type: 'bot',
-                                content: { image_url: data.images[0].url },
-                                option: currentOption
-                            };
-                        } else {
-                            botMessage = {
-                                type: 'bot',
-                                content: { image_url: data.image_url },
-                                option: currentOption
-                            };
-                        }
-                    } else if (currentOption === "7") {
-                        botMessage = {
-                            type: 'bot',
-                            content: { text: data.answer },
-                            option: currentOption
-                        };
-                    } else if (currentOption === "8") {
-                        botMessage = {
-                            type: 'bot',
-                            content: { text: data.code },
+                            content: { image_url: data.images[0].url },
                             option: currentOption
                         };
                     } else {
                         botMessage = {
                             type: 'bot',
-                            content: data,
+                            content: { image_url: "http://localhost:8000/" + data.image_url },
                             option: currentOption
                         };
                     }
+                } else if (currentOption === "7") {
+                    botMessage = {
+                        type: 'bot',
+                        content: { text: data.answer },
+                        option: currentOption
+                    };
+                } else if (currentOption === "8") {
+                    botMessage = {
+                        type: 'bot',
+                        content: { text: data.code },
+                        option: currentOption
+                    };
+                } else {
+                    botMessage = {
+                        type: 'bot',
+                        content: data,
+                        option: currentOption
+                    };
                 }
-                setChatHistory(prev => [...prev, botMessage]);
             }
+            setChatHistory(prev => [...prev, botMessage]);
 
-            // Reset về Auto Analyze nếu không phải là lựa chọn thủ công
-            if (!isManualSelection) {
-                setSelectedOption("0");
-            }
+            // Reset về Auto Analyze sau khi xử lý xong
+            setSelectedOption("0");
 
             // Reset file và preview
             setSelectedFile(null);
@@ -564,10 +583,12 @@ const Generate = () => {
         } catch (error) {
             console.error("Lỗi:", error);
             toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
-                                closeButton: true,
-                                className: 'p-0 w-[400px] border border-red-600/40',
-                                ariaLabel: 'Error',
-                            });
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40',
+                ariaLabel: 'Error',
+            });
+            // Reset về Auto Analyze khi có lỗi
+            setSelectedOption("0");
         } finally {
             setIsLoading(false);
         }
@@ -759,6 +780,14 @@ const Generate = () => {
         }
     };
 
+    const handleManualModeToggle = () => {
+        setIsManualMode(!isManualMode);
+        setShowFunctionDropdown(!isManualMode);
+        if (!isManualMode) {
+            setSelectedOption("0"); // Reset về Auto Analyze khi tắt manual mode
+        }
+    };
+
     return (
         <div className="full-container">
             <ToastContainer
@@ -795,27 +824,63 @@ const Generate = () => {
                     <h2>Sidebar</h2>
                 </div>
 
-                <div className="choices">
+                <div className="mode-selection">
                     <select
                         className={`options ${isLoading ? 'disabled' : ''} focus:border-blue-600`}
-                        value={selectedOption}
-                        onChange={handleOptionChange}
+                        value={selectedMode}
+                        onChange={handleModeChange}
                         disabled={isLoading}
                     >
-                        <option value="0">Auto Analyze</option>
-                        <option value="1">Text to Speech</option>
-                        <option value="2">Text to Image</option>
-                        <option value="3">Text to Video</option>
-                        <option value="4">Create AI Avatar</option>
-                        <option value="5">Improve Image Quality</option>
-                        <option value="6">AI Chatbox</option>
-                        <option value="7">Answer Question</option>
-                        <option value="8">Generate code</option>
-                        <option value="9">Speech to Text</option>
-                        <option value="10">Video to Text</option>
-                        <option value="11">File to Text</option>
+                        <option value="1">API-Model 1</option>
+                        <option value="1.1" disabled={role !== "pro"}>API-Model 1.1</option>
                     </select>
                 </div>
+
+                <div className="manual-mode-toggle" style={{ margin: '10px 0' }}>
+                    <button
+                        className={`toggle-button ${isManualMode ? 'active' : ''}`}
+                        onClick={handleManualModeToggle}
+                        style={{
+                            padding: '8px 15px',
+                            borderRadius: '5px',
+                            border: 'none',
+                            background: isManualMode ? 'linear-gradient(135deg, #3999ff, #50e2ff)' : '#2a2a2a',
+                            color: 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}
+                    >
+                        <i className={`fa ${isManualMode ? 'fa-check-circle' : 'fa-cog'}`}></i>
+                        {isManualMode ? 'Chế độ thủ công' : 'Chế độ tự động'}
+                    </button>
+                </div>
+
+                {showFunctionDropdown && (
+                    <div className="choices">
+                        <select
+                            className={`options ${isLoading ? 'disabled' : ''} focus:border-blue-600`}
+                            value={selectedOption}
+                            onChange={handleOptionChange}
+                            disabled={isLoading}
+                        >
+                            <option value="0">Auto Analyze</option>
+                            <option value="1">Text to Speech</option>
+                            <option value="2">Text to Image</option>
+                            <option value="3">Text to Video</option>
+                            <option value="4">Create AI Avatar</option>
+                            <option value="5">Improve Image Quality</option>
+                            <option value="6">AI Chatbox</option>
+                            <option value="7">Answer Question</option>
+                            <option value="8">Generate code</option>
+                            <option value="9">Speech to Text</option>
+                            <option value="10">Video to Text</option>
+                            <option value="11">File to Text</option>
+                        </select>
+                    </div>
+                )}
 
                 <div className="new-chat_btn">
                     <button 
@@ -999,12 +1064,12 @@ const Generate = () => {
                                         rows="4"
                                         placeholder="Mô tả những gì bạn muốn tạo, hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)"
                                         value={inputValue}
-                                        onChange={(e)=>setInputValue(e.target.value)}
+                                        onChange={(e) => setInputValue(e.target.value)}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && !e.shiftKey) {
                                                 e.preventDefault();
                                                 handleSubmit(inputValue);
-                                                e.target.value = '';
+                                                setInputValue('');
                                             }
                                         }}
                                         disabled={isLoading}
@@ -1134,6 +1199,7 @@ const Generate = () => {
                                         className={isLoading ? 'disabled' : ''}
                                         onClick={() => {
                                             handleSubmit(inputValue);
+                                            setInputValue('');
                                         }}
                                         disabled={isLoading}
                                         
@@ -1332,11 +1398,13 @@ const Generate = () => {
                                     className={`input ${isLoading ? 'disabled' : ''}  focus:border-blue-600`}
                                     rows="4"
                                     placeholder="Mô tả những gì bạn muốn tạo"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
-                                            handleSubmit(e.target.value);
-                                            e.target.value = '';
+                                            handleSubmit(inputValue);
+                                            setInputValue('');
                                         }
                                     }}
                                     disabled={isLoading}
@@ -1345,10 +1413,9 @@ const Generate = () => {
                                     <button
                                         id="submit_btn"
                                         className={isLoading ? 'disabled' : ''}
-                                        onClick={(e) => {
-                                            const textarea = e.target.previousSibling;
-                                            handleSubmit(textarea.value);
-                                            textarea.value = '';
+                                        onClick={() => {
+                                            handleSubmit(inputValue);
+                                            setInputValue('');
                                         }}
                                         disabled={isLoading}
                                     >
