@@ -174,19 +174,19 @@ Dự án sử dụng các công nghệ và framework hiện đại để đảm 
     Mở file `.env` và cấu hình các biến cần thiết. Dưới đây là các biến quan trọng:
 
     ```env
-# Environment configuration for NT208 Project backend
+Environment configuration for NT208 Project backend
 
-# Text to speech API key
+Text to speech API key
 TTS_API_KEY = "****************************" 
 
-# Database URL
+Database URL
 DATABASE_URL = "***************************"
 
-# Text to image API key
+Text to image API key
 TTI_API_KEY = "*****************************"
 TTI_ACCOUNT_ID = "**************************"
 
-# Google OAuthA
+Google OAuthA
 GOOGLE_CLIENT_ID = "*************************************************"
 GOOGLE_CLIENT_SECRET = "*********************************************"
 GOOGLE_REDIRECT_URI = "https://yourdomain/auth/google/callback"
@@ -198,7 +198,7 @@ GITHUB_REDIRECT_URI = https://yourdomain/auth/github/callback"
 SECRET_KEY = "*********************"
 JWT_SECRET_KEY="******************"
 
-# Payment momo
+Payment momo
 MOMO_PARTNER_CODE = "MOMO"
 MOMO_ENDPOINT = "https://test-payment.momo.vn/v2/gateway/api/create"
 ACCESS_KEY = "***************"
@@ -208,35 +208,35 @@ REDIRECT_URL = "https://yourdomain:5173/Thanks"
 IPN_URL = "https://yourdomain/momo/callback"
 MOMO_NOTIFY_URL = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b"
 
-#Chatbot Content API key, hết bạn key lên https://openrouter.ai/account/keys lấy key về
+Chatbot Content API key, hết bạn key lên https://openrouter.ai/account/keys lấy key về
 OPENROUTER_API_KEY = "sk-************************************************"
 
-# Text to video API KEY
+Text to video API KEY
 TTV_API_KEYS = "SG***********************************************************"
 
-# Generate answer API KEY
+Generate answer API KEY
 GENERATE_ANSWER_API_KEY = "sk-**********************************************"
 
-# Text to code API KEY
+Text to code API KEY
 TEXT_TO_CODE_API_KEY = "sk-***************************************************"
 
 SENDGRID_API_KEY=SG*******************************************
 FROM_EMAIL=your_email
 
-# SMTP 
+SMTP 
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your_email
 SMTP_PASSWORD=***************  # Use Gmail App Password, not regular password
 
-# URL ADVANCED
+URL ADVANCED
 APP_URL=https://yourdomain/advanced  # URL to your subscription page
 
-# KEY AVANCED MODEL
+KEY AVANCED MODEL
 OPENAI_API_KEY="sk********************************************************************"
 RUNWAYML_API_SECRET="key***************************************************************************"
 
-#Redis URL
+Redis URL
 REDIS_URL="redis://yourdomain"
     ```
 
