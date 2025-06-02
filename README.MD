@@ -38,14 +38,15 @@ Dưới đây là các tính năng nổi bật của nền tảng "Text to Every
 | :-------- | :------- |
 |🖼️ Text-to-Image |Sử dụng các mô hình AI khuếch tán (diffusion models) hoặc GANs tiên tiến để chuyển đổi mô tả văn bản thành hình ảnh nghệ thuật, minh họa, hoặc ảnh thực tế. Hỗ trợ tùy chỉnh phong cách, độ phân giải.|
 |📽️ Text-to-Video	| Tạo video ngắn từ kịch bản văn bản, có thể bao gồm các cảnh đơn giản, chuyển động nhân vật cơ bản, và lồng ghép âm thanh/giọng đọc được tạo ra từ AI.|
+|📄 Text-to-Code| Chuyển đổi từ văn bản, yêu cầu của người dùng tạo ra các đoạn code hỗ trợ nhiều loại ngôn ngữ khác nhau(python,C++,C,...) |
 |🗣️ Text-to-Speech (TTS) |	Chuyển đổi văn bản thành giọng nói tự nhiên, truyền cảm. Hỗ trợ nhiều giọng đọc, ngôn ngữ, đặc biệt có các giọng đọc tiếng Việt chất lượng cao với ngữ điệu phù hợp.|
 |🎙️ Speech-to-Text (STT) |	Chuyển đổi file âm thanh hoặc giọng nói trực tiếp thành văn bản chính xác. Có khả năng tự động nhận diện ngôn ngữ đầu vào, hỗ trợ xử lý tiếng Việt.|
+|🗣️ Your voice| Người dùng có thể chuyển đổi giọng đọc của AI bằng của bản thân bằng mô hình Vi-XTTS |
 |🧑‍🎤 AI Nhân vật kể chuyện |	Kết hợp TTS với công nghệ tạo chuyển động cho nhân vật ảo (avatar animation). Người dùng có thể chọn avatar, giọng đọc và nội dung để tạo video nhân vật kể chuyện.|
 |✍️ Bot sáng tạo nội dung |	Hỗ trợ người dùng trong việc lên ý tưởng, viết truyện ngắn, kịch bản, slogan, bài đăng mạng xã hội, hoặc các loại nội dung văn bản khác từ yêu cầu đầu vào.|
 |🌐 Đa ngôn ngữ |	Giao diện và khả năng xử lý AI hỗ trợ nhiều ngôn ngữ. Ưu tiên và tối ưu hóa cho tiếng Việt trong cả TTS, STT và các mô hình tạo nội dung khác.|
 |🗂️ Quản lý nội dung |	Cung cấp không gian lưu trữ cá nhân cho người dùng để quản lý các nội dung đã tạo. Cho phép xem lại, chỉnh sửa (nếu có), tải xuống và chia sẻ dễ dàng.|
 |🧑‍🔧 Quản lý người dùng & Phân quyền |	Hệ thống tài khoản người dùng với các vai trò (roles) khác nhau như Admin, User. Có kế hoạch cho các gói tài khoản miễn phí và trả phí với các giới hạn và quyền lợi riêng.|
-
 ### 🧑‍💻 Kiến trúc hệ thống
 
 Hệ thống **Text to Everything** được thiết kế theo kiến trúc module, bao gồm các thành phần chính sau:
@@ -61,11 +62,12 @@ FastAPI Backend (Python)
 │                                                                             │
 ├─► Text-to-Image Service (Tích hợp AI Model)                                 │
 ├─► Text-to-Video Service (Tích hợp AI Model)                                 │
-├─► Text-to-Speech Service (Tích hợp AI Model)                                │
-├─► Speech-to-Text Service (Tích hợp AI Model)                                │
-├─► AI Character Service (Tích hợp AI Model)                                  │
-└─► Content Generation Service (Tích hợp AI Model)                            │
-│                                                                             │
+├─► Text-to-Speech Service (Tích hợp Model tự train ) ────────────────────────|───────────────────────────────────────────────────|                         
+├─► Text-to-Code Service (Tích hợp AI Model)                                  |                                                   |
+├─► Speech-to-Text Service (Tích hợp AI Model)                                │                                                   | Ngrok hoặc Claudflare 
+├─► AI Character Service (Tích hợp AI Model)                                  │                                                   |
+└─► Content Generation Service (Tích hợp AI Model)                            │                                                   ▼
+│                                                                             │                                           Chạy bằng máy cá nhân
 │ (Truy vấn & Lưu trữ dữ liệu)                                                │
 ▼                                                                             ▼
 PostgreSQL Database                                                       File Storage
@@ -79,7 +81,7 @@ External AI APIs (OpenAI, Stability AI, ElevenLabs, Google Cloud
 
 **Luồng hoạt động cơ bản:**
 
-1.  **Client (Người dùng):** Người dùng tương tác với giao diện web (xây dựng bằng React hoặc HTML/CSS/JS), gửi yêu cầu tạo nội dung (ví dụ: văn bản cần chuyển thành hình ảnh, giọng nói cần chuyển thành văn bản).
+1.  **Client (Người dùng):** Người dùng tương tác với giao diện web (xây dựng bằng React+Vite ), gửi yêu cầu tạo nội dung (ví dụ: văn bản cần chuyển thành hình ảnh, giọng nói cần chuyển thành văn bản).
 2.  **FastAPI Backend:**
       * Tiếp nhận yêu cầu từ client, xác thực người dùng (nếu cần).
       * Đóng vai trò là API Gateway, điều phối yêu cầu đến các service AI chuyên biệt.
@@ -102,11 +104,11 @@ Dự án sử dụng các công nghệ và framework hiện đại để đảm 
 | Thành phần | Công nghệ | Lý do lựa chọn (Gợi ý) |
 | :------------------ | :------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------- |
 | **Backend** | Python 3.9+, FastAPI | Python: Hệ sinh thái AI/ML phong phú. FastAPI: Hiệu năng cao, dễ phát triển API, tự động tạo docs (Swagger). |
-| **Frontend** | HTML5, CSS3, JavaScript (Có thể sử dụng React, Vue.js hoặc Angular) | React/Vue/Angular: Xây dựng UI tương tác, hiện đại. HTML/CSS/JS thuần: Đơn giản, linh hoạt cho các dự án nhỏ hơn. |
+| **Frontend** |Có thể sử dụng React+Vite ) | React/Vue/: Xây dựng UI tương tác. |
 | **Cơ sở dữ liệu** | PostgreSQL (phiên bản ổn định mới nhất) | Mạnh mẽ, tin cậy, hỗ trợ tốt các kiểu dữ liệu phức tạp, phù hợp cho nhiều loại ứng dụng. |
 | **AI Models & APIs**| OpenAI (GPT-3/4, DALL-E), Stability AI, ElevenLabs, Google TTS/STT, Hugging Face Transformers | Đa dạng hóa nguồn lực AI, tận dụng các mô hình SOTA (State-of-the-art) cho từng tác vụ cụ thể. |
 | **Xác thực** | OAuth2 (Password flow, JWT - JSON Web Tokens) | Tiêu chuẩn ngành cho xác thực API an toàn và linh hoạt. |
-| **Triển khai** | Docker, Docker Compose. Nền tảng PaaS/IaaS (Railway, Render, Heroku, AWS, GCP, Azure) | Docker: Đóng gói ứng dụng và môi trường, đảm bảo tính nhất quán. PaaS/IaaS: Linh hoạt trong việc lựa chọn hạ tầng. |
+| **Triển khai** |  Nền tảng PaaS/IaaS (Railway, Render, Heroku, AWS, GCP, Azure) | Docker: Đóng gói ứng dụng và môi trường, đảm bảo tính nhất quán. PaaS/IaaS: Linh hoạt trong việc lựa chọn hạ tầng. |
 | **Lưu trữ file** | Firebase Storage, AWS S3, MinIO (tự host) hoặc lưu trữ cục bộ (cho development) | Các dịch vụ lưu trữ đám mây tin cậy, có khả năng mở rộng tốt cho file đa phương tiện. |
 | **Quản lý tác vụ** | Celery (với RabbitMQ/Redis làm message broker) - Tùy chọn | Xử lý các tác vụ AI tốn thời gian một cách bất đồng bộ, tránh block request của người dùng. |
 | **Testing** | Pytest (cho backend) | Framework testing mạnh mẽ và dễ sử dụng cho Python. |
@@ -130,8 +132,8 @@ Dự án sử dụng các công nghệ và framework hiện đại để đảm 
     Mở terminal hoặc command prompt, di chuyển đến thư mục bạn muốn lưu dự án và chạy lệnh:
 
     ```bash
-    git clone [https://github.com/yourusername/text-to-everything.git](https://github.com/yourusername/text-to-everything.git)
-    cd text-to-everything
+    git clone https://github.com/vobao-xD/NT208__Project__Text-to-everything.git
+    cd NT208__Project__Text-to-everything
     ```
 
 2.  **Tạo và kích hoạt môi trường ảo (virtual environment):**
@@ -162,7 +164,7 @@ Dự án sử dụng các công nghệ và framework hiện đại để đảm 
 ### Cấu hình môi trường
 
 1.  **Tạo file `.env`:**
-    Sao chép file `.env.example` (nếu có) thành file `.env` ở thư mục gốc của dự án. Nếu không có file example, hãy tạo mới file `.env`.
+    Sao chép file `.env` (nếu có) thành file `.env` ở thư mục gốc của dự án. Nếu không có file example, hãy tạo mới file `.env`.
 
     ```bash
     cp.env.example.env  # Hoặc tạo file.env thủ công
@@ -172,31 +174,75 @@ Dự án sử dụng các công nghệ và framework hiện đại để đảm 
     Mở file `.env` và cấu hình các biến cần thiết. Dưới đây là các biến quan trọng:
 
     ```env
-    # Cấu hình Database (PostgreSQL)
-    DATABASE_URL=postgresql://user:password@host:port/dbname
-    # Ví dụ: DATABASE_URL=postgresql://postgres:mysecretpassword@localhost:5432/text_to_everything_db
+# Environment configuration for NT208 Project backend
 
-    # API Keys cho các dịch vụ AI bên ngoài
-    OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    ELEVENLABS_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    STABILITY_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    # Thêm các API key khác nếu cần
+# Text to speech API key
+TTS_API_KEY = "****************************" 
 
-    # Khóa bí mật cho JWT và các mục đích bảo mật khác
-    SECRET_KEY=your_very_strong_and_secret_key_here 
-    # Nên tạo một chuỗi ngẫu nhiên, dài và phức tạp
+# Database URL
+DATABASE_URL = "***************************"
 
-    # Cấu hình khác (nếu có)
-    # Ví dụ: DEBUG=True (cho môi trường development)
-    # ALLOWED_HOSTS=localhost,127.0.0.1
+# Text to image API key
+TTI_API_KEY = "*****************************"
+TTI_ACCOUNT_ID = "**************************"
+
+# Google OAuthA
+GOOGLE_CLIENT_ID = "*************************************************"
+GOOGLE_CLIENT_SECRET = "*********************************************"
+GOOGLE_REDIRECT_URI = "https://yourdomain/auth/google/callback"
+
+GITHUB_CLIENT_ID = "***********************"
+GITHUB_CLIENT_SECRET = "************************************"
+GITHUB_REDIRECT_URI = https://yourdomain/auth/github/callback"
+
+SECRET_KEY = "*********************"
+JWT_SECRET_KEY="******************"
+
+# Payment momo
+MOMO_PARTNER_CODE = "MOMO"
+MOMO_ENDPOINT = "https://test-payment.momo.vn/v2/gateway/api/create"
+ACCESS_KEY = "***************"
+SECRET_KEY_MOMO = "************************"
+PARTNER_CODE = "MOMO"
+REDIRECT_URL = "https://yourdomain:5173/Thanks"
+IPN_URL = "https://yourdomain/momo/callback"
+MOMO_NOTIFY_URL = "https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b"
+
+#Chatbot Content API key, hết bạn key lên https://openrouter.ai/account/keys lấy key về
+OPENROUTER_API_KEY = "sk-************************************************"
+
+# Text to video API KEY
+TTV_API_KEYS = "SG***********************************************************"
+
+# Generate answer API KEY
+GENERATE_ANSWER_API_KEY = "sk-**********************************************"
+
+# Text to code API KEY
+TEXT_TO_CODE_API_KEY = "sk-***************************************************"
+
+SENDGRID_API_KEY=SG*******************************************
+FROM_EMAIL=your_email
+
+# SMTP 
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your_email
+SMTP_PASSWORD=***************  # Use Gmail App Password, not regular password
+
+# URL ADVANCED
+APP_URL=https://yourdomain/advanced  # URL to your subscription page
+
+# KEY AVANCED MODEL
+OPENAI_API_KEY="sk********************************************************************"
+RUNWAYML_API_SECRET="key***************************************************************************"
+
+#Redis URL
+REDIS_URL="redis://yourdomain"
     ```
 
     **Lưu ý:**
 
-      * Thay thế `user`, `password`, `host`, `port`, `dbname` bằng thông tin kết nối PostgreSQL của bạn.
-      * Lấy API key từ các nhà cung cấp dịch vụ AI tương ứng (OpenAI, ElevenLabs, Stability AI, v.v.) và điền vào.
-      * `SECRET_KEY` phải được giữ bí mật và đủ mạnh.
-
+      * Về nơi lấy các key trên hãy liên hệ với chúng tôi hoặc hỏi chatgpt để biết thêm .
 3.  **Thiết lập cơ sở dữ liệu (Database Setup):**
     Nếu dự án sử dụng Alembic để quản lý migrations, chạy lệnh sau để áp dụng các schema mới nhất vào database:
 
