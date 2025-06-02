@@ -866,7 +866,7 @@ const Generate = () => {
                     </div>
                 </div>
 
-                <div className="conservation content-item">
+                <div className="conversation content-item">
                     {chatHistory.map((message, index) => (
                         <div
                             key={index}

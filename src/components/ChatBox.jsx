@@ -2,7 +2,7 @@ import React from 'react';
 
 const ChatBox = ({ messages }) => {
     return (
-        <div className="conservation">
+        <div className="conversation">
             {messages.map((message, index) => (
                 <div
                     key={index}
