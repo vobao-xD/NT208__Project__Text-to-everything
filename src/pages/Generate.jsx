@@ -27,33 +27,32 @@ const Generate = () => {
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [inputValue,setInputValue]=useState('');
     useEffect(() => {
-        console.log("Cookies:", document.cookie);
-        const fetchUserInfo = async () => {
+        const init = async () => {
           try {
-            const response = await fetch('http://localhost:8000/api/user-info', {
+            console.log("Cookies:", document.cookie);
+            const res1 = await fetch('http://localhost:8000/api/user-info', {
               method: "GET",
               credentials: 'include',
             });
-      
-            const data = await response.json();
-      
-            if (data.email) {
-              localStorage.setItem('email', data.email);
-                setUserInfo({email:data.email,
-                    role: data.role||'free',
-                    expire:data.expire||''})
-            } else {
+            const data1 = await res1.json();
+            if (!data1.email) {
               alert("Không tìm thấy email!");
+              return;
             }
-          } catch (error) {
-            console.error("Lỗi khi lấy email:", error);
+            localStorage.setItem("email", data1.email);
+      
+            const res2 = await fetch(`http://localhost:8000/user-subscription?email=${data1.email}`);
+            const data2 = await res2.json();
+            localStorage.setItem("role", data2.role);
+            localStorage.setItem("billingCycle", data2.billingCycle || "monthly");
+          } catch (err) {
+            console.error("Lỗi khi khởi tạo:", err);
           }
         };
       
-        fetchUserInfo();
+        init();
       }, [navigate]);
-      
-
+      const role = localStorage.getItem("role");
     const handleNewChat = () => {
         if (chatHistory.length > 0) {
             const newConversation = {
@@ -83,7 +82,7 @@ const Generate = () => {
                     "Content-Type": "application/json",
                     "Authorization":`Bearer ${localStorage.getItem("access_token")}`,
                     'X-User-email':localStorage.getItem("email"),
-                    'X-User-role':userInfo.role
+                    'X-User-role':role
                 },
                 body: JSON.stringify({ user_text: text })
             });
@@ -148,6 +147,11 @@ const Generate = () => {
     };
 
     const handleFileSelect = (event) => {
+        if (role === "free") {
+            alert("Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!");
+            navigate('/advanced');
+            return;
+        }
         const file = event.target.files[0];
         if (file) {
             setSelectedFile(file);
@@ -156,6 +160,11 @@ const Generate = () => {
     };
 
     const handleFileUpload = async (file) => {
+        if (role === "free") {
+            alert("Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!");
+            navigate('/advanced');
+            return;
+        }
         setIsLoading(true);
         const fileExtension = file.name.split('.').pop().toLowerCase();
         const formData = new FormData();
@@ -243,6 +252,11 @@ const Generate = () => {
     };
 
     const handleImageSelect = (event) => {
+        if (role === "free") {
+            alert("Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!");
+            navigate('/advanced');
+            return;
+        }
         const file = event.target.files[0];
         if (file && file.type.startsWith('image/')) {
             setSelectedFile(file);
@@ -259,6 +273,12 @@ const Generate = () => {
     const handleSubmit = async (text) => {
         if (!text.trim()) {
             alert("Vui lòng nhập nội dung trước khi gửi.");
+            return;
+        }
+
+        if (selectedOption === "3" && role !== "pro") {
+            alert("Chỉ tài khoản Pro mới được phép sử dụng chức năng Text to Video. Vui lòng nâng cấp lên Pro để sử dụng tính năng này!");
+            navigate('/advanced');
             return;
         }
 
@@ -360,11 +380,24 @@ const Generate = () => {
                         speed: "0"
                     };
                 } else if (currentOption === "2") {
-                    apiUrl = "http://localhost:8000/text-to-image/";
-                    requestBody = {
-                        prompt: finalText,
-                        steps: 0
+                    if (role === "pro") {
+                        apiUrl = "http://127.0.0.1:8000/advanced/text-to-image";
+                        requestBody = {
+                            prompt: finalText,
+                            n: 1,
+                            size: "1024x1024", 
+                            quality: "standard",
+                            style: "vivid",
+                            response_format: "url"
+                        };
+                    } else {
+                        apiUrl = "http://localhost:8000/text-to-image/";
+                        requestBody = {
+                            prompt: finalText,
+                            steps: 0
+                        };
                     };
+                 
                 } else if (currentOption === "3") {
                     apiUrl = "http://localhost:8000/text-to-video";
                     requestBody = {
@@ -377,29 +410,50 @@ const Generate = () => {
                         frames: 64
                     }
                 } else if (currentOption === "6") {
-                    apiUrl = "http://127.0.0.1:8000/chatbot/content";
-                    requestBody = {
-                        prompt: finalText
-                    };
-                    headers = {
-                        "Content-Type": "application/json"
-                    };
+                    const role = localStorage.getItem("role");
+                    if (role === "pro") {
+                        apiUrl = "http://127.0.0.1:8000/advanced/chatbot-content";
+                        requestBody = {
+                            user_input: finalText,
+                            history: [],
+                            system_prompt: "You are a helpful and friendly chatbot.",
+                            max_tokens: 500
+                        };
+                    } else {
+                        apiUrl = "http://127.0.0.1:8000/chatbot/content";
+                        requestBody = {
+                            prompt: finalText
+                        };
+                    }
                 }  else if (currentOption === "7") {
-                    apiUrl = "http://127.0.0.1:8000/generate_answer";
-                    requestBody = {
-                        question: finalText
-                    };
-                    headers = {
-                        "Content-Type": "application/json"
-                    };
+                    const role = localStorage.getItem("role");
+                    if (role === "pro") {
+                        apiUrl = "http://127.0.0.1:8000/advanced/generate-answer";
+                        requestBody = {
+                            question: finalText,
+                            context: "string",
+                            max_tokens: 500
+                        };
+                    } else {
+                        apiUrl = "http://127.0.0.1:8000/generate_answer";
+                        requestBody = {
+                            question: finalText
+                        };
+                    }
                 } else if (currentOption === "8") {
-                    apiUrl = " http://127.0.0.1:8000/text-to-code";
-                    requestBody = {
-                        prompt: finalText
-                    };
-                    headers = {
-                        "Content-Type": "application/json"
-                    };
+                    if (role === "pro") {
+                        apiUrl = "http://127.0.0.1:8000/advanced/text-to-code";
+                        requestBody = {
+                            prompt: finalText,
+                            language: "python",
+                            max_tokens: 150
+                        };
+                    } else {
+                        apiUrl = "http://127.0.0.1:8000/text-to-code";
+                        requestBody = {
+                            prompt: finalText
+                        };
+                    }
                 } else {
                     alert("Tính năng này chưa được hỗ trợ!");
                     setIsLoading(false);
@@ -435,11 +489,19 @@ const Generate = () => {
                             option: currentOption
                         };
                     } else if (currentOption === "2") {
-                        botMessage = {
-                            type: 'bot',
-                            content: { image_url: `http://localhost:8000/${data.image_url}` },
-                            option: currentOption
-                        };
+                        if (role === "pro") {
+                            botMessage = {
+                                type: 'bot',
+                                content: { image_url: data.images[0].url },
+                                option: currentOption
+                            };
+                        } else {
+                            botMessage = {
+                                type: 'bot',
+                                content: { image_url: data.image_url },
+                                option: currentOption
+                            };
+                        }
                     } else if (currentOption === "7") {
                         botMessage = {
                             type: 'bot',
@@ -487,6 +549,11 @@ const Generate = () => {
     };
 
     const handleSpeechFile = async (file) => {
+        if (role === "free") {
+            alert("Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!");
+            navigate('/advanced');
+            return;
+        }
         setIsLoading(true);
         const audioUrl = URL.createObjectURL(file);
         const userMessage = {
@@ -524,6 +591,11 @@ const Generate = () => {
     };
 
     const handleVideoFile = async (file) => {
+        if (role === "free") {
+            alert("Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!");
+            navigate('/advanced');
+            return;
+        }
         setIsLoading(true);
         const videoUrl = URL.createObjectURL(file);
         const userMessage = {
@@ -562,6 +634,11 @@ const Generate = () => {
     };
 
     const handleDocFile = async (file) => {
+        if (role === "free") {
+            alert("Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!");
+            navigate('/advanced');
+            return;
+        }
         setIsLoading(true);
         const fileUrl = URL.createObjectURL(file);
         const userMessage = {
@@ -599,6 +676,11 @@ const Generate = () => {
     };
 
     const handleImproveImage = async (file) => {
+        if (role === "free") {
+            alert("Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!");
+            navigate('/advanced');
+            return;
+        }
         setIsLoading(true);
         const imageUrl = URL.createObjectURL(file);
         const userMessage = {
@@ -665,7 +747,6 @@ const Generate = () => {
                         <option value="9">Speech to Text</option>
                         <option value="10">Video to Text</option>
                         <option value="11">File to Text</option>
-                        <option value="12">Image to Text</option>
                     </select>
                 </div>
 
@@ -842,7 +923,6 @@ const Generate = () => {
                 <div className="footer_content content-item">
                     <div id="btn_complex" style={{position: 'relative', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                         {selectedOption === "0" ? (
-                            // 
                             <>
                             
                          
@@ -986,7 +1066,7 @@ const Generate = () => {
                                         id="submit_btn"
                                         className={isLoading ? 'disabled' : ''}
                                         onClick={() => {
-                                                handleSubmit(inputValue);
+                                            handleSubmit(inputValue);
                                         }}
                                         disabled={isLoading}
                                         
@@ -1012,10 +1092,40 @@ const Generate = () => {
                                 width: '60%',
                                 margin: '20px auto'
                             }}>
-                                <FileUpload onFileSend={handleSpeechFile} accept=".wav" disabled={isLoading} />
-                                <span style={{ color: "#fff" }}>
-                                    Hãy chọn file (.wav,.mp3) để chuyển thành văn bản...
-                                </span>
+                                {localStorage.getItem("role") !== "free" ? (
+                                    <>
+                                        <FileUpload onFileSend={handleSpeechFile} accept=".wav" disabled={isLoading} />
+                                        <span style={{ color: "#fff" }}>
+                                            Hãy chọn file (.wav,.mp3) để chuyển thành văn bản...
+                                        </span>
+                                    </>
+                                ) : (
+                                    <div style={{ 
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '10px'
+                                    }}>
+                                        <span style={{ color: "#fff", textAlign: 'center' }}>
+                                            Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!
+                                        </span>
+                                        <div className="fixed-button-container-2">
+                                        <button
+                                            className="rainbow-button"
+                                            onClick={() => navigate('/advanced')}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '5px',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '14px'
+                                            }}
+                                        >
+                                            Nâng cấp ngay
+                                        </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : selectedOption === "10" ? (
                             <div style={{ 
@@ -1026,10 +1136,40 @@ const Generate = () => {
                                 width: '60%',
                                 margin: '20px auto'
                             }}>
-                                <FileUpload onFileSend={handleVideoFile} accept=".mp4" disabled={isLoading} />
-                                <span style={{ color: "#fff" }}>
-                                    Hãy chọn file video (.mp4) để chuyển thành văn bản...
-                                </span>
+                                {role !== "free" ? (
+                                    <>
+                                        <FileUpload onFileSend={handleVideoFile} accept=".mp4" disabled={isLoading} />
+                                        <span style={{ color: "#fff" }}>
+                                            Hãy chọn file video (.mp4) để chuyển thành văn bản...
+                                        </span>
+                                    </>
+                                ) : (
+                                    <div style={{ 
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '10px'
+                                    }}>
+                                        <span style={{ color: "#fff", textAlign: 'center' }}>
+                                            Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!
+                                        </span>
+                                        <div className="fixed-button-container-2">
+                                        <button
+                                            className="rainbow-button"
+                                            onClick={() => navigate('/advanced')}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '5px',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '14px'
+                                            }}
+                                        >
+                                            Nâng cấp ngay
+                                        </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : selectedOption === "11" ? (
                             <div style={{ 
@@ -1040,10 +1180,40 @@ const Generate = () => {
                                 width: '60%',
                                 margin: '20px auto'
                             }}>
-                                <FileUpload onFileSend={handleDocFile} accept=".docx,.txt" disabled={isLoading} />
-                                <span style={{ color: "#fff" }}>
-                                    Hãy chọn file (.pdf, .doc, .docx, .txt) để chuyển thành văn bản...
-                                </span>
+                                {role !== "free" ? (
+                                    <>
+                                        <FileUpload onFileSend={handleDocFile} accept=".docx,.txt" disabled={isLoading} />
+                                        <span style={{ color: "#fff" }}>
+                                            Hãy chọn file (.pdf, .doc, .docx, .txt) để chuyển thành văn bản...
+                                        </span>
+                                    </>
+                                ) : (
+                                    <div style={{ 
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '10px'
+                                    }}>
+                                        <span style={{ color: "#fff", textAlign: 'center' }}>
+                                            Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!
+                                        </span>
+                                        <div className="fixed-button-container-2">
+                                        <button
+                                            className="rainbow-button"
+                                            onClick={() => navigate('/advanced')}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '5px',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '14px'
+                                            }}
+                                        >
+                                            Nâng cấp ngay
+                                        </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : selectedOption === "5" ? (
                             <div style={{ 
@@ -1054,10 +1224,40 @@ const Generate = () => {
                                 width: '60%',
                                 margin: '20px auto'
                             }}>
-                                <FileUpload onFileSend={handleImproveImage} accept=".jpg" disabled={isLoading} />
-                                <span style={{ color: "#fff" }}>
-                                    Hãy chọn file ảnh (.jpg) để cải thiện chất lượng...
-                                </span>
+                                {role !== "free" ? (
+                                    <>
+                                        <FileUpload onFileSend={handleImproveImage} accept=".jpg" disabled={isLoading} />
+                                        <span style={{ color: "#fff" }}>
+                                            Hãy chọn file ảnh (.jpg) để cải thiện chất lượng...
+                                        </span>
+                                    </>
+                                ) : (
+                                    <div style={{ 
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '10px'
+                                    }}>
+                                        <span style={{ color: "#fff", textAlign: 'center' }}>
+                                            Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!
+                                        </span>
+                                        <div className="fixed-button-container-2">
+                                        <button
+                                            className="rainbow-button"
+                                            onClick={() => navigate('/advanced')}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '5px',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '14px'
+                                            }}
+                                        >
+                                            Nâng cấp ngay
+                                        </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <>
@@ -1074,19 +1274,19 @@ const Generate = () => {
                                     }}
                                     disabled={isLoading}
                                 />
-                                 <div class="glow-wrapper">
-                                <button
-                                    id="submit_btn"
-                                    className={isLoading ? 'disabled' : ''}
-                                    onClick={(e) => {
-                                        const textarea = e.target.previousSibling;
-                                        handleSubmit(textarea.value);
-                                        textarea.value = '';
-                                    }}
-                                    disabled={isLoading}
-                                >
-                                    Create
-                                </button>
+                                <div className="glow-wrapper">
+                                    <button
+                                        id="submit_btn"
+                                        className={isLoading ? 'disabled' : ''}
+                                        onClick={(e) => {
+                                            const textarea = e.target.previousSibling;
+                                            handleSubmit(textarea.value);
+                                            textarea.value = '';
+                                        }}
+                                        disabled={isLoading}
+                                    >
+                                        Create
+                                    </button>
                                 </div>
                             </>
                         )}
