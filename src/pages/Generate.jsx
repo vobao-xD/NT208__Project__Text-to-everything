@@ -38,7 +38,12 @@ const Generate = () => {
             });
             const data1 = await res1.json();
             if (!data1.email) {
-              alert("Không tìm thấy email!");
+                alert("Không tìm thấy email!");
+                toast.error("Không tìm thấy email!",{
+                    closeButton: true,
+                    className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                    ariaLabel: 'Error',
+                })
               return;
             }
             localStorage.setItem("email", data1.email);

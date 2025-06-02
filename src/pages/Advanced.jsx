@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import "../Advanced.css";
 import { useNavigate } from 'react-router-dom';
 
+import {toast, ToastContainer,Slide} from 'react-toastify';
+import { BadgeCheck, CircleAlert, Info, TriangleAlert } from 'lucide-react';
+
+
 const Advanced = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('monthly'); // 'monthly' hoặc 'yearly'
@@ -10,7 +14,12 @@ const Advanced = () => {
     async function fetchUserData() {
       const email = localStorage.getItem("email");
       if (!email) {
-        alert("No email found in localStorage");
+        // alert("No email found in localStorage");
+        toast.error("No email found in localStorage",{
+            closeButton: true,
+            className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+            ariaLabel: 'Warn',
+        })
         return;
       }
       
@@ -118,7 +127,12 @@ const Advanced = () => {
     if (plan === "plus") {
       amount = pricing.plus.amount;
       if (currentRole === "pro" && currentBillingCycle === activeTab) {
-        alert("Bạn đã sử dụng gói Pro với chu kỳ này");
+        // alert("Bạn đã sử dụng gói Pro với chu kỳ này");
+        toast.warning("Bạn đã sử dụng gói Pro với chu kỳ này",{
+            closeButton: true,
+            className: 'p-0 w-[400px] border border-yellow-600/40 backdrop-blur-lg',
+            ariaLabel: 'Warn',
+        })
         return;
       }
     } else if (plan === "pro") {
@@ -126,7 +140,12 @@ const Advanced = () => {
       // Không cần check nếu đang chuyển từ Plus sang Pro
     } else {
       if (currentRole === "pro" || currentRole === "plus") {
-        alert("Bạn đã có gói cao hơn");
+        // alert("Bạn đã có gói cao hơn");
+        toast.warning("Bạn đã có gói cao hơn",{
+            closeButton: true,
+            className: 'p-0 w-[400px] border border-yellow-600/40 backdrop-blur-lg',
+            ariaLabel: 'Warn',
+        })
         return;
       }
       navigate('/generate');
@@ -153,13 +172,28 @@ const Advanced = () => {
       
       const data = await response.json();
       if (response.ok) {
-        alert("Thanh toán thành công! Link: " + data.payUrl);
+        // alert("Thanh toán thành công! Link: " + data.payUrl);
+        toast.info("Thanh toán thành công!",{
+            closeButton: true,
+            className: 'p-0 w-[400px] border border-green-600/40 backdrop-blur-lg',
+            ariaLabel: 'Info',
+        })
         window.location.href = data.payUrl;  
       } else {
-        alert("Lỗi thanh toán: " + data.message);
+        // alert("Lỗi thanh toán: " + data.message);
+        toast.error("Lỗi thanh toán: " + data.message,{
+            closeButton: true,
+            className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+            ariaLabel: 'Info',
+        })
       }
     } catch (error) {
-      alert("Lỗi khi tạo đơn hàng!");
+      // alert("Lỗi khi tạo đơn hàng!");
+      toast.error("Lỗi khi tạo đơn hàng!",{
+            closeButton: true,
+            className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+            ariaLabel: 'Info',
+        })
       console.error("Lỗi:", error);
     }
   };
@@ -168,6 +202,32 @@ const Advanced = () => {
 
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={true}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="light"
+        transition={Slide}
+        stacked
+        icon={({ type, theme }) => {
+        // theme is not used in this example but you could
+        switch (type) {
+            case 'info':
+            return <Info className="stroke-indigo-400" />;
+            case 'error':
+            return <CircleAlert className="stroke-red-500" />;
+            case 'success':
+            return <BadgeCheck className="stroke-green-500" />;
+            case 'warning':
+            return <TriangleAlert className="stroke-yellow-500" />;
+            default:
+            return null;
+        }
+        }}
+          />
       <h1>Nâng cấp gói của bạn</h1>
       
       {/* Tab Navigation */}
