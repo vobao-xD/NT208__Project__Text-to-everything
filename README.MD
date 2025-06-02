@@ -173,7 +173,7 @@ Dự án sử dụng các công nghệ và framework hiện đại để đảm 
 2.  **Điền các biến môi trường:**
     Mở file `.env` và cấu hình các biến cần thiết. Dưới đây là các biến quan trọng:
 
-    ```env
+```env
 Environment configuration for NT208 Project backend
 
 Text to speech API key
@@ -238,10 +238,8 @@ RUNWAYML_API_SECRET="key********************************************************
 
 Redis URL
 REDIS_URL="redis://yourdomain"
-    ```
-
+```
     **Lưu ý:**
-
       * Về nơi lấy các key trên hãy liên hệ với chúng tôi hoặc hỏi chatgpt để biết thêm .
 3.  **Thiết lập cơ sở dữ liệu (Database Setup):**
     Nếu dự án sử dụng Alembic để quản lý migrations, chạy lệnh sau để áp dụng các schema mới nhất vào database:
