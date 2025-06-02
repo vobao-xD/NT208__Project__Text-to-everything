@@ -630,49 +630,69 @@ async def smart_file_text_to_answer(
         error=error_message
     )
 TASK_LIST_DESCRIPTION = """
+
 Here are the available task types and their keys:
+
 1. Text to Code
-   Key: "text-to-code"
-   Description: Generate code from a text description.
-   Relevant input: User's text prompt describing the code, target language.
+Key: "text-to-code"
+Description: Generate code from a text description.
+Relevant input: User's text prompt describing the code, target language.
+parameters: (prompt:str),(language:Optional[str] = "python"),(max_tokens:Optional[int] = 150)
 
 2. Text to Image
-   Key: "text-to-image"
-   Description: Generate an image from a text description.
-   Relevant input: User's text prompt describing the image.
+Key: "text-to-image"
+Description: Generate an image from a text description.
+Relevant input: User's text prompt describing the im
+parameters: (prompt:str),(model:Optional[str]="dall-e-3"),(n:Optional[int] = 1),(size:Optional[str] = "1024x1024"),(quality:Optional[str] = "standard"),(style:Optional[str] = "vivid"),(response_format:Optional[str] = "url")
 
 3. Text to Audio
-   Key: "text-to-audio"
-   Description: Convert text to speech.
-   Relevant input: User's text to be converted.
+Key: "text-to-audio"
+Description: Convert text to speech.
+Relevant input: User's text to be converted.
+parameters: (text:str),(voice:Optional[str] = "alloy"),(model:Optional[str] = "gpt-4o-mini-tts"),(response_format:Optional[str] = "mp3"),(speed:Optional[float] = 1.0),(instructions:Optional[str] = None)
 
 4. Text to Answer (Question Answering)
-   Key: "generate-answer"
-   Description: Answer a question, possibly with context.
-   Relevant input: User's question, optional context.
+Key: "generate-answer"
+Description: Answer a question, possibly with context.
+Relevant input: User's question, optional context.
+parameters: (question:str),(max_tokens:Optional[int] = 150),(context:Optional[str] = None)
 
 5. Chatbot Conversation Content
-   Key: "chatbot-content"
-   Description: Continue a chat conversation.
-   Relevant input: User's current message, possibly conversation history.
+Key: "chatbot-content"
+Description: Continue a chat conversation.
+Relevant input: User's current message, possibly conversation history.
+parameters: (user_input:str),(max_tokens:Optional[int] = 150),(system_prompt:Optional[str] = None),(history:Optional[List[Message]] = None)
 
 6. Enhanced Text
-   Key: "enhance-text"  # Corrected from "enchance"
-   Description: Enhance or modify existing text based on an instruction.
-   Relevant input: User's text to enhance, instruction for enhancement.
+Key: "enhance-text" # Corrected from "enchance"
+Description: Enhance or modify existing text based on an instruction.
+Relevant input: User's text to enhance, instruction for enhancement.
+parameters: (text:str),(instruction:str),(max_tokens:Optional[int] = 150)
 
 7. File + Text to Answer (File-Based Question Answering)
-   Key: "file-text-to-answer"
-   Description: Answer a question based on the content of an uploaded file (image or document) and a text query.
-   Relevant input: Uploaded file (image or document), user's text query.
-   
+Key: "file-text-to-answer"
+Description: Answer a question based on the content of an uploaded file (image or document) and a text query.
+Relevant input: Uploaded file (image or document), user's text query.
+parameters: (text:str),(file:Optional[UploadFile] = None),(vision_model_override:Optional[str] = "gpt-4o"),(detail_vision:Optional[str] = "auto"),(max_tokens_vision:Optional[int] = 300),(assistant_model_override:Optional[str] = "gpt-4o"),(max_tokens:Optional[int] = 150)    
+
 8. Image URL + Text to Answer (Image URL-Based Question Answering)
-    Key: "image-url-to-answer" # Adding a distinct key if image_url is the primary input
-    Description: Answer a question based on an image URL and a text query.
-    Relevant input: Image URL, user's text query.
+ Key: "image-url-to-answer" # Adding a distinct key if image_url is the primary input
+ Description: Answer a question based on an image URL and a text query.
+ Relevant input: Image URL, user's text query.
+ parameters : (text:str),(image_url:Optional[str] = None),(vision_model_override:Optional[str] = "gpt-4o"),(detail_vision:Optional[str] = "auto"),(max_tokens_vision:Optional[int] = 300),(assistant_model_override:Optional[str] = "gpt-4o"),(max_tokens:Optional[int] = 150)
+
+
 
 If the input does not clearly match any of these tasks, or if essential information for a task seems missing, use the key "unknown_task".
-you MUST respond with a single, valid JSON object containing only one key: 'task'. The value for 'task' MUST be one of the provided task keys (e.g., \"text-to-code\", \"file-text-to-answer\", \"unknown_task\"). Do not include any other text, explanations, or markdown formatting like ```json or ``` around the JSON object.
+The return value includes the key and parameters I provided the paramater like : (prompt:str),(language:Optional[str] = "python"),(max_tokens:Optional[int] = 150).The value is a json object. Do not include any other text, explanations, or markdown formatting like ```json or ``` around the JSON object.
+{{
+  "task": "text-to-code",
+  "parameters": {{
+    "prompt": "write a python script to list files",
+    "language": "python",
+    "max_tokens": 100
+  }}
+}}
 """
 
 # Programmatically extract valid task keys for validation later (optional but good)
@@ -702,17 +722,13 @@ async def analyze(
     if not has_input:
         raise HTTPException(status_code=400, detail="No input provided. Please provide text, an image_url, or upload a file.")
 
-    prompt_parts.append("\nBased on the user input, identify exactly one task key from the list below.\n")
-    prompt_parts.append(TASK_LIST_DESCRIPTION)
-    prompt_parts.append("\nYou MUST respond with a single, valid JSON object containing only one key: 'task'. The value for 'task' MUST be one of the provided task keys (e.g., \"text-to-code\", \"file-text-to-answer\", \"unknown_task\"). Do not include any other text, explanations, or markdown formatting like ```json or ``` around the JSON object.")
-    
     final_prompt = "".join(prompt_parts)
 
     try:
         completion = await client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are an AI assistant that analyzes user inputs to classify them into predefined task types. Your response MUST be a single, valid JSON object formatted exactly as: {\"task\": \"CHOSEN_TASK_KEY\",\"parameters\": {\"text\": \"TEXT_INPUT\", \"file\": \"FILE_INPUT\", \"image_url\": \"IMAGE_URL_INPUT\"}}. Do not add any extra text, explanations, or markdown."},
+                {"role": "system", "content":TASK_LIST_DESCRIPTION},
                 {"role": "user", "content": final_prompt}
             ],
             temperature=0, 
