@@ -747,7 +747,7 @@ async def analyze(
         if task not in VALID_TASK_KEYS:
             print(f"Warning: AI returned a task ('{task}') not in the predefined VALID_TASK_KEYS. Treating as 'unknown_task'. Original JSON: {result_json}")
 
-        return {result_json}
+        return result_json
 
     except httpx.HTTPStatusError as e: # Catch errors from OpenAI client (e.g., auth, rate limits)
         error_detail_msg = str(e)
