@@ -9,6 +9,8 @@ import {
   } from "react-share";
 
 import FileUpload from '../components/FileUpload';
+import {toast, ToastContainer,Slide} from 'react-toastify';
+import { BadgeCheck, CircleAlert, Info, TriangleAlert } from 'lucide-react';
 
 const Generate = () => {
     const navigate = useNavigate();
@@ -258,7 +260,12 @@ const Generate = () => {
 
     const handleSubmit = async (text) => {
         if (!text.trim()) {
-            alert("Vui lòng nhập nội dung trước khi gửi.");
+            toast.error("Vui lòng nhập nội dung trước khi gửi.",{
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                ariaLabel: 'Error',
+            })
+            // alert("Vui lòng nhập nội dung trước khi gửi.");
             return;
         }
 
@@ -336,7 +343,12 @@ const Generate = () => {
                             }
                         ]);
                     } else {
-                        alert(analyzeResult.error || "Không thể phân tích yêu cầu của bạn. Vui lòng chọn chức năng thủ công.");
+                        toast.error(analyzeResult.error || "Không thể phân tích yêu cầu của bạn. Vui lòng chọn chức năng thủ công.",{
+                                closeButton: true,
+                                className: 'p-0 w-[400px] border border-red-600/40',
+                                ariaLabel: 'Error',
+                            }
+                        );
                         setIsLoading(false);
                         return;
                     }
@@ -401,7 +413,11 @@ const Generate = () => {
                         "Content-Type": "application/json"
                     };
                 } else {
-                    alert("Tính năng này chưa được hỗ trợ!");
+                    toast.error("Tính năng này chưa được hỗ trợ!",{
+                                closeButton: true,
+                                className: 'p-0 w-[400px] border border-red-600/40',
+                                ariaLabel: 'Error',
+                            });
                     setIsLoading(false);
                     return;
                 }
@@ -480,7 +496,11 @@ const Generate = () => {
 
         } catch (error) {
             console.error("Lỗi:", error);
-            alert("Có lỗi xảy ra khi gọi API: " + error.message);
+            toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
+                                closeButton: true,
+                                className: 'p-0 w-[400px] border border-red-600/40',
+                                ariaLabel: 'Error',
+                            });
         } finally {
             setIsLoading(false);
         }
@@ -517,7 +537,11 @@ const Generate = () => {
             };
             setChatHistory(prev => [...prev, botMessage]);
         } catch (error) {
-            alert("Có lỗi xảy ra khi gọi API: " + error.message);
+            toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
+                                closeButton: true,
+                                className: 'p-0 w-[400px] border border-red-600/40',
+                                ariaLabel: 'Error',
+                            });
         } finally {
             setIsLoading(false);
         }
@@ -555,7 +579,11 @@ const Generate = () => {
             };
             setChatHistory(prev => [...prev, botMessage]);
         } catch (error) {
-            alert("Gửi video thất bại: " + error.message);
+            toast.error("Gửi video thất bại: " + error.message,{
+                                closeButton: true,
+                                className: 'p-0 w-[400px] border border-red-600/40',
+                                ariaLabel: 'Error',
+                            });
         } finally {
             setIsLoading(false);
         }
@@ -592,7 +620,11 @@ const Generate = () => {
             };
             setChatHistory(prev => [...prev, botMessage]);
         } catch (error) {
-            alert("Có lỗi xảy ra khi gọi API: " + error.message);
+            toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
+                                closeButton: true,
+                                className: 'p-0 w-[400px] border border-red-600/40',
+                                ariaLabel: 'Error',
+                            });
         } finally {
             setIsLoading(false);
         }
@@ -630,7 +662,11 @@ const Generate = () => {
             };
             setChatHistory(prev => [...prev, botMessage]);
         } catch (error) {
-            alert("Có lỗi xảy ra khi gọi API: " + error.message);
+            toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
+                                closeButton: true,
+                                className: 'p-0 w-[400px] border border-red-600/40',
+                                ariaLabel: 'Error',
+                            });
         } finally {
             setIsLoading(false);
         }
@@ -638,6 +674,32 @@ const Generate = () => {
 
     return (
         <div className="full-container">
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={true}
+                closeOnClick
+                pauseOnHover
+                draggable
+                theme="dark"
+                transition={Slide}
+                stacked
+                icon={({ type, theme }) => {
+                // theme is not used in this example but you could
+                switch (type) {
+                    case 'info':
+                    return <Info className="stroke-indigo-400" />;
+                    case 'error':
+                    return <CircleAlert className="stroke-red-500" />;
+                    case 'success':
+                    return <BadgeCheck className="stroke-green-500" />;
+                    case 'warning':
+                    return <TriangleAlert className="stroke-yellow-500" />;
+                    default:
+                    return null;
+                }
+                }}
+            />
             <div className="sidebar">
                 <button className="back-button" onClick={() => navigate('/')}>
                     <i className="fa fa-home"></i>
@@ -648,7 +710,7 @@ const Generate = () => {
 
                 <div className="choices">
                     <select
-                        className={`options ${isLoading ? 'disabled' : ''}`}
+                        className={`options ${isLoading ? 'disabled' : ''} focus:border-blue-600`}
                         value={selectedOption}
                         onChange={handleOptionChange}
                         disabled={isLoading}
@@ -847,7 +909,7 @@ const Generate = () => {
                             
                          
                                     <textarea
-                                        className={`input ${isLoading ? 'disabled' : ''}`}
+                                        className={`input ${isLoading ? 'disabled' : ''}  focus:border-blue-600`}
                                         id="textarea"
                                         rows="4"
                                         placeholder="Mô tả những gì bạn muốn tạo, hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)"
@@ -1062,7 +1124,7 @@ const Generate = () => {
                         ) : (
                             <>
                                 <textarea
-                                    className={`input ${isLoading ? 'disabled' : ''}`}
+                                    className={`input ${isLoading ? 'disabled' : ''}  focus:border-blue-600`}
                                     rows="4"
                                     placeholder="Mô tả những gì bạn muốn tạo"
                                     onKeyDown={(e) => {
