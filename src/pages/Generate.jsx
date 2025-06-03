@@ -845,7 +845,7 @@ const Generate = () => {
                             borderRadius: '5px',
                             border: 'none',
                             background: isManualMode ? 'linear-gradient(135deg, #3999ff, #50e2ff)' : '#2a2a2a',
-                            color: 'white',
+                            color: isManualMode ? 'black' : 'white',
                             cursor: 'pointer',
                             transition: 'all 0.3s ease',
                             display: 'flex',
