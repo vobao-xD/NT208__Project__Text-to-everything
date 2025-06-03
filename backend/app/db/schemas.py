@@ -224,7 +224,7 @@ class FileTextToAnswerResponse(BaseModel):
 ###################### Chat History ######################
 
 class ChatHistoryBase(BaseModel):
-    user_id: UUID
+    user_email: str
     created_at: Optional[datetime] = None
 
     class Config:
@@ -232,7 +232,7 @@ class ChatHistoryBase(BaseModel):
 
 class ChatDetailBase(BaseModel):
     chat_history_id: UUID
-    generator_id: UUID
+    generator_name: str
     input_type: str = "text"
     text_prompt: Optional[str] = None
     input_file_path: Optional[str] = None

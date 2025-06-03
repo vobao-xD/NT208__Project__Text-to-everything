@@ -1,9 +1,12 @@
+import logging
 import os
+from typing import Optional
 from dotenv import load_dotenv
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, File, Form, HTTPException, Request, UploadFile
 import httpx
 from db.schemas import UserBase, TTSRequest, TTSResponse, TTSUploadRequest
 from services.authentication_and_authorization import create_microservice_token
+from services.output_manager import OutputManager
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pathlib import Path
@@ -17,7 +20,7 @@ load_dotenv()
 
 class TextToSpeechService:
     # Khởi tạo API Key
-    BASEURL = os.getenv("TTS_BACKEND_URL")
+    TTS_BACKEND_URL = os.getenv("TTS_BACKEND_URL")
     
     @staticmethod
     async def text_to_speech_with_default_voice(
@@ -27,11 +30,11 @@ class TextToSpeechService:
     ) -> TTSResponse:
         async with httpx.AsyncClient(timeout=600.0) as client:
             try:
-                tts_token = create_microservice_token("text-to-speech", user_data["email"])
+                tts_token = create_microservice_token("text-to-speech-default", user_data["email"])
 
                 # Gọi endpoint /tts của viXTTS
                 response = await client.post(
-                    f"{TextToSpeechService.BASEURL}/tts",
+                    f"{TextToSpeechService.TTS_BACKEND_URL}/tts",
                     headers={
                         "Authorization": f"Bearer {tts_token}",
                         "Content-Type": "application/json"
@@ -50,40 +53,32 @@ class TextToSpeechService:
                 if not tts_response.get("success"):
                     raise HTTPException(status_code=500, detail="viXTTS generation failed")
 
-                mp3_path = tts_response["file_path"]
+                wav_path = tts_response["file_path"]
                 
-                # Tải file MP3 từ /audio
-                mp3_response = await client.get(
-                    f"{TextToSpeechService.BASEURL}/audio/{mp3_path}",
+                # Tải file wav từ /audio
+                wav_response = await client.get(
+                    f"{TextToSpeechService.TTS_BACKEND_URL}/audio/{wav_path}",
                     headers={"Authorization": f"Bearer {tts_token}"}
                 )
-                mp3_response.raise_for_status()
+                wav_response.raise_for_status()
                 
-                # Tạo thư mục lưu trữ nếu chưa tồn tại
-                output_dir = Path("_audio_output")
-                output_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Lưu file MP3
-                mp3_filename = mp3_path.split("/")[-1]
-                save_path = output_dir / mp3_filename
-                with open(save_path, "wb") as f:
-                    f.write(mp3_response.content)
+                save_path = OutputManager.save_output_file(
+                    user_email=user_data["email"],
+                    generator_name="text-to-speech-default",
+                    file_content=wav_response.content,
+                    file_extension="wav"
+                )
 
-                # # Lưu lịch sử vào database
-                # new_chat = ChatHistoryBase(user_id=current_user.id)
-                
-                # new_detail = ChatDetailBase(
-                #     chat_history_id=new_chat.id,
-                #     generator_id=UUID("550e8400-e29b-41d4-a716-446655440001"),
-                #     input_type="text",
-                #     text_prompt=f"{request.text} (language: {request.language}, gender: {request.gender}, style: {request.style})",
-                #     output_type="audio",
-                #     output_file_path=str(save_path)
-                # )
-                # db.add(new_chat)
-                # db.add(new_detail)
-                # db.commit()
-                
+                OutputManager.log_chat(
+                    db=db,
+                    user_email=user_data["email"],
+                    generator_name="text-to-speech-default",
+                    input_type="text",
+                    text_prompt=TTS_request.text,
+                    output_type="audio",
+                    output_file_path=str(save_path)
+                )
+
                 return TTSResponse(
                     success=True,
                     file_path=str(save_path),
@@ -99,29 +94,35 @@ class TextToSpeechService:
 
     @staticmethod
     async def text_to_speech_with_custom_voice(
-        TTS_request: TTSUploadRequest,    
+        db: Session,
         user_data: dict,
-        db: Session
+        text: str,
+        language: str,
+        use_existing_reference: bool,
+        file: Optional[UploadFile],
     ) -> TTSResponse:
         async with httpx.AsyncClient(timeout=600.0) as client:
             try:
-                tts_token = create_microservice_token("text-to-speech", user_data["email"])
+                tts_token = create_microservice_token("text-to-speech-custom", user_data["email"])
 
-                validated_file = TTS_request.file
-                
                 if file and not use_existing_reference:
-                files = {"file": open(file, "rb")}
+                    file_content = await file.read()
+                    files = {
+                        "file": (file.filename, file_content, file.content_type)
+                    }
+                else:
+                    files = None
+
                 # Gọi endpoint /custom-tts của viXTTS
                 response = await client.post(
-                    f"{TextToSpeechService.BASEURL}/custom-tts",
+                    f"{TextToSpeechService.TTS_BACKEND_URL}/custom-tts",
                     headers={
-                        "Authorization": f"Bearer {tts_token}",
-                        "Content-Type": "application/json"
+                        "Authorization": f"Bearer {tts_token}"
                     },
                     data={
-                        "text": TTS_request.text,
-                        "language": TTS_request.language,
-                        "use_existing_reference": str(TTS_request.use_existing_reference).lower()
+                        "text": text,
+                        "language": language,
+                        "use_existing_reference": str(use_existing_reference).lower()
                     },
                     files=files
                 )
@@ -132,40 +133,32 @@ class TextToSpeechService:
                 if not tts_response.get("success"):
                     raise HTTPException(status_code=500, detail="viXTTS generation failed")
 
-                mp3_path = tts_response["file_path"]
+                wav_path = tts_response["file_path"]
                 
-                # Tải file MP3 từ /audio
-                mp3_response = await client.get(
-                    f"{TextToSpeechService.BASEURL}/audio/{mp3_path}",
+                # Tải file wav từ /audio
+                wav_response = await client.get(
+                    f"{TextToSpeechService.TTS_BACKEND_URL}/audio/{wav_path}",
                     headers={"Authorization": f"Bearer {tts_token}"}
                 )
-                mp3_response.raise_for_status()
+                wav_response.raise_for_status()
                 
-                # Tạo thư mục lưu trữ nếu chưa tồn tại
-                output_dir = Path("_audio_output")
-                output_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Lưu file MP3
-                mp3_filename = mp3_path.split("/")[-1]
-                save_path = output_dir / mp3_filename
-                with open(save_path, "wb") as f:
-                    f.write(mp3_response.content)
+                save_path = OutputManager.save_output_file(
+                    user_email=user_data["email"],
+                    generator_name="text-to-speech-default",
+                    file_content=wav_response.content,
+                    file_extension="wav"
+                )
 
-                # # Lưu lịch sử vào database
-                # new_chat = ChatHistoryBase(user_id=current_user.id)
-                
-                # new_detail = ChatDetailBase(
-                #     chat_history_id=new_chat.id,
-                #     generator_id=UUID("550e8400-e29b-41d4-a716-446655440001"),
-                #     input_type="text",
-                #     text_prompt=f"{request.text} (language: {request.language}, gender: {request.gender}, style: {request.style})",
-                #     output_type="audio",
-                #     output_file_path=str(save_path)
-                # )
-                # db.add(new_chat)
-                # db.add(new_detail)
-                # db.commit()
-                
+                OutputManager.log_chat(
+                    db=db,
+                    user_email=user_data["email"],
+                    generator_name="text-to-speech-default",
+                    input_type="text",
+                    text_prompt=text,
+                    output_type="audio",
+                    output_file_path=str(save_path)
+                )
+
                 return TTSResponse(
                     success=True,
                     file_path=str(save_path),
@@ -178,4 +171,6 @@ class TextToSpeechService:
                 raise HTTPException(status_code=504, detail="Request to viXTTS timed out after 10 minutes")
             except httpx.RequestError as e:
                 raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
-    }
+            
+
+

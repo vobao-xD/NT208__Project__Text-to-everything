@@ -1,13 +1,15 @@
 import re
 from services.authentication_and_authorization import verify_user_access_token
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, File, Form, HTTPException, Depends, Request, UploadFile
 from services import TextToSpeechService as service
 from db.schemas import TTSRequest, TTSResponse, TTSUploadRequest
+from typing import Optional
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from pathlib import Path
 from db import get_db
+import logging
 
 router = APIRouter()
 
@@ -31,7 +33,10 @@ async def text_to_speech_default(
 @router.post("/custom", response_model = TTSResponse)
 async def custom_text_to_speech_with_voice_cloning(
     request: Request,
-    TTS_request: TTSUploadRequest,
+    file: Optional[UploadFile] = File(None),
+    text: str = Form(..., min_length=1, max_length=1000),
+    language: str = Form(default="Tiếng Việt"),
+    use_existing_reference: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     """
@@ -39,7 +44,7 @@ async def custom_text_to_speech_with_voice_cloning(
     """
     try:
         user_data = verify_user_access_token(request)
-        return await service.text_to_speech_with_custom_voice(TTS_request, user_data, db) 
+        return await service.text_to_speech_with_custom_voice(db, user_data, text, language, use_existing_reference, file)  
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -53,7 +58,7 @@ async def serve_audio(filename: str, request: Request):
         verify_user_access_token(request)
 
         file_path = Path(filename)
-        if not str(file_path).startswith("_audio_output/"):
+        if not str(file_path).startswith("_outputs/"):
             raise HTTPException(status_code=403, detail="Access to files outside _output directory is forbidden")
         
         if not file_path.exists():
