@@ -1,7 +1,6 @@
-import requests
 import os
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException
+from fastapi import HTTPException
 from grpc import Status
 import httpx
 

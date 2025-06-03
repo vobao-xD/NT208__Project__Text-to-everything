@@ -10,9 +10,8 @@ import io
 from moviepy import VideoFileClip
 import PyPDF2
 import docx
-from dependencies.GetInfo import get_current_user_email, get_current_user_role
 from db.schemas import *
-from services.analyzeInput import guess_ai_intent
+from services.input_analyzer import guess_ai_intent
 import speech_recognition as sr
 from pydub import AudioSegment
 import os
@@ -158,8 +157,8 @@ def extract_text_from_docx(file: UploadFile):
 async def analyze_text(
     input: TextInput,
     request: Request,
-    user_email: str = Depends(get_current_user_email),
-    user_role: str = Depends(get_current_user_role)
+    user_email: str,
+    user_role: str
 ):
     """
     Phân tích intent của người dùng. Giới hạn 10 lượt/ngày cho role 'free'.

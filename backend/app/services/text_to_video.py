@@ -1,13 +1,12 @@
-#text_to_video-service.py
 import os
 import requests
-from dotenv import load_dotenv # type: ignore
+from dotenv import load_dotenv
 from deep_translator import GoogleTranslator
 
 load_dotenv()
 
 class TextToVideoService:
-    TTV_MODEL_URL = "https://api.segmind.com/v1/mochi-1"
+    TTV_MODEL_URL =  os.getenv("TTV_MODEL_URL")
     TTV_API_KEYS = os.getenv("TTV_API_KEYS", "").split(",")
 
     @staticmethod 

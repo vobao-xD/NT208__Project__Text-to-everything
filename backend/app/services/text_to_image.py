@@ -35,8 +35,6 @@ class TextToImageService:
             result = await translator.translate(text)
             return result
         
-
-
     # Tạo ảnh tốc độ nhanh
     @staticmethod
     def getImage(prompt: str | None, steps: int = 4):
@@ -73,8 +71,6 @@ class TextToImageService:
         else:
             return f"Error {response.status_code}: {response.text}"
         
-
-    
     # Tạo ảnh tốc độ nhanh
     @staticmethod
     def textToImage(prompt: TTIPrompt):

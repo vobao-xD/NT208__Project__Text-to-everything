@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, Response
-from services.auth import Auth
-from db import get_db
+from fastapi import APIRouter, Response, Depends
+from services.authentication_and_authorization import *
 from starlette.requests import Request
 from sqlalchemy.orm import Session
+from db import get_db
 
 router = APIRouter()
 
-@router.get("/auth/github") 
+@router.get("/github") 
 async def github_login(request: Request):
     """
         Chuyển hướng người dùng đến trang đăng nhập GitHub để xác thực.
@@ -29,9 +29,9 @@ async def github_login(request: Request):
         **Lưu ý**:
         - Frontend cần xử lý redirect từ GitHub callback.
     """
-    return await Auth.login_with_provider(request, "github")
+    return await login_with_provider(request, "github")
 
-@router.get("/auth/github/callback")
+@router.get("/github/callback")
 async def github_callback(request: Request, db: Session = Depends(get_db)):
     """
         Xử lý callback từ GitHub, lấy thông tin user, lưu vào database, tạo access token và lưu vào cookie.
@@ -61,9 +61,9 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
         **Lưu ý**:
         - Nếu GitHub không cung cấp email công khai, API sẽ gọi `/user/emails` để lấy email verified.
     """
-    return await Auth.provider_callback(request, "github", db)
+    return await provider_callback(request, "github", db)
 
-@router.get("/auth/google") 
+@router.get("/google") 
 async def google_login(request: Request):
     """
         Chuyển hướng người dùng đến trang đăng nhập Google để xác thực.
@@ -84,9 +84,9 @@ async def google_login(request: Request):
         **Lưu ý**:
         - Frontend cần xử lý redirect từ Google callback.
     """
-    return await Auth.login_with_provider(request, "google")
+    return await login_with_provider(request, "google")
 
-@router.get("/auth/google/callback")
+@router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
     """
         Xử lý callback từ Google sau khi xác thực, lưu user vào database, tạo access token và lưu vào cookie.
@@ -114,9 +114,9 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         }
         ```
     """
-    return await Auth.provider_callback(request, "google", db)
+    return await provider_callback(request, "google", db)
 
-@router.get("/auth/logout")
+@router.get("/logout")
 async def logout(request: Request, response: Response):
     """
         Đăng xuất người dùng, xóa cookie `access_token` và session, chuyển hướng về trang đăng nhập.
@@ -134,4 +134,8 @@ async def logout(request: Request, response: Response):
         **Lưu ý**:
         - Frontend cần xử lý redirect để hiển thị trang đăng nhập.
     """
-    return await Auth.logout(request, response)
+    return await logout(request, response)
+
+@router.get("/get-user-info")
+async def get_user_info(request: Request, db: Session = Depends(get_db)):
+    return await get_user_info(request, db)
