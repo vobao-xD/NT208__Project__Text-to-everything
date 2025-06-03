@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Cookies from "js-cookie";
 
 import {
     EmailShareButton,
     EmailIcon,
     FacebookShareButton,
     FacebookIcon
-  } from "react-share";
+} from "react-share";
 
 import FileUpload from '../components/FileUpload';
-import {toast, ToastContainer,Slide} from 'react-toastify';
+import { toast, ToastContainer, Slide } from 'react-toastify';
 import { BadgeCheck, CircleAlert, Info, TriangleAlert } from 'lucide-react';
 
 const Generate = () => {
@@ -24,69 +25,455 @@ const Generate = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
-    const [userInfo,setUserInfo]=useState({email:' ',role:'free',expire:' '});
+    const [userInfo, setUserInfo] = useState({ email: ' ', role: 'free', expire: ' ' });
     const [retryAfter, setRetryAfter] = useState(0);
     const [isRateLimited, setIsRateLimited] = useState(false);
-    const [inputValue,setInputValue]=useState('');
-    const [role,setRole]=useState('');
+    const [inputValue, setInputValue] = useState('');
+    const [role, setRole] = useState('');
     const [selectedMode, setSelectedMode] = useState("1");
     const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
     const [isManualMode, setIsManualMode] = useState(false);
+    const generatorIdMap = {
+        "1": "01010101-0101-0101-0101-010101010101",
+        "2": "22222222-2222-2222-2222-222222222222",
+        "3": "33333333-3333-3333-3333-333333333333",
+        "4": "",
+        "5": "55555555-5555-5555-5555-555555555555",
+        "6": "66666666-6666-6666-6666-666666666666",
+        "7": "77777777-7777-7777-7777-777777777777",
+        "8": "88888888-8888-8888-8888-888888888888",
+        "9": "99999999-9999-9999-9999-999999999999",
+        "10": "10101010-1010-1010-1010-101010101010",
+        "11": "11111111-1111-1111-1111-111111111111"
+    }
+
+    // Tạo map ngược lại từ UUID sang option
+    const reverseGeneratorIdMap = Object.entries(generatorIdMap).reduce((acc, [key, value]) => {
+        if (value) { // Chỉ thêm vào map nếu value không rỗng
+            acc[value] = key;
+        }
+        return acc;
+    }, {});
+
+    // Hàm chuyển đổi từ UUID sang option
+    const getOptionFromGeneratorId = (generatorId) => {
+        return reverseGeneratorIdMap[generatorId] || "0"; // Trả về "0" nếu không tìm thấy
+    };
 
     useEffect(() => {
         const init = async () => {
-          try {
-            console.log("Cookies:", document.cookie);
-            const res1 = await fetch('http://localhost:8000/api/user-info', {
-              method: "GET",
-              credentials: 'include',
-            });
-            const data1 = await res1.json();
-            if (!data1.email) {
-                alert("Không tìm thấy email!");
-                toast.error("Không tìm thấy email!",{
+            try {
+                console.log("Cookies:", document.cookie);
+                const res1 = await fetch('http://localhost:8000/api/user-info', {
+                    method: "GET",
+                    credentials: 'include',
+                });
+                const data1 = await res1.json();
+                if (!data1.email) {
+                    alert("Không tìm thấy email!");
+                    toast.error("Không tìm thấy email!", {
+                        closeButton: true,
+                        className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                        ariaLabel: 'Error',
+                    })
+                    return;
+                }
+                localStorage.setItem("email", data1.email);
+                fetchChatHistories();
+                const res2 = await fetch(`http://localhost:8000/user-subscription?email=${data1.email}`);
+                const data2 = await res2.json();
+                localStorage.setItem("role", data2.role);
+                localStorage.setItem("billingCycle", data2.billingCycle || "monthly");
+
+                // Chỉ set role state sau khi đã lấy và lưu role vào localStorage
+                setRole(data2.role);
+            } catch (err) {
+                console.error("Lỗi khi khởi tạo:", err);
+            }
+        };
+
+        init();
+    }, [navigate]);
+
+    const detectInputFileType = (filename) => {
+        const ext = filename.split(".").pop().toLowerCase();
+        if (["mp3", "wav"].includes(ext)) return "audio";
+        if (["mp4", "avi", "mov"].includes(ext)) return "video";
+        if (["pdf", "txt", "doc", "docx"].includes(ext)) return "file";
+        return "file";
+    };
+
+    const normalizeBotMessageContent = (botMessage) => {
+        // Xử lý đặc biệt cho output text của code generation
+        let outputText = null;
+        if (botMessage.option === "8") {
+            outputText = typeof botMessage.content.text === 'object' ?
+                JSON.stringify(botMessage.content.text) :
+                botMessage.content.text;
+        } else {
+            outputText = botMessage.content.text || null;
+        }
+
+        return {
+            type: botMessage.content.image_url
+                ? "image"
+                : botMessage.content.video_url
+                    ? "video"
+                    : botMessage.content.audio_url
+                        ? "audio"
+                        : "text",
+            text: outputText,
+            image_url: botMessage.content.image_url || null,
+            video_url: botMessage.content.video_url || null,
+            audio_url: botMessage.content.audio_url || null,
+        };
+    };
+
+    const prepareChatDetailPayload = (inputText, inputFileName, normalizedContent, generatorId) => {
+        return {
+            input: {
+                text: inputFileName ? null : inputText,
+                file: inputFileName,
+            },
+            input_type: inputFileName ? detectInputFileType(inputFileName) : "text",
+            output: normalizedContent,
+            generator_id: generatorId,
+        };
+    };
+
+    const addChatDetail = async (payload) => {
+        try {
+            const token = Cookies.get('access_token');
+            if (!token) {
+                toast.error("Không tìm thấy token xác thực", {
                     closeButton: true,
                     className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
                     ariaLabel: 'Error',
-                })
-              return;
+                });
+                return;
             }
-            localStorage.setItem("email", data1.email);
-      
-            const res2 = await fetch(`http://localhost:8000/user-subscription?email=${data1.email}`);
-            const data2 = await res2.json();
-            localStorage.setItem("role", data2.role);
-            localStorage.setItem("billingCycle", data2.billingCycle || "monthly");
-            
-            // Chỉ set role state sau khi đã lấy và lưu role vào localStorage
-            setRole(data2.role);
-          } catch (err) {
-            console.error("Lỗi khi khởi tạo:", err);
-          }
-        };
-      
-        init();
-    }, [navigate]);
-    const handleNewChat = () => {
-        if (chatHistory.length > 0) {
-            const newConversation = {
-                id: Date.now(),
-                messages: [...chatHistory],
-                title: chatHistory[0].content.substring(0, 30) + '...'
+
+            if (!currentConversationId) {
+                // Nếu chưa có conversation, tạo mới
+                const newChatResponse = await fetch("http://127.0.0.1:8000/chat-history", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        details: []
+                    })
+                });
+
+                if (!newChatResponse.ok) {
+                    throw new Error(`Lỗi tạo cuộc trò chuyện mới: ${await newChatResponse.text()}`);
+                }
+
+                const newChatData = await newChatResponse.json();
+                setCurrentConversationId(newChatData.id);
+            }
+
+            // Lấy UUID tương ứng với option từ generatorIdMap
+            const generatorId = generatorIdMap[payload.generator_id];
+            if (!generatorId) {
+                throw new Error(`Không tìm thấy generator_id cho option ${payload.generator_id}`);
+            }
+
+            // Chuẩn bị payload dựa trên input_type
+            const chatDetailPayload = {
+                input_type: payload.input_type,
+                text_prompt: payload.input.text || null,
+                input_file_name: payload.input.file || null,
+                output_type: payload.output.type,
+                output_text: payload.output.text || null,
+                output_url: payload.output.audio_url || payload.output.image_url || payload.output.video_url || null,
+                generator_id: generatorId
             };
-            setConversations(prev => [...prev, newConversation]);
+
+            console.log("Sending chat detail:", chatDetailPayload);
+
+            const response = await fetch(
+                `http://127.0.0.1:8000/chat-history/${currentConversationId}/add-detail`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(chatDetailPayload),
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Lỗi lưu chi tiết chat: ${errorText}`);
+            }
+
+            const savedDetail = await response.json();
+            console.log("Saved chat detail:", savedDetail);
+
+            // Cập nhật lại danh sách conversations mà không thay đổi tiêu đề
+            const updatedConversations = await fetch("http://127.0.0.1:8000/chat-history", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            }).then(res => res.json());
+
+            setConversations(updatedConversations.map(c => {
+                // Giữ nguyên tiêu đề từ conversation hiện tại nếu đã có
+                const existingConversation = conversations.find(existing => existing.id === c.id);
+                const title = existingConversation ? existingConversation.title :
+                    (c.details[0]?.text_prompt || "Cuộc trò chuyện mới").substring(0, 30) + '...';
+
+                return {
+                    id: c.id,
+                    title: title,
+                    messages: c.details
+                };
+            }));
+
+        } catch (err) {
+            console.error("addChatDetail error:", err);
+            toast.error("Có lỗi xảy ra khi lưu chi tiết chat: " + err.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                ariaLabel: 'Error',
+            });
         }
-        setChatHistory([]);
-        setCurrentConversationId(null);
     };
 
-    const loadConversation = (conversationId) => {
-        const conversation = conversations.find(c => c.id === conversationId);
-        if (conversation) {
-            setChatHistory(conversation.messages);
-            setCurrentConversationId(conversationId);
+    const handleNewChat = async () => {
+        try {
+            const token = Cookies.get('access_token');
+            if (!token) {
+                toast.error("Không tìm thấy token xác thực", {
+                    closeButton: true,
+                    className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                    ariaLabel: 'Error',
+                });
+                return;
+            }
+
+            const response = await fetch("http://127.0.0.1:8000/chat-history", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    details: []
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            const conversation_id = data.id;
+
+            if (chatHistory.length > 0) {
+                // Lấy prompt đầu tiên từ chat history
+                const firstPrompt = chatHistory[0].content;
+                const title = firstPrompt.length > 30 ? firstPrompt.substring(0, 30) + '...' : firstPrompt;
+
+                const newConversation = {
+                    id: conversation_id,
+                    messages: [...chatHistory],
+                    title: title
+                };
+                setConversations(prev => [...prev, newConversation]);
+            }
+
+            setCurrentConversationId(conversation_id);
+            setChatHistory([]);
+        } catch (error) {
+            console.error("Error:", error);
+            toast.error("Có lỗi xảy ra khi tạo cuộc trò chuyện mới: " + error.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                ariaLabel: 'Error',
+            });
         }
-    };  
+    };
+
+    const fetchChatHistories = async () => {
+        try {
+            const token = Cookies.get('access_token');
+            if (!token) {
+                console.error("Không tìm thấy token xác thực");
+                return;
+            }
+
+            const response = await fetch("http://127.0.0.1:8000/chat-history", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            setConversations(data.map(c => {
+                // Lấy prompt đầu tiên từ details
+                const firstPrompt = c.details[0]?.text_prompt || "Cuộc trò chuyện mới";
+                const title = firstPrompt.length > 30 ? firstPrompt.substring(0, 30) + '...' : firstPrompt;
+
+                return {
+                    id: c.id,
+                    title: title,
+                    messages: c.details
+                };
+            }));
+        } catch (err) {
+            console.error("fetchChatHistories error:", err);
+            toast.error("Có lỗi xảy ra khi tải lịch sử chat: " + err.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                ariaLabel: 'Error',
+            });
+        }
+    };
+
+    const loadConversation = async (conversationId) => {
+        try {
+            const token = Cookies.get('access_token');
+            if (!token) {
+                toast.error("Không tìm thấy token xác thực", {
+                    closeButton: true,
+                    className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                    ariaLabel: 'Error',
+                });
+                return;
+            }
+
+            const response = await fetch(`http://127.0.0.1:8000/chat-history/${conversationId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            console.log("Data from API:", data);
+
+            const messages = [];
+
+            for (let detail of data.details) {
+                // USER MESSAGE
+                const userMsg = {
+                    type: "user",
+                    content: detail.text_prompt || `[Đã gửi tệp: ${detail.input_file_name}]`,
+                };
+
+                if (detail.input_type === "audio") {
+                    userMsg.audio_url = detail.input_file_url;
+                } else if (detail.input_type === "video") {
+                    userMsg.video_url = detail.input_file_url;
+                } else if (detail.input_type === "image") {
+                    userMsg.image_url = detail.input_file_url;
+                } else if (detail.input_type === "file") {
+                    userMsg.file_url = detail.input_file_url;
+                }
+
+                messages.push(userMsg);
+
+                // BOT MESSAGE
+                const botMsg = {
+                    type: "bot",
+                    content: {},
+                    option: getOptionFromGeneratorId(detail.generator_id)
+                };
+
+                if (detail.output_text) {
+                    botMsg.content.text = detail.output_text;
+                }
+
+                const outputUrl = detail.output_url;
+                const outputType = detail.output_type;
+
+                if (outputUrl) {
+                    if (outputType === "audio" || botMsg.option === "1" || botMsg.option === "9") {
+                        botMsg.content.audio_url = outputUrl;
+                    } else if (outputType === "video" || botMsg.option === "3" || botMsg.option === "10") {
+                        botMsg.content.video_url = outputUrl;
+                    } else if (outputType === "image" || botMsg.option === "2" || botMsg.option === "5") {
+                        if (detail.generator_id === generatorIdMap["5"]) {
+                            botMsg.content.improved_image_url = outputUrl;
+                        } else {
+                            botMsg.content.image_url = outputUrl;
+                        }
+                    }
+                }
+
+                messages.push(botMsg);
+            }
+
+            setChatHistory(messages);
+            setCurrentConversationId(conversationId);
+        } catch (err) {
+            console.error("loadConversation error:", err);
+            toast.error("Có lỗi xảy ra khi tải cuộc trò chuyện: " + err.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                ariaLabel: 'Error',
+            });
+        }
+    };
+
+    const handleDeleteConversation = async (conversationId) => {
+        const confirmDelete = window.confirm("Bạn có chắc chắn muốn xoá đoạn chat này?");
+        if (!confirmDelete) return;
+
+        try {
+            const token = Cookies.get('access_token');
+            if (!token) {
+                toast.error("Không tìm thấy token xác thực", {
+                    closeButton: true,
+                    className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                    ariaLabel: 'Error',
+                });
+                return;
+            }
+
+            const response = await fetch(`http://127.0.0.1:8000/chat-history/${conversationId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
+            }
+
+            setConversations(prev => prev.filter(c => c.id !== conversationId));
+            if (conversationId === currentConversationId) {
+                setChatHistory([]);
+                setCurrentConversationId(null);
+            }
+        } catch (err) {
+            console.error("Xoá chat lỗi:", err);
+            toast.error("Có lỗi xảy ra khi xoá cuộc trò chuyện: " + err.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
+                ariaLabel: 'Error',
+            });
+        }
+    };
 
     const handleModeChange = (e) => {
         const newMode = e.target.value;
@@ -106,15 +493,15 @@ const Generate = () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization":`Bearer ${localStorage.getItem("access_token")}`,
-                    'X-User-email':localStorage.getItem("email"),
-                    'X-User-role':role
+                    "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+                    'X-User-email': localStorage.getItem("email"),
+                    'X-User-role': role
                 },
                 body: JSON.stringify({ user_text: text })
             });
-            if(response.status === 429) {
+            if (response.status === 429) {
                 console.log("Rate limit exceeded");
-                const data=await response.json();
+                const data = await response.json();
                 const retryAfter = response.headers.get('Retry-After');
                 const timeToWait = retryAfter ? parseInt(retryAfter, 10) * 1000 : 5000;
 
@@ -152,7 +539,7 @@ const Generate = () => {
 
             if (data.intent_analysis && actionMap[data.intent_analysis]) {
                 const selectedAction = actionMap[data.intent_analysis];
-                
+
                 // Kiểm tra quyền trước khi set option
                 if (selectedAction === "3" && role !== "pro") {
                     toast.error("Chỉ tài khoản Pro mới được phép sử dụng chức năng Text to Video. Vui lòng nâng cấp lên Pro để sử dụng tính năng này!", {
@@ -317,9 +704,9 @@ const Generate = () => {
         }
     };
 
-    const handleSubmit = async (text) => {
+    const handleSubmit = async (text, file = null) => {
         if (!text.trim()) {
-            toast.error("Vui lòng nhập nội dung trước khi gửi.",{
+            toast.error("Vui lòng nhập nội dung trước khi gửi.", {
                 closeButton: true,
                 className: 'p-0 w-[400px] border border-red-600/40 backdrop-blur-lg',
                 ariaLabel: 'Error',
@@ -328,6 +715,12 @@ const Generate = () => {
         }
 
         setIsLoading(true);
+        setSelectedFile(file);
+
+        const inputType = file ? detectInputFileType(file.name) : "text";
+        const fileName = file ? file.name : null;
+        const finalText = file ? "" : text;
+
         // Nếu có cả text và file ảnh, lưu thành 2 message riêng biệt
         if (selectedFile && imagePreview) {
             setChatHistory(prev => [
@@ -374,10 +767,10 @@ const Generate = () => {
                     option: "12"
                 };
                 setChatHistory(prev => [...prev, botMessage]);
-                
+
                 // Reset về Auto Analyze sau khi xử lý xong
                 setSelectedOption("0");
-                
+
                 // Reset file và preview
                 setSelectedFile(null);
                 setImagePreview(null);
@@ -387,17 +780,27 @@ const Generate = () => {
                 if (imageInputRef.current) {
                     imageInputRef.current.value = '';
                 }
-                
+
                 setIsLoading(false);
                 return;
             }
 
             // Nếu đang ở chế độ Auto Analyze
-            if (selectedOption === "0") {
+            if (selectedOption === "0" && !file) {
                 const analyzeResult = await handleAutoAnalyze(text);
                 if (analyzeResult.success) {
                     currentOption = analyzeResult.action;
                     finalText = analyzeResult.prompt;
+                    setChatHistory((prev) => [
+                        ...prev,
+                        {
+                            type: "bot",
+                            content: {
+                                text: `[AutoAnalyze đã xác định chức năng phù hợp]`,
+                            },
+                            option: "0",
+                        },
+                    ]);
                 } else {
                     setIsLoading(false);
                     return;
@@ -405,7 +808,7 @@ const Generate = () => {
             }
 
             console.log("Current Option:", currentOption);
-            
+
             let apiUrl;
             let requestBody = {};
             let videoUrl = null;
@@ -416,7 +819,7 @@ const Generate = () => {
 
             // Xử lý API URL dựa trên mode và role
             if (currentOption === "1") {
-                apiUrl = selectedMode === "1.1" && role === "pro" ? "http://127.0.0.1:8000/advanced/text-to-speech" : "http://localhost:8000/text-to-speech";
+                apiUrl = selectedMode === "1.1" && role === "pro" ? "http://127.0.0.1:8000/advanced/text-to-speech" : "http://127.0.0.1:8000/text-to-speech";
                 requestBody = {
                     text: finalText,
                     voice: "banmai",
@@ -434,14 +837,14 @@ const Generate = () => {
                         response_format: "url"
                     };
                 } else {
-                    apiUrl = "http://localhost:8000/text-to-image/";
+                    apiUrl = "http://127.0.0.1:8000/text-to-image";
                     requestBody = {
                         prompt: finalText,
                         steps: 0
                     };
                 }
             } else if (currentOption === "3") {
-                apiUrl = "http://localhost:8000/text-to-video";
+                apiUrl = "http://127.0.0.1:8000/text-to-video";
                 requestBody = {
                     prompt: finalText,
                     negative_prompt: "blurry, low quality, distorted",
@@ -495,7 +898,7 @@ const Generate = () => {
                     };
                 }
             } else {
-                toast.error("Tính năng này chưa được hỗ trợ!",{
+                toast.error("Tính năng này chưa được hỗ trợ!", {
                     closeButton: true,
                     className: 'p-0 w-[400px] border border-red-600/40',
                     ariaLabel: 'Error',
@@ -514,18 +917,23 @@ const Generate = () => {
                 throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
             }
 
-            let botMessage;
+            let botMessage = { type: "bot", content: {}, option: currentOption };
             if (currentOption === "3") {
                 const blob = await response.blob();
-                videoUrl = URL.createObjectURL(blob);
-                botMessage = {
-                    type: 'bot',
-                    content: { video_url: videoUrl },
-                    option: currentOption
-                };
+                botMessage.content.video_url = URL.createObjectURL(blob);
             } else {
                 const data = await response.json();
-                if (currentOption === "6") {
+                if (currentOption === "1") { // Text to Speech
+                    console.log("Text to Speech response:", data); // Debug log
+                    botMessage = {
+                        type: 'bot',
+                        content: {
+                            audio_url: data.audio_url
+                        },
+                        option: currentOption
+                    };
+                    console.log("Bot message with audio:", botMessage); // Debug log
+                } else if (currentOption === "6") {
                     botMessage = {
                         type: 'bot',
                         content: { text: data.response },
@@ -541,7 +949,7 @@ const Generate = () => {
                     } else {
                         botMessage = {
                             type: 'bot',
-                            content: { image_url: "http://localhost:8000/" + data.image_url },
+                            content: { image_url: `http://127.0.0.1:8000/${data.image_url}` },
                             option: currentOption
                         };
                     }
@@ -554,7 +962,9 @@ const Generate = () => {
                 } else if (currentOption === "8") {
                     botMessage = {
                         type: 'bot',
-                        content: { text: data.code },
+                        content: {
+                            text: typeof data.code === 'object' ? JSON.stringify(data.code) : data.code
+                        },
                         option: currentOption
                     };
                 } else {
@@ -565,7 +975,24 @@ const Generate = () => {
                     };
                 }
             }
+
+            console.log("Bot message after processing:", botMessage); // Debug log
+
             setChatHistory(prev => [...prev, botMessage]);
+
+            // Chuẩn bị và lưu chat detail
+            const normalizedContent = normalizeBotMessageContent(botMessage);
+            const payload = prepareChatDetailPayload(finalText, fileName, normalizedContent, currentOption);
+
+            // Đảm bảo có conversation ID trước khi lưu
+            if (!currentConversationId) {
+                await handleNewChat();
+            }
+
+            // Lưu chat detail
+            await addChatDetail(payload);
+
+            if (!isManualSelection) setSelectedOption("0");
 
             // Reset về Auto Analyze sau khi xử lý xong
             setSelectedOption("0");
@@ -582,7 +1009,7 @@ const Generate = () => {
 
         } catch (error) {
             console.error("Lỗi:", error);
-            toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
+            toast.error("Có lỗi xảy ra khi gọi API: " + error.message, {
                 closeButton: true,
                 className: 'p-0 w-[400px] border border-red-600/40',
                 ariaLabel: 'Error',
@@ -630,11 +1057,11 @@ const Generate = () => {
             };
             setChatHistory(prev => [...prev, botMessage]);
         } catch (error) {
-            toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
-                                closeButton: true,
-                                className: 'p-0 w-[400px] border border-red-600/40',
-                                ariaLabel: 'Error',
-                            });
+            toast.error("Có lỗi xảy ra khi gọi API: " + error.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40',
+                ariaLabel: 'Error',
+            });
         } finally {
             setIsLoading(false);
         }
@@ -654,22 +1081,22 @@ const Generate = () => {
             video_url: videoUrl
         };
         setChatHistory(prev => [...prev, userMessage]);
-    
+
         try {
             const formData = new FormData();
             formData.append("file", file);
-    
+
             const response = await fetch("http://127.0.0.1:8000/input/video", {
                 method: "POST",
                 body: formData
             });
-    
+
             if (!response.ok) {
                 throw new Error(`Lỗi API (${response.status}): ${await response.text()}`);
             }
-    
+
             const data = await response.json();
-    
+
             const botMessage = {
                 type: 'bot',
                 content: { text: data.text },
@@ -677,11 +1104,11 @@ const Generate = () => {
             };
             setChatHistory(prev => [...prev, botMessage]);
         } catch (error) {
-            toast.error("Gửi video thất bại: " + error.message,{
-                                closeButton: true,
-                                className: 'p-0 w-[400px] border border-red-600/40',
-                                ariaLabel: 'Error',
-                            });
+            toast.error("Gửi video thất bại: " + error.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40',
+                ariaLabel: 'Error',
+            });
         } finally {
             setIsLoading(false);
         }
@@ -723,11 +1150,11 @@ const Generate = () => {
             };
             setChatHistory(prev => [...prev, botMessage]);
         } catch (error) {
-            toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
-                                closeButton: true,
-                                className: 'p-0 w-[400px] border border-red-600/40',
-                                ariaLabel: 'Error',
-                            });
+            toast.error("Có lỗi xảy ra khi gọi API: " + error.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40',
+                ariaLabel: 'Error',
+            });
         } finally {
             setIsLoading(false);
         }
@@ -770,11 +1197,11 @@ const Generate = () => {
             };
             setChatHistory(prev => [...prev, botMessage]);
         } catch (error) {
-            toast.error("Có lỗi xảy ra khi gọi API: " + error.message,{
-                                closeButton: true,
-                                className: 'p-0 w-[400px] border border-red-600/40',
-                                ariaLabel: 'Error',
-                            });
+            toast.error("Có lỗi xảy ra khi gọi API: " + error.message, {
+                closeButton: true,
+                className: 'p-0 w-[400px] border border-red-600/40',
+                ariaLabel: 'Error',
+            });
         } finally {
             setIsLoading(false);
         }
@@ -801,19 +1228,19 @@ const Generate = () => {
                 transition={Slide}
                 stacked
                 icon={({ type, theme }) => {
-                // theme is not used in this example but you could
-                switch (type) {
-                    case 'info':
-                    return <Info className="stroke-indigo-400" />;
-                    case 'error':
-                    return <CircleAlert className="stroke-red-500" />;
-                    case 'success':
-                    return <BadgeCheck className="stroke-green-500" />;
-                    case 'warning':
-                    return <TriangleAlert className="stroke-yellow-500" />;
-                    default:
-                    return null;
-                }
+                    // theme is not used in this example but you could
+                    switch (type) {
+                        case 'info':
+                            return <Info className="stroke-indigo-400" />;
+                        case 'error':
+                            return <CircleAlert className="stroke-red-500" />;
+                        case 'success':
+                            return <BadgeCheck className="stroke-green-500" />;
+                        case 'warning':
+                            return <TriangleAlert className="stroke-yellow-500" />;
+                        default:
+                            return null;
+                    }
                 }}
             />
             <div className="sidebar">
@@ -883,8 +1310,8 @@ const Generate = () => {
                 )}
 
                 <div className="new-chat_btn">
-                    <button 
-                        className={`generate_btn ${isLoading ? 'disabled' : ''}`} 
+                    <button
+                        className={`generate_btn ${isLoading ? 'disabled' : ''}`}
                         onClick={handleNewChat}
                         disabled={isLoading}
                     >
@@ -893,21 +1320,58 @@ const Generate = () => {
                 </div>
 
                 <div className="history">
-                    <ul className="chat-list" style={{ listStyle: 'none', padding: 0 }}>
+                    <ul className="chat-list" style={{ listStyle: 'none', padding: 0, cursor: 'pointer' }}>
                         {conversations.map((conversation) => (
                             <li
                                 key={conversation.id}
                                 className={`chat-item ${currentConversationId === conversation.id ? 'active' : ''}`}
                                 onClick={() => loadConversation(conversation.id)}
                                 style={{
-                                    padding: '10px',
+                                    padding: '10px 15px',
                                     margin: '5px 0',
-                                    cursor: 'pointer',
-                                    background: currentConversationId === conversation.id ? 'linear-gradient(135deg, #3999ff, #50e2ff)' : 'transparent',
-                                    color: currentConversationId === conversation.id ? 'black' : 'white'
+                                    borderRadius: '8px',
+                                    backgroundColor: currentConversationId === conversation.id ? '#2a2a2a' : 'transparent',
+                                    border: currentConversationId === conversation.id ? '1px solid #3999ff' : '1px solid transparent',
+                                    transition: 'all 0.3s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    '&:hover': {
+                                        backgroundColor: '#2a2a2a',
+                                        transform: 'translateX(5px)'
+                                    }
                                 }}
                             >
-                                {conversation.title}
+                                <span style={{
+                                    color: currentConversationId === conversation.id ? '#3999ff' : '#fff',
+                                    fontWeight: currentConversationId === conversation.id ? 'bold' : 'normal',
+                                    transition: 'all 0.3s ease'
+                                }}>
+                                    {conversation.title}
+                                </span>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteConversation(conversation.id);
+                                    }}
+                                    style={{
+                                        background: 'transparent',
+                                        color: '#ff4444',
+                                        border: 'none',
+                                        padding: '2px 6px',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                        marginLeft: '10px',
+                                        opacity: currentConversationId === conversation.id ? 1 : 0.5,
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            opacity: 1,
+                                            backgroundColor: 'rgba(255, 68, 68, 0.1)'
+                                        }
+                                    }}
+                                >
+                                    🞬
+                                </button>
                             </li>
                         ))}
                     </ul>
@@ -917,8 +1381,8 @@ const Generate = () => {
             <div className="content">
                 <div className="header_content content-item">
                     <div className="fixed-button-container">
-                        <button 
-                            className={`rainbow-button fixed-button-advanced ${isLoading ? 'disabled' : ''}`} 
+                        <button
+                            className={`rainbow-button fixed-button-advanced ${isLoading ? 'disabled' : ''}`}
                             onClick={() => navigate('/advanced')}
                             disabled={isLoading}
                         >
@@ -939,7 +1403,14 @@ const Generate = () => {
                         >
                             {message.type === 'user' ? (
                                 message.audio_url ? (
-                                    <audio controls src={message.audio_url} />
+                                    <audio controls
+                                        src={message.audio_url}
+                                        style={{
+                                            width: "100%",
+                                            maxWidth: "500px",
+                                            maxHeight: "300px",
+                                            borderRadius: "10px"
+                                        }} />
                                 ) : message.video_url ? (
                                     <video
                                         controls
@@ -974,16 +1445,31 @@ const Generate = () => {
                             ) : (
                                 message.option === "1" ? (
                                     <>
-                                        <audio controls src={message.content.audio_url} />
-                                        <EmailShareButton subject='My content was created by Nhom1, check it out!'
-                                                body='My content was created by Nhom 1! Check it out!' className='share' style={{color: 'white'}}>
-                                                    <EmailIcon size={48} round={true} />
-                                        </EmailShareButton>
+                                        <audio
+                                            controls
+                                            src={message.content.audio_url}
+                                            style={{
+                                                minwidth: "100%",
+                                                maxWidth: "800px",
+                                                borderRadius: "10px",
+                                                marginBottom: "10px"
+                                            }}
+                                        />
+                                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                            <EmailShareButton
+                                                subject='My content was created by Nhom1, check it out!'
+                                                body='My content was created by Nhom 1! Check it out!'
+                                                className='share'
+                                                style={{ color: 'white' }}
+                                            >
+                                                <EmailIcon size={48} round={true} />
+                                            </EmailShareButton>
 
-                                        <FacebookShareButton hashtag='#AI'>
-                                            <FacebookIcon size={48} round={true} />
-                                        </FacebookShareButton>
-                                    </> 
+                                            <FacebookShareButton hashtag='#AI'>
+                                                <FacebookIcon size={48} round={true} />
+                                            </FacebookShareButton>
+                                        </div>
+                                    </>
                                 ) : message.option === "2" ? (
                                     <>
                                         <img
@@ -991,24 +1477,24 @@ const Generate = () => {
                                             alt="Generated"
                                             style={{ maxWidth: '100%', borderRadius: '10px' }}
                                         />
-                                        <EmailShareButton 
+                                        <EmailShareButton
                                             subject='My content was created by Nhom1, check it out!'
-                                            body='My content was created by Nhom 1! Check it out!' 
-                                            className='share' 
-                                            style={{color: 'white'}}
+                                            body='My content was created by Nhom 1! Check it out!'
+                                            className='share'
+                                            style={{ color: 'white' }}
                                         >
                                             <EmailIcon size={48} round={true} />
                                         </EmailShareButton>
-                                        
+
                                         <FacebookShareButton hashtag='#AI'>
                                             <FacebookIcon size={48} round={true} />
                                         </FacebookShareButton>
                                     </>
-                                ): message.option === "3" ? (
+                                ) : message.option === "3" ? (
                                     <>
                                         <video controls width="100%" src={message.content.video_url} />
                                         <EmailShareButton subject='My content was created by Nhom1, check it out!'
-                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white',borderRadius: '10px' }}>
+                                            body='My content was created by Nhom 1! Check it out!' className='share' style={{ color: 'white', borderRadius: '10px' }}>
                                             <EmailIcon size={48} round={true} />
                                         </EmailShareButton>
 
@@ -1029,11 +1515,11 @@ const Generate = () => {
                                                 display: "block"
                                             }}
                                         />
-                                        <EmailShareButton 
+                                        <EmailShareButton
                                             subject='My content was created by Nhom1, check it out!'
                                             body='My content was created by Nhom 1! Check it out!'
-                                            className='share' 
-                                            style={{color: 'white'}}
+                                            className='share'
+                                            style={{ color: 'white' }}
                                         >
                                             <EmailIcon size={48} round={true} />
                                         </EmailShareButton>
@@ -1053,147 +1539,147 @@ const Generate = () => {
                 </div>
 
                 <div className="footer_content content-item">
-                    <div id="btn_complex" style={{position: 'relative', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                    <div id="btn_complex" style={{ position: 'relative', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         {selectedOption === "0" ? (
                             <>
-                            
-                         
-                                    <textarea
-                                        className={`input ${isLoading ? 'disabled' : ''}  focus:border-blue-600`}
-                                        id="textarea"
-                                        rows="4"
-                                        placeholder="Mô tả những gì bạn muốn tạo, hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)"
-                                        value={inputValue}
-                                        onChange={(e) => setInputValue(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                handleSubmit(inputValue);
-                                                setInputValue('');
-                                            }
-                                        }}
-                                        disabled={isLoading}
-                                    />
-                                     <button
-                                        className={`file-upload-btn ${isLoading ? 'disabled' : ''}`}
-                                        onClick={() => fileInputRef.current?.click()}
-                                        disabled={isLoading}
-                                        data-tooltip="Nhập liệu bằng video
+
+
+                                <textarea
+                                    className={`input ${isLoading ? 'disabled' : ''}  focus:border-blue-600`}
+                                    id="textarea"
+                                    rows="4"
+                                    placeholder="Mô tả những gì bạn muốn tạo, hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt)"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSubmit(inputValue);
+                                            setInputValue('');
+                                        }
+                                    }}
+                                    disabled={isLoading}
+                                />
+                                <button
+                                    className={`file-upload-btn ${isLoading ? 'disabled' : ''}`}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isLoading}
+                                    data-tooltip="Nhập liệu bằng video
                                         âm thanh, hình ảnh"
-                                        style={{
-                                            padding: '10px',
-                                            borderRadius: '50%',
-                                            height: '20px',
-                                            marginLeft: '2%',
-                                            marginRight: '20px',
-                                            marginBottom: '3%',
-                                            width: '20px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            background: 'linear-gradient(45deg, #ff00ff, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff)',
-                                            border: 'none',
-                                            color: 'black',
-                                            fontSize: '25px',
-                                            position: 'absolute'
-                                        }}
-                                    >
-                                        +
-                                    </button>
-                                    <button
-                                        className={`file-upload-btn ${isLoading ? 'disabled' : ''}`}
-                                        onClick={() => imageInputRef.current?.click()}
-                                        disabled={isLoading}
-                                        data-tooltip="Đính kèm tệp"
-                                        style={{
-                                            padding: '10px',
-                                            borderRadius: '50%',
-                                            height: '20px',
-                                            marginLeft: '2%',
-                                            marginRight: '20px',
-                                            marginBottom: '3%',
-                                            width: '20px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            cursor: 'pointer',
-                                            background: 'none',
-                                            border: 'none',
-                                            color: 'black',
-                                            fontSize: '25px',
-                                            position: 'absolute',
-                                            left: '50px'
-                                        }}
-                                    >
-                                        📎
-                                    </button>
-                                    <input
-                                        type="file"
-                                        ref={imageInputRef}
-                                        onChange={handleImageSelect}
-                                        style={{ display: 'none' }}
-                                        accept="image/*"
-                                    />
-                                    {imagePreview && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '-40px',
-                                            left: '4%',
-                                            transform: 'translateX(-50%)',
-                                            width: '50px',
-                                            height: '50px',
-                                            borderRadius: '5px',
-                                            overflow: 'hidden',
-                                            border: 'none'
-                                        }}>
-                                            <img
-                                                src={imagePreview}
-                                                alt="Preview"
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    objectFit: 'cover'
-                                                }}
-                                            />
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedFile(null);
-                                                    setImagePreview(null);
-                                                    if (imageInputRef.current) {
-                                                        imageInputRef.current.value = '';
-                                                    }
-                                                }}
-                                                style={{
-                                                    position: 'absolute',
-                                                    top: '2px',
-                                                    right: '2px',
-                                                    width: '16px',
-                                                    height: '16px',
-                                                    borderRadius: '50%',
-                                                    background: '#ff4444',
-                                                    border: 'none',
-                                                    color: 'white',
-                                                    fontSize: '10px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    cursor: 'pointer',
-                                                    padding: 0,
-                                                    lineHeight: 1,
-                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                                    zIndex: 2,
-                                                    transition: 'transform 0.2s ease',
-                                                    ':hover': {
-                                                        transform: 'scale(1.2)'
-                                                    }
-                                                }}
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    )}
-                                    <div className="glow-wrapper">
+                                    style={{
+                                        padding: '10px',
+                                        borderRadius: '50%',
+                                        height: '20px',
+                                        marginLeft: '2%',
+                                        marginRight: '20px',
+                                        marginBottom: '3%',
+                                        width: '20px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        background: 'linear-gradient(45deg, #ff00ff, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff)',
+                                        border: 'none',
+                                        color: 'black',
+                                        fontSize: '25px',
+                                        position: 'absolute'
+                                    }}
+                                >
+                                    +
+                                </button>
+                                <button
+                                    className={`file-upload-btn ${isLoading ? 'disabled' : ''}`}
+                                    onClick={() => imageInputRef.current?.click()}
+                                    disabled={isLoading}
+                                    data-tooltip="Đính kèm tệp"
+                                    style={{
+                                        padding: '10px',
+                                        borderRadius: '50%',
+                                        height: '20px',
+                                        marginLeft: '2%',
+                                        marginRight: '20px',
+                                        marginBottom: '3%',
+                                        width: '20px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'black',
+                                        fontSize: '25px',
+                                        position: 'absolute',
+                                        left: '50px'
+                                    }}
+                                >
+                                    📎
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={imageInputRef}
+                                    onChange={handleImageSelect}
+                                    style={{ display: 'none' }}
+                                    accept="image/*"
+                                />
+                                {imagePreview && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-40px',
+                                        left: '4%',
+                                        transform: 'translateX(-50%)',
+                                        width: '50px',
+                                        height: '50px',
+                                        borderRadius: '5px',
+                                        overflow: 'hidden',
+                                        border: 'none'
+                                    }}>
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover'
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                setSelectedFile(null);
+                                                setImagePreview(null);
+                                                if (imageInputRef.current) {
+                                                    imageInputRef.current.value = '';
+                                                }
+                                            }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: '2px',
+                                                right: '2px',
+                                                width: '16px',
+                                                height: '16px',
+                                                borderRadius: '50%',
+                                                background: '#ff4444',
+                                                border: 'none',
+                                                color: 'white',
+                                                fontSize: '10px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                padding: 0,
+                                                lineHeight: 1,
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                                zIndex: 2,
+                                                transition: 'transform 0.2s ease',
+                                                ':hover': {
+                                                    transform: 'scale(1.2)'
+                                                }
+                                            }}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                )}
+                                <div className="glow-wrapper">
                                     <button
                                         id="submit_btn"
                                         className={isLoading ? 'disabled' : ''}
@@ -1202,26 +1688,26 @@ const Generate = () => {
                                             setInputValue('');
                                         }}
                                         disabled={isLoading}
-                                        
+
                                     >
                                         Create
                                     </button>
                                 </div>
                                 <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileSelect}
-                                        style={{ display: 'none' }}
-                                        accept=".mp4,.wav,.mp3,.pdf,.doc,.docx,.txt"
-                                    />
-                            
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileSelect}
+                                    style={{ display: 'none' }}
+                                    accept=".mp4,.wav,.mp3,.pdf,.doc,.docx,.txt"
+                                />
+
                             </>
                         ) : selectedOption === "9" ? (
-                            <div style={{ 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center', 
-                                gap: '10px', 
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '10px',
                                 width: '60%',
                                 margin: '20px auto'
                             }}>
@@ -1233,7 +1719,7 @@ const Generate = () => {
                                         </span>
                                     </>
                                 ) : (
-                                    <div style={{ 
+                                    <div style={{
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',
@@ -1243,29 +1729,29 @@ const Generate = () => {
                                             Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!
                                         </span>
                                         <div className="fixed-button-container-2">
-                                        <button
-                                            className="rainbow-button"
-                                            onClick={() => navigate('/advanced')}
-                                            style={{
-                                                padding: '10px 20px',
-                                                borderRadius: '5px',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                fontSize: '14px'
-                                            }}
-                                        >
-                                            Nâng cấp ngay
-                                        </button>
+                                            <button
+                                                className="rainbow-button"
+                                                onClick={() => navigate('/advanced')}
+                                                style={{
+                                                    padding: '10px 20px',
+                                                    borderRadius: '5px',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Nâng cấp ngay
+                                            </button>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         ) : selectedOption === "10" ? (
-                            <div style={{ 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center', 
-                                gap: '10px', 
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '10px',
                                 width: '60%',
                                 margin: '20px auto'
                             }}>
@@ -1277,7 +1763,7 @@ const Generate = () => {
                                         </span>
                                     </>
                                 ) : (
-                                    <div style={{ 
+                                    <div style={{
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',
@@ -1287,29 +1773,29 @@ const Generate = () => {
                                             Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!
                                         </span>
                                         <div className="fixed-button-container-2">
-                                        <button
-                                            className="rainbow-button"
-                                            onClick={() => navigate('/advanced')}
-                                            style={{
-                                                padding: '10px 20px',
-                                                borderRadius: '5px',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                fontSize: '14px'
-                                            }}
-                                        >
-                                            Nâng cấp ngay
-                                        </button>
+                                            <button
+                                                className="rainbow-button"
+                                                onClick={() => navigate('/advanced')}
+                                                style={{
+                                                    padding: '10px 20px',
+                                                    borderRadius: '5px',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Nâng cấp ngay
+                                            </button>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         ) : selectedOption === "11" ? (
-                            <div style={{ 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center', 
-                                gap: '10px', 
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '10px',
                                 width: '60%',
                                 margin: '20px auto'
                             }}>
@@ -1321,7 +1807,7 @@ const Generate = () => {
                                         </span>
                                     </>
                                 ) : (
-                                    <div style={{ 
+                                    <div style={{
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',
@@ -1331,29 +1817,29 @@ const Generate = () => {
                                             Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!
                                         </span>
                                         <div className="fixed-button-container-2">
-                                        <button
-                                            className="rainbow-button"
-                                            onClick={() => navigate('/advanced')}
-                                            style={{
-                                                padding: '10px 20px',
-                                                borderRadius: '5px',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                fontSize: '14px'
-                                            }}
-                                        >
-                                            Nâng cấp ngay
-                                        </button>
+                                            <button
+                                                className="rainbow-button"
+                                                onClick={() => navigate('/advanced')}
+                                                style={{
+                                                    padding: '10px 20px',
+                                                    borderRadius: '5px',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Nâng cấp ngay
+                                            </button>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         ) : selectedOption === "5" ? (
-                            <div style={{ 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                alignItems: 'center', 
-                                gap: '10px', 
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '10px',
                                 width: '60%',
                                 margin: '20px auto'
                             }}>
@@ -1365,7 +1851,7 @@ const Generate = () => {
                                         </span>
                                     </>
                                 ) : (
-                                    <div style={{ 
+                                    <div style={{
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',
@@ -1375,19 +1861,19 @@ const Generate = () => {
                                             Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!
                                         </span>
                                         <div className="fixed-button-container-2">
-                                        <button
-                                            className="rainbow-button"
-                                            onClick={() => navigate('/advanced')}
-                                            style={{
-                                                padding: '10px 20px',
-                                                borderRadius: '5px',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                fontSize: '14px'
-                                            }}
-                                        >
-                                            Nâng cấp ngay
-                                        </button>
+                                            <button
+                                                className="rainbow-button"
+                                                onClick={() => navigate('/advanced')}
+                                                style={{
+                                                    padding: '10px 20px',
+                                                    borderRadius: '5px',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Nâng cấp ngay
+                                            </button>
                                         </div>
                                     </div>
                                 )}
