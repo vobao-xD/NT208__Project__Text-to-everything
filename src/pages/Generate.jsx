@@ -844,6 +844,14 @@ const Generate = () => {
                     };
                 }
             } else if (currentOption === "3") {
+                if (role !== "pro") {
+                    toast.error("Chỉ tài khoản Pro mới được phép sử dụng chức năng Text to Video. Vui lòng nâng cấp lên Pro để sử dụng tính năng này!", {
+                        closeButton: true,
+                        onClose: () => navigate('/advanced')
+                    });
+                    setIsLoading(false);
+                    return;
+                }
                 apiUrl = "http://127.0.0.1:8000/text-to-video";
                 requestBody = {
                     prompt: finalText,
@@ -1572,7 +1580,7 @@ const Generate = () => {
                                         height: '20px',
                                         marginLeft: '2%',
                                         marginRight: '20px',
-                                        marginBottom: '3%',
+                                        marginBottom: '2%',
                                         width: '20px',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -1598,7 +1606,7 @@ const Generate = () => {
                                         height: '20px',
                                         marginLeft: '2%',
                                         marginRight: '20px',
-                                        marginBottom: '3%',
+                                        marginBottom: '2%',
                                         width: '20px',
                                         display: 'flex',
                                         alignItems: 'center',
