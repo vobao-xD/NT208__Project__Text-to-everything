@@ -60,35 +60,10 @@ class TTSRequest(BaseModel):
         if v not in allowed_styles:
             raise ValueError(f"Style must be one of {allowed_styles} for gender '{gender}'")
         return v
-    
-class TTSUploadRequest(BaseModel):
-    text: str = Form(..., min_length=1, max_length=1000, description="Text to convert to speech")
-    language: str = Form(default="Tiếng Việt", description="Language for TTS")
-    file: Optional[UploadFile] = File(None, description="Audio file (WAV, MP3, FLAC, OGG). Required if use_existing_reference is false.")
-    use_existing_reference: bool = Form(False, description="Set to true to use previously uploaded reference audio")
-    
-    @validator('text')
-    def validate_text(cls, v):
-        if not v or not v.strip():
-            raise ValueError("Text cannot be empty")
-        return v.strip()
-    
-    @validator('language')
-    def validate_language(cls, v):
-        if v not in ['Tiếng Việt', 'Vietnamese', 'Tiếng Anh', 'English']:
-            raise ValueError("Only Vietnamese and English languages are supported")
-        return v
-    
-    @validator('use_existing_reference')
-    def validate_boolean(cls, v):
-        if not isinstance(v, bool):
-            raise ValueError("use_existing_reference must be a boolean (True/False)")
-        return v
 
 class TTSResponse(BaseModel):
     success: bool
     file_path: str
-    timestamp: str
 
 class TTSError(Exception):
     """Custom exception for TTS operations"""
@@ -100,6 +75,10 @@ class TTIPrompt(BaseModel):
     prompt: str
     steps: int = 4
 
+class TTIResponse(BaseModel):
+    success: bool
+    file_path: str
+
 #################### Text to video ####################
 
 class TextToVideoRequest(BaseModel):
@@ -110,6 +89,10 @@ class TextToVideoRequest(BaseModel):
     steps: int = 30
     seed: int = 123456
     frames: int = 64
+
+class TTVResponse(BaseModel):
+    success: bool
+    file_path: str
 
 #################### Speech to text ####################
 
@@ -136,6 +119,10 @@ class ChatRequest(BaseModel):
 
 class TTCRequest(BaseModel):
     prompt: str
+
+class TTCResponse(BaseModel):
+    success: bool
+    code: str
 
 #################### Payment ####################
 

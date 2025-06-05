@@ -4,7 +4,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import Depends, File, Form, HTTPException, Request, UploadFile
 import httpx
-from db.schemas import UserBase, TTSRequest, TTSResponse, TTSUploadRequest
+from db.schemas import UserBase, TTSRequest, TTSResponse
 from services.authentication_and_authorization import create_microservice_token
 from services.output_manager import OutputManager
 from sqlalchemy.orm import Session
@@ -13,7 +13,6 @@ from pathlib import Path
 from db.models import User
 from uuid import UUID
 from db import get_db
-
 import jwt
 
 load_dotenv()
@@ -82,7 +81,6 @@ class TextToSpeechService:
                 return TTSResponse(
                     success=True,
                     file_path=str(save_path),
-                    timestamp=tts_response.get("timestamp", "")
                 )
                 
             except httpx.HTTPStatusError as e:
@@ -144,7 +142,7 @@ class TextToSpeechService:
                 
                 save_path = OutputManager.save_output_file(
                     user_email=user_data["email"],
-                    generator_name="text-to-speech-default",
+                    generator_name="text-to-speech-custom",
                     file_content=wav_response.content,
                     file_extension="wav"
                 )
@@ -152,7 +150,7 @@ class TextToSpeechService:
                 OutputManager.log_chat(
                     db=db,
                     user_email=user_data["email"],
-                    generator_name="text-to-speech-default",
+                    generator_name="text-to-speech-custom",
                     input_type="text",
                     text_prompt=text,
                     output_type="audio",

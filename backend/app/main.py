@@ -60,17 +60,6 @@ app.add_middleware(
     allow_headers=["*"],                      # Cho phép tất cả header
 )
 
-# # Create img directory for storing images
-# if not os.path.exists("img"):
-#     os.mkdir("img")
-
-# app.mount("/img", StaticFiles(directory="img"), name="static")
-
-# if not os.path.exists("static"):
-#     os.makedirs("static")
-
-# app.mount("/static", StaticFiles(directory="static"), name="static")
-
 app.include_router(router)
 
 # @app.on_event("startup")
