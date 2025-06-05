@@ -20,6 +20,7 @@ generators_to_insert = [
     {"name": "text-to-speech-custom", "input_type": "text", "output_type": "audio"},
     {"name": "text-to-image", "input_type": "text", "output_type": "image"},
     {"name": "text-to-video", "input_type": "text", "output_type": "video"},
+    {"name": "text-to-code", "input_type": "text", "output_type": "text"}
 ]
 
 try:

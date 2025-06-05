@@ -1,7 +1,6 @@
-from fastapi import HTTPException, Depends, Response, Request
+from fastapi import HTTPException, Response, Request
 from jose import JWTError, jwt, ExpiredSignatureError
 from authlib.integrations.starlette_client import OAuth
-from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 from datetime import datetime, timedelta
 from starlette.requests import Request
@@ -57,7 +56,6 @@ oauth.register(
     client_kwargs={"scope": "user:email"},
 )
 
-
 # JWT for user management
 def create_user_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     if "sub" not in data:
@@ -95,7 +93,6 @@ def verify_user_access_token(
         raise HTTPException(status_code=401, detail="Token has expired")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
 
 # JWT for microservice management
 def create_microservice_token(service_name: str, user_email: str) -> str:
@@ -141,7 +138,7 @@ async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
         if not token:
             return None
 
-        payload = verify_token(token)
+        payload = verify_user_access_token(token)
         email: str = payload.get("sub")
         
         user = db.query(User).filter(User.email == email).first()
@@ -159,13 +156,6 @@ async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
         )
         
     except HTTPException:
-        # Try to refresh token if access token is expired
-        refresh_token = request.cookies.get("refresh_token")
-        if refresh_token:
-            try:
-                return await refresh_access_token(request, db)
-            except:
-                pass
         return None
 async def get_user_info(request: Request, db: Session) -> dict:
     token = request.cookies.get("access_token")

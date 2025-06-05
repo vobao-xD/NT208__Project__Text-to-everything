@@ -1,20 +1,12 @@
-import logging
 import os
 from typing import Optional
 from dotenv import load_dotenv
-from fastapi import Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import HTTPException, UploadFile
 import httpx
-from db.schemas import UserBase, TTSRequest, TTSResponse, TTSUploadRequest
+from db.schemas import TTSRequest, TTSResponse
 from services.authentication_and_authorization import create_microservice_token
 from services.output_manager import OutputManager
 from sqlalchemy.orm import Session
-from datetime import datetime
-from pathlib import Path
-from db.models import User
-from uuid import UUID
-from db import get_db
-
-import jwt
 
 load_dotenv()
 
@@ -171,6 +163,3 @@ class TextToSpeechService:
                 raise HTTPException(status_code=504, detail="Request to viXTTS timed out after 10 minutes")
             except httpx.RequestError as e:
                 raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
-            
-
-
