@@ -1,7 +1,6 @@
-from fastapi import HTTPException, Depends, Response, Request
+from fastapi import HTTPException, Response, Request
 from jose import JWTError, jwt, ExpiredSignatureError
 from authlib.integrations.starlette_client import OAuth
-from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import RedirectResponse
 from datetime import datetime, timedelta
 from starlette.requests import Request
@@ -25,7 +24,7 @@ GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
 ACCESS_TOKEN_EXPIRE_MINUTES = 3000
 COOKIE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
-FRONTEND_URL = os.getenv("FRONTEND_URL")
+FRONTEND_URL = os.getenv("BASE_FRONTEND_URL")
 ENV = os.getenv("ENV")
 with open("_ec_private_key.pem", "r") as f:
     PRIVATE_KEY = f.read()
@@ -57,7 +56,6 @@ oauth.register(
     client_kwargs={"scope": "user:email"},
 )
 
-
 # JWT for user management
 def create_user_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     if "sub" not in data:
@@ -66,7 +64,7 @@ def create_user_access_token(data: dict, expires_delta: Optional[timedelta] = No
     payload["role"] = data.get("role", "free")
     payload["exp"] = datetime.utcnow() + (expires_delta if expires_delta else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     token = jwt.encode(payload, PRIVATE_KEY, algorithm="ES256")
-    logging.info(f"Creating JWT for user: {data.get('sub')} with role: {payload['role']}")
+    # logging.info(f"Creating JWT for user: {data.get('sub')} with role: {payload['role']}")
     return token
 def verify_user_access_token(
         request: Request,
@@ -107,7 +105,7 @@ def create_microservice_token(service_name: str, user_email: str) -> str:
         "exp": datetime.utcnow() + timedelta(minutes=10)
     }
     token = jwt.encode(payload, PRIVATE_KEY, algorithm="ES256")
-    logging.info(f"Creating JWT for service: {service_name}")
+    # logging.info(f"Creating JWT for service: {service_name}")
     return token
 def verify_microservice_token(
         request: Request,
@@ -141,7 +139,7 @@ async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
         if not token:
             return None
 
-        payload = verify_token(token)
+        payload = verify_user_access_token(token)
         email: str = payload.get("sub")
         
         user = db.query(User).filter(User.email == email).first()
@@ -159,13 +157,6 @@ async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
         )
         
     except HTTPException:
-        # Try to refresh token if access token is expired
-        refresh_token = request.cookies.get("refresh_token")
-        if refresh_token:
-            try:
-                return await refresh_access_token(request, db)
-            except:
-                pass
         return None
 async def get_user_info(request: Request, db: Session) -> dict:
     token = request.cookies.get("access_token")
