@@ -5,8 +5,8 @@ import json
 import os
 from dotenv import load_dotenv
 from googletrans import Translator
+from sqlalchemy.orm import Session
 from db.schemas import TTIPrompt
-import secrets
 
 load_dotenv()
 
@@ -37,7 +37,7 @@ class TextToImageService:
         
     # Tạo ảnh tốc độ nhanh
     @staticmethod
-    def getImage(prompt: str | None, steps: int = 4):
+    def getImage(db, user_data, prompt: str | None, steps: int = 4):
         """
         .. |language| replace:: Python
         Gửi yêu cầu chuyển đổi văn bản thành hình ảnh bằng API của Cloudflare\n
@@ -62,22 +62,38 @@ class TextToImageService:
         response = requests.post(url, body, headers=TextToImageService.head)
         successCode = response.status_code
         if successCode == 200:
+            from services import OutputManager
             image = json.loads(response.text)['result']['image']
             image_bytes = base64.b64decode(image)
-            file_name = "./img/" + base64.b64encode(secrets.token_bytes(12), b"-_").decode() + ".png"
-            with open(file_name, "wb") as f:
-                f.write(image_bytes)
-            return file_name.removeprefix('./')
+
+            save_path = OutputManager.save_output_file(
+                user_email=user_data["email"],
+                generator_name="text-to-image",
+                file_content=image_bytes,
+                file_extension="png"
+            )
+
+            OutputManager.log_chat(
+                db=db,
+                user_email=user_data["email"],
+                generator_name="text-to-image",
+                input_type="text",
+                text_prompt=prompt,
+                output_type="image",
+                output_file_path=str(save_path)
+            )
+
+            return save_path
         else:
             return f"Error {response.status_code}: {response.text}"
         
     # Tạo ảnh tốc độ nhanh
     @staticmethod
-    def textToImage(prompt: TTIPrompt):
+    def textToImage(prompt: TTIPrompt, user_data: dict, db: Session):
         '''
         prompt: str
         steps: int | None = None
         '''
         enPrompt = asyncio.run(TextToImageService.translateText(prompt.prompt)).text
-        image = TextToImageService.getImage(enPrompt, prompt.steps)
-        return image
+        image_path = TextToImageService.getImage(db, user_data ,enPrompt, prompt.steps)
+        return image_path
