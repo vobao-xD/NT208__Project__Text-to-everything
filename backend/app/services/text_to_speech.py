@@ -20,7 +20,7 @@ load_dotenv()
 
 class TextToSpeechService:
     # Khởi tạo API Key
-    TTS_BACKEND_URL = os.getenv("TTS_BACKEND_URL")
+    TTS_BACKEND_URL = os.getenv("TTS_URL")
     
     @staticmethod
     async def text_to_speech_with_default_voice(

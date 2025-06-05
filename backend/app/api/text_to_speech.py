@@ -1,15 +1,12 @@
-import re
 from services.authentication_and_authorization import verify_user_access_token
 from fastapi import APIRouter, File, Form, HTTPException, Depends, Request, UploadFile
 from services import TextToSpeechService as service
-from db.schemas import TTSRequest, TTSResponse, TTSUploadRequest
+from db.schemas import TTSRequest, TTSResponse
 from typing import Optional
 from fastapi.responses import FileResponse
-from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from pathlib import Path
 from db import get_db
-import logging
 
 router = APIRouter()
 
@@ -23,7 +20,7 @@ async def text_to_speech_default(
     Gọi API viXTTS (tự tạo) để tạo âm thanh từ văn bản với giọng mặc định.
     """
     try:
-        user_data = verify_user_access_token(request)
+        user_data = verify_user_access_token(source="header", request=request)
         return await service.text_to_speech_with_default_voice(TTS_request, user_data, db)
     except HTTPException as e:
         raise e
@@ -43,7 +40,7 @@ async def custom_text_to_speech_with_voice_cloning(
     Gọi API viXTTS với chức năng voice cloning từ một file âm thanh người dùng tải lên
     """
     try:
-        user_data = verify_user_access_token(request)
+        user_data = verify_user_access_token(source="header", request=request)
         return await service.text_to_speech_with_custom_voice(db, user_data, text, language, use_existing_reference, file)  
     except HTTPException as e:
         raise e
@@ -55,7 +52,7 @@ async def serve_audio(filename: str, request: Request):
     """Serve generated audio files"""
     try:
         # Remember, always authentication and authorization first (zero trust)
-        verify_user_access_token(request)
+        verify_user_access_token(source="header", request=request)
 
         file_path = Path(filename)
         if not str(file_path).startswith("_outputs/"):
