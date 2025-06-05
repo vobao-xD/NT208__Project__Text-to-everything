@@ -3,6 +3,9 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 from grpc import Status
 import httpx
+from requests import Session
+from db.schemas import TTCResponse
+from services.output_manager import OutputManager
 
 load_dotenv()
 
@@ -10,19 +13,21 @@ class TextToCodeService:
     api_key = os.getenv("TEXT_TO_CODE_API_KEY")
 
     @staticmethod
-    async def text_to_code(prompt: str):
+    async def text_to_code(db: Session, user_data: dict, prompt: str):
+        
         headers = {
-    "Authorization": f"Bearer {TextToCodeService.api_key}",
-    "Content-Type": "application/json"
-    }
+            "Authorization": f"Bearer {TextToCodeService.api_key}",
+            "Content-Type": "application/json"
+        }
 
         data = {
-        "model": "openai/gpt-3.5-turbo",
-        "messages": [
-            {"role": "system", "content": "Bạn là một lập trình viên xuất chúng và tinh thông mọi ngôn ngữ lập trình."},
-            {"role": "user", "content": prompt}
-        ]
-    }
+            "model": "openai/gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": "Bạn là một lập trình viên xuất chúng và tinh thông mọi ngôn ngữ lập trình."},
+                {"role": "user", "content": prompt}
+            ]
+        }
+
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
@@ -32,7 +37,24 @@ class TextToCodeService:
                     timeout=30.0
                 )
                 res = response.json()
-                return {"code": res["choices"][0]["message"]["content"]}
+                
+                # return {"code": res["choices"][0]["message"]["content"]}
+            
+                OutputManager.log_chat(
+                    db=db,
+                    user_email=user_data["email"],
+                    generator_name="text-to-code",
+                    input_type="text",
+                    text_prompt=prompt,
+                    output_type="code",
+                    output_content=res["choices"][0]["message"]["content"]
+                )
+
+                return TTCResponse(
+                    success=True,
+                    code=res["choices"][0]["message"]["content"]
+                )
+
             except httpx.RequestError as e:
                 raise HTTPException(
                     status_code=Status.HTTP_503_SERVICE_UNAVAILABLE,
