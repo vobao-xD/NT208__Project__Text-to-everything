@@ -117,7 +117,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     return await provider_callback(request, "google", db)
 
 @router.get("/logout")
-async def logout(request: Request, response: Response):
+async def _(request: Request, response: Response):
     """
         Đăng xuất người dùng, xóa cookie `access_token` và session, chuyển hướng về trang đăng nhập.
 
@@ -134,8 +134,8 @@ async def logout(request: Request, response: Response):
         **Lưu ý**:
         - Frontend cần xử lý redirect để hiển thị trang đăng nhập.
     """
-    return await logout(request, response)
+    return await log_out(request, response)
 
 @router.get("/get-user-info")
-async def get_user_info(request: Request, db: Session = Depends(get_db)):
+async def _(request: Request, db: Session = Depends(get_db)):
     return await get_user_info(request, db)

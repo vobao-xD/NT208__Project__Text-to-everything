@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, Depends
-from services import TextToImageService as service
 from services.authentication_and_authorization import verify_user_access_token
-from db import schemas, get_db
+from services import TextToImageService as service
+from db import get_db
+from db.schemas import TTIPrompt
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -9,7 +10,7 @@ router = APIRouter()
 @router.post("/")
 def text_to_image(
     request: Request, 
-    prompt: schemas.TTIPrompt,
+    prompt: TTIPrompt,
     db: Session = Depends(get_db)
 ):
     """

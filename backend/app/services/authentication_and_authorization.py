@@ -56,6 +56,64 @@ oauth.register(
     client_kwargs={"scope": "user:email"},
 )
 
+# Ultilities
+def decode_user_jwt(token: str) -> dict:
+    """
+    Hàm nội bộ để giải mã JWT và trả về payload.
+    Trả về: dict chứa email, role, exp.
+    """
+    try:
+        payload = jwt.decode(token, PUBLIC_KEY, algorithms=["ES256"])
+        email: str = payload.get("sub")
+        role: str = payload.get("role")
+        exp: int = payload.get("exp")
+
+        if not email:
+            raise HTTPException(status_code=401, detail="Invalid token: email not found")
+        if not exp:
+            raise HTTPException(status_code=401, detail="Invalid token: expiration not found")
+        
+        return {
+            "email": email,
+            "role": role or "free",  # Gán role mặc định nếu không có
+            "exp": exp
+        }
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+def decode_microservice_jwt(token: str, expected_issuer: str = "text-to-everything-backend") -> dict:
+    """
+    Hàm nội bộ để giải mã JWT và trả về payload.
+    Trả về: dict chứa issuer, subject, user_email, iat, exp.
+    """
+    try:
+        payload = jwt.decode(token, PUBLIC_KEY, algorithms=["ES256"], options={"verify_iss": True}, issuer=expected_issuer)
+        issuer: str = payload.get("iss")
+        subject: str = payload.get("sub")
+        user_email: str = payload.get("user_email")
+        iat: int = payload.get("iat")
+        exp: int = payload.get("exp")
+
+        if not issuer or issuer != expected_issuer:
+            raise HTTPException(status_code=401, detail="Invalid token: issuer mismatch")
+        if not user_email:
+            raise HTTPException(status_code=401, detail="Invalid token: user_email not found")
+        if not exp:
+            raise HTTPException(status_code=401, detail="Invalid token: expiration not found")
+
+        return {
+            "issuer": issuer,
+            "subject": subject or "who the fuck make this token???",
+            "user_email": user_email,
+            "iat": iat or 0,  # Gán mặc định nếu iat không có
+            "exp": exp
+        }
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+
 # JWT for user management
 def create_user_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     if "sub" not in data:
@@ -67,34 +125,46 @@ def create_user_access_token(data: dict, expires_delta: Optional[timedelta] = No
     # logging.info(f"Creating JWT for user: {data.get('sub')} with role: {payload['role']}")
     return token
 def verify_user_access_token(
-        request: Request,
-        token: Optional[str] = None
-) -> dict: # trả về email, role, exp
+    *,  # Buộc sử dụng keyword arguments
+    source: str = "direct",
+    token: Optional[str] = None,
+    request: Optional[Request] = None
+) -> dict:
     """
-    Xác thực JWT từ:
-    - Header (Authorization: Bearer <token>)
-    - Hoặc chuỗi token được truyền trực tiếp vào
-    Trả về thông tin user: email, role, exp.
+    Xác thực JWT từ nguồn được chỉ định:
+    - source="direct": Token truyền trực tiếp
+    - source="header": Token từ header Authorization: Bearer <token>
+    - source="cookie": Token từ cookie access_token
+    Trả về: dict chứa email, role, exp.
     """
-    if not token:
+    if source not in ["direct", "header", "cookie"]:
+        raise HTTPException(status_code=400, detail="Invalid source. Must be 'direct', 'header', or 'cookie'")
+
+    if source == "direct":
+        if not token:
+            raise HTTPException(status_code=401, detail="No token provided")
+        logging.info(f"Verifying token (direct): {token}")
+        return decode_user_jwt(token)
+
+    if source == "header":
+        if not request:
+            raise HTTPException(status_code=401, detail="Request object required for header source")
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing Authorization header")
+            raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
         token = auth_header.split(" ")[1]
-    try:
-        payload = jwt.decode(token, PUBLIC_KEY , algorithms="ES256")
-        email: str = payload.get("sub")
-        role: str = payload.get("role")
-        exp: str = payload.get("exp")
-        if not email:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
-        return {"email": email, "role": role, "exp": exp}
-    except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        logging.info(f"Verifying token (header): {token}")
+        return decode_user_jwt(token)
 
-
+    if source == "cookie":
+        if not request:
+            raise HTTPException(status_code=401, detail="Request object required for cookie source")
+        token = request.cookies.get("access_token")
+        if not token:
+            raise HTTPException(status_code=401, detail="No token found in cookies")
+        logging.info(f"Verifying token (cookie): {token}")
+        return decode_user_jwt(token)
+    
 # JWT for microservice management
 def create_microservice_token(service_name: str, user_email: str) -> str:
     payload = {
@@ -108,22 +178,35 @@ def create_microservice_token(service_name: str, user_email: str) -> str:
     # logging.info(f"Creating JWT for service: {service_name}")
     return token
 def verify_microservice_token(
-        request: Request,
-        token: Optional[str] = None
-) -> dict: # issuer, subject, user_email, iat, exp
-    if not token:
+    *,  # Buộc sử dụng keyword arguments
+    source: str = "direct",
+    token: Optional[str] = None,
+    request: Optional[Request] = None
+) -> dict:
+    """
+    Xác thực JWT từ nguồn được chỉ định:
+    - source="direct": Token truyền trực tiếp
+    - source="header": Token từ header Authorization: Bearer <token>
+    Trả về: dict chứa issuer, subject, user_email, iat, exp.
+    """
+    if source not in ["direct", "header"]:
+        raise HTTPException(status_code=400, detail="Invalid source. Must be 'direct' or 'header'")
+
+    if source == "direct":
+        if not token:
+            raise HTTPException(status_code=401, detail="No token provided")
+        logging.info(f"Verifying microservice token (direct): {token}")
+        return decode_microservice_jwt(token)
+
+    if source == "header":
+        if not request:
+            raise HTTPException(status_code=401, detail="Request object required for header source")
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing Authorization header")
+            raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
         token = auth_header.split(" ")[1]
-    try:
-        payload = jwt.decode(token, PUBLIC_KEY, algorithms="ES256", issuer="text-to-everything-backend")
-        return payload 
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
-
+        logging.info(f"Verifying microservice token (header): {token}")
+        return decode_microservice_jwt(token)
 
 # Get user information
 async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
@@ -158,31 +241,34 @@ async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
         
     except HTTPException:
         return None
-async def get_user_info(request: Request, db: Session) -> dict:
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=401, detail="No token provided")
+async def get_user_info(request: Request, db: Session) -> dict: # Hỗ trợ cả header lẫn cookie
+    """
+    Lấy thông tin user từ token, ưu tiên cookie, sau đó header.
+    Trả về: dict chứa email, role, expire.
+    """
     try:
-        payload = verify_user_access_token(token)
-        email = payload["email"]
-        role = payload["role"]
-        expire_at = payload["exp"]
-
-        if not email:
-            raise HTTPException(status_code=401, detail="Invalid token: email not found")
+        # Ưu tiên cookie, sau đó header
+        try:
+            payload = verify_user_access_token(source="cookie", request=request)
+        except HTTPException as e:
+            if e.status_code == 401 and "No token found in cookies" in e.detail:
+                payload = verify_user_access_token(source="header", request=request)
+            else:
+                raise e
         
         user_info = {
-            "email": email,
-            "role": role,
-            "expire": expire_at
+            "email": payload["email"],
+            "role": payload["role"],
+            "expire": payload["exp"]
         }
-        logging.info(f"Give frontend this user-info: {user_info}")
+        logging.info(f"User info for frontend: {user_info}")
         return user_info
 
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        print(f"An error occur when getting user information: {str(e)}")  
+        logging.error(f"Error getting user info: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid token")
-
 
 # Login/Logout with Google and Github
 async def login_with_provider(request: Request, provider: str):
@@ -279,7 +365,7 @@ async def provider_callback(request: Request, provider: str, db: Session):
     except Exception as e:
         logging.error(f"{provider} login failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"{provider} login failed: {str(e)}")
-async def logout(request: Request, response: Response):
+async def log_out(request: Request, response: Response):
     if request.cookies.get("access_token"):
         response.delete_cookie(
             key="access_token",

@@ -98,7 +98,7 @@ class TTSError(Exception):
 
 class TTIPrompt(BaseModel):
     prompt: str
-    steps: int | None = None
+    steps: int = 4
 
 #################### Text to video ####################
 
