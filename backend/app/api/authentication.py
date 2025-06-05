@@ -138,4 +138,4 @@ async def _(request: Request, response: Response):
 
 @router.get("/get-user-info")
 async def _(request: Request, db: Session = Depends(get_db)):
-    return await get_user_info(request, db)
+    return await get_current_user(request, db)

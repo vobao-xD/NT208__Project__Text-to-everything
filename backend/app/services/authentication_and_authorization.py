@@ -211,37 +211,25 @@ def verify_microservice_token(
 # Get user information
 async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
     try:
-        token = None
-        if request.cookies.get("access_token"):
-            token = request.cookies.get("access_token")
-        else:
-            authorization = request.headers.get("Authorization")
-            if authorization and authorization.startswith("Bearer "):
-                token = authorization.split(" ")[1]
-        
-        if not token:
-            return None
-
-        payload = verify_user_access_token(token)
-        email: str = payload.get("sub")
-        
+        user_data = verify_user_access_token(source="cookie", request=request)
+        email: str = user_data["email"]
         user = db.query(User).filter(User.email == email).first()
         if not user:
-            logging.warning(f"User not found in database: {email}")
+            logging.info(f"User not found in database: {email}")
             return None
         
         return UserBase(
-            user.email,
-            user.name,
-            user.avatar,
-            user.provider,
-            user.role,
-            user.expires_at
+            email=user.email,
+            name=user.name,
+            avatar=user.avatar,
+            provider=user.provider,
+            role=user.role,
+            expires_at=user.expires_at
         )
         
-    except HTTPException:
-        return None
-async def get_user_info(request: Request, db: Session) -> dict: # Hỗ trợ cả header lẫn cookie
+    except Exception as e:
+        return e
+async def get_user_info(request: Request, db: Session) -> dict: # Tạm bỏ, không xài nha
     """
     Lấy thông tin user từ token, ưu tiên cookie, sau đó header.
     Trả về: dict chứa email, role, expire.
