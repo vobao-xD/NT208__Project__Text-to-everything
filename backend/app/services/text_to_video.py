@@ -2,6 +2,9 @@ import os
 import requests
 from dotenv import load_dotenv
 from deep_translator import GoogleTranslator
+from sqlalchemy.orm import Session
+from db.schemas import TTVResponse
+from services.output_manager import OutputManager
 
 load_dotenv()
 
@@ -22,7 +25,7 @@ class TextToVideoService:
         return translated
         
     @staticmethod
-    def textToVideo(payload: dict) -> bytes:
+    def textToVideo(db: Session, user_data: dict, payload: dict) -> bytes:
         last_error = None
 
         for key in TextToVideoService.TTV_API_KEYS:
@@ -37,7 +40,28 @@ class TextToVideoService:
 
             if response.status_code == 200:
                 print(f"✅ Thành công với key: {key}")
-                return response.content
+                
+                save_path = OutputManager.save_output_file(
+                    user_email=user_data["email"],
+                    generator_name="text-to-video",
+                    file_content=response.content,
+                    file_extension="mp4"
+                )
+
+                OutputManager.log_chat(
+                    db=db,
+                    user_email=user_data["email"],
+                    generator_name="text-to-video",
+                    input_type="text",
+                    text_prompt=str(payload),
+                    output_type="video",
+                    output_file_path=str(save_path)
+                )
+
+                return TTVResponse(
+                    success=True,
+                    file_path=str(save_path),
+                )
 
             # Nếu API Key hết credit 
             if (response.status_code == 406 or 

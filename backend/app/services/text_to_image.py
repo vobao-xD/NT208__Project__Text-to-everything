@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 from googletrans import Translator
 from sqlalchemy.orm import Session
-from db.schemas import TTIPrompt
+from db.schemas import TTIPrompt, TTIResponse
 
 load_dotenv()
 
@@ -83,7 +83,10 @@ class TextToImageService:
                 output_file_path=str(save_path)
             )
 
-            return save_path
+            return TTIResponse(
+                    success=True,
+                    file_path=str(save_path),
+                )
         else:
             return f"Error {response.status_code}: {response.text}"
         
@@ -95,5 +98,4 @@ class TextToImageService:
         steps: int | None = None
         '''
         enPrompt = asyncio.run(TextToImageService.translateText(prompt.prompt)).text
-        image_path = TextToImageService.getImage(db, user_data ,enPrompt, prompt.steps)
-        return image_path
+        return TextToImageService.getImage(db, user_data ,enPrompt, prompt.steps)

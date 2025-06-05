@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from requests import Session
-from backend.app.db.database import get_db
+from db.database import get_db
 from services.authentication_and_authorization import verify_user_access_token
 from services.text_to_video import TextToVideoService as service
 from fastapi.responses import StreamingResponse
-from db.schemas import TextToVideoRequest
+from db.schemas import TextToVideoRequest, TTVResponse
 import io
 
 router = APIRouter()
 
-@router.post("/")
+@router.post("/", response_model=TTVResponse)
 def text_to_video(
     request: Request,
     prompt: TextToVideoRequest,
@@ -24,12 +24,7 @@ def text_to_video(
         prompt_dict["prompt"] = translated_prompt
 
         # Gửi request tới API 
-        video_bytes = service.textToVideo(prompt_dict)
-
-        return StreamingResponse(
-            io.BytesIO(video_bytes),
-            media_type="video/mp4",
-        )
+        return service.textToVideo(db, user_data, prompt_dict)
 
     except Exception as e:
         raise HTTPException(
