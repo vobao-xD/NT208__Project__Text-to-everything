@@ -1,9 +1,12 @@
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, validator
 from datetime import datetime
+from pydantic import BaseModel, Field, validator
 from uuid import UUID
-from enum import Enum
+from typing import Optional
+from datetime import datetime
 from fastapi import UploadFile
+from uuid import UUID
 
 #################### Authentication ####################
 
@@ -11,54 +14,64 @@ class UserBase(BaseModel):
     email: str
     name: str
     avatar: Optional[HttpUrl] = None
-    provider: str
-    role: str
+    provider: str = "unknown"
+    role: str = "free"
+    expires_at: Optional[datetime] = None
+
+#################### Text to speech ####################
+
+class TTSRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=1000, description="Text to convert to speech")
+    language: str = Field(default="Tiếng Việt", description="Language for TTS")
+    gender: str = Field(..., pattern="^(male|female)$", description="Voice gender: 'male' or 'female'")
+    style: str = Field(default="default", description="Voice style: depends on gender")
+    
+    @validator('text')
+    def validate_text(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Text cannot be empty")
+        return v.strip()
+    
+    @validator('language')
+    def validate_language(cls, v):
+        if v not in ['Tiếng Việt', 'Vietnamese', 'Tiếng Anh', 'English']:
+            raise ValueError("Only Vietnamese and English languages are supported")
+        return v
+    
+    @validator('gender')
+    def validate_gender(cls, v):
+        if v not in ['male', 'female']:
+            raise ValueError("Gender must be 'male' or 'female'")
+        return v
+    
+    @validator('style')
+    def validate_style(cls, v, values):
+        if 'gender' not in values:
+            raise ValueError("Gender must be specified before style validation")
+        
+        gender = values['gender']
+        male_styles = ['calm', 'cham', 'nhanh', 'default']
+        female_styles = ['calm', 'cham', 'luuloat', 'nhannha', 'default']
+        
+        allowed_styles = male_styles if gender == 'male' else female_styles
+        if v not in allowed_styles:
+            raise ValueError(f"Style must be one of {allowed_styles} for gender '{gender}'")
+        return v
+
+class TTSResponse(BaseModel):
+    success: bool
+    file_path: str
+    timestamp: str
+
+class TTSError(Exception):
+    """Custom exception for TTS operations"""
+    pass
 
 #################### Text to image ####################
 
 class TTIPrompt(BaseModel):
     prompt: str
     steps: int | None = None
-
-#################### Text to speech ####################
-
-class TTSClientRequest(BaseModel):
-    text: str
-    voice: str = "banmai"
-    speed: str = "0"
-
-class RequestBase(BaseModel):
-    input_type: str  # text, audio, filee
-    input_text: Optional[str] = None
-    input_audio_url: Optional[str] = None
-    output_type: str  # speech, image, video
-
-class RequestCreate(RequestBase):
-    pass
-
-class RequestResponse(RequestBase):
-    id: int
-    user_id: int
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class ResponseBase(BaseModel):
-    output_type: str
-    output_url: HttpUrl
-    model_used: str
-
-class ResponseCreate(ResponseBase):
-    pass
-
-class ResponseResponse(ResponseBase):
-    id: int
-    request_id: int
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 #################### Text to video ####################
 
@@ -83,12 +96,12 @@ class PermissionResult(BaseModel):
 class QuestionRequest(BaseModel):
     question: str
 
-#################### Tu tu ####################
+#################### What is this??? ####################
 
-    
 class TextInput(BaseModel):
     user_text: str
     max_tokens: Optional[int] = 150
+
 class ChatRequest(BaseModel):
     prompt: str
 
@@ -98,6 +111,7 @@ class TTCRequest(BaseModel):
     prompt: str
 
 #################### Payment ####################
+
 class PaymentRequest(BaseModel):
     amount: int
     email: str
@@ -105,11 +119,13 @@ class PaymentRequest(BaseModel):
     billing_cycle: str = Field(alias="billingCycle")
     current_role: str = Field(alias="currentRole")
     current_billing_cycle: str = Field(alias="currentBillingCycle")
+
 class UserSubscription(BaseModel):
     role: str
     billingCycle: Optional[str] = "monthly"
 
 #################### Advanced Model ####################
+
 class TextToCodeRequest(BaseModel):
     prompt:str
     language:Optional[str] = "python"
@@ -123,7 +139,6 @@ class TextToImageRequest(BaseModel):
     quality: Optional[str] = "standard" # "standard" or "hd" for DALL-E 3
     style: Optional[str] = "vivid" # "vivid" or "natural" for DALL-E 3
     response_format: Optional[str] = "url" # "url" or "b64_json"
-
 
 class TextToAudioRequest(BaseModel):
     text: str
@@ -172,7 +187,6 @@ class RequestAdvancedModel(BaseModel):
     image_url:str=None
     file: UploadFile=None
 
-
 class FileTextToAnswerResponse(BaseModel):
     answer: str = Field(description="The answer generated by the AI based on the file and text query.")
     processed_by: str = Field(description="Indicates which AI method was used: 'vision_model' or 'assistant_file_search'.")
@@ -180,53 +194,25 @@ class FileTextToAnswerResponse(BaseModel):
     model_used: Optional[str] = Field(None, description="The specific AI model that generated the answer.")
     usage: Optional[Dict[str, Any]] = Field(None, description="Token usage statistics from the OpenAI API call.")
 
-
-###################### Chat Detail ######################
-
-class InputType(str,Enum):
-    text = "text"
-    image = "image"
-    audio = "audio"
-    video = "video"
-    file = "file"
-
-class ChatDetailBase(BaseModel):
-    input_type: InputType
-    text_prompt: Optional[str] = None
-    input_file_name: Optional[str] = None
-
-    output_type: Optional[str] = None
-    output_text: Optional[str] = None
-    output_url: Optional[HttpUrl] = None
-
-class ChatDetailCreate(ChatDetailBase):
-    generator_id: UUID 
-
-class ChatDetailResponse(ChatDetailBase):
-    id: UUID
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-##################### Chat History #####################
+###################### Chat History ######################
 
 class ChatHistoryBase(BaseModel):
-    pass  
-
-class ChatCreate(ChatHistoryBase):
-    details: List[ChatDetailCreate]
-    
-class ChatHistoryResponse(ChatHistoryBase):
-    id: UUID
-    user_id: UUID
-    created_at: datetime
-    details: List[ChatDetailResponse] = []
+    user_email: str
+    created_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True
+        from_attribute = True
 
-class userInfo(BaseModel):
-    email:str
-    role:str
-    expire:datetime
+class ChatDetailBase(BaseModel):
+    chat_history_id: UUID
+    generator_name: str
+    input_type: str = "text"
+    text_prompt: Optional[str] = None
+    input_file_path: Optional[str] = None
+    output_type: str = "audio"
+    output_content: Optional[str] = None
+    output_file_path: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attribute = True

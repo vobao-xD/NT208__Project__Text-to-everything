@@ -3,17 +3,16 @@ from email.mime.text import MIMEText
 import logging
 import os
 import smtplib
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
 import pytz
-from fastapi import FastAPI, logger
+from fastapi import logger
 from db import get_db
 from db.models import User
-from logging import getLogger
 from dotenv import load_dotenv
 load_dotenv()
 
 logger = logging.getLogger("uvicorn.error")
+
 def send_expiration_email(to_email: str, plan: str, billing_cycle: str):
     from_email = os.getenv("SMTP_USERNAME")
     app_url = os.getenv("APP_URL")
@@ -45,6 +44,7 @@ def send_expiration_email(to_email: str, plan: str, billing_cycle: str):
     except Exception as e:
         print(f"Failed to send email to {to_email}: {e}")
         return False
+
 def check_expired_subscriptions():
     print("Checking expired subscriptions")
     db = next(get_db())

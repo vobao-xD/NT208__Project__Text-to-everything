@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, FastAPI, Request, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Request, HTTPException
 import json
 import uuid
-from fastapi.responses import RedirectResponse
 import requests
 import hmac
 import hashlib

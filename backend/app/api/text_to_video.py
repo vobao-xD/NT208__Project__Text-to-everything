@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from services.ai_services.text_to_video_service import TextToVideoService as service
-from db import schemas
+from services.text_to_video import TextToVideoService as service
+from db.schemas import TextToVideoRequest
 import io
 
 router = APIRouter()
 
 @router.post("/")
-def text_to_video(prompt: schemas.TextToVideoRequest):
+def text_to_video(prompt: TextToVideoRequest):
     try:
         # Convert model sang dict
         prompt_dict = prompt.model_dump()
