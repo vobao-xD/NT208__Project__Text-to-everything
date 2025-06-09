@@ -6,4 +6,3 @@ venv/
 *.code-workspace
 backend/.env
 app.log
-_outputs/

@@ -14,7 +14,7 @@ from openai import AsyncOpenAI
 import openai
 from runwayml import AsyncRunwayML
 import runwayml
-from services.openai_client_instance import openai_client_instance
+from openai_client_instance import openai_client_instance
 
 from db.schemas import AnalyzeRequest, ChatbotContentRequest, EnhanceTextRequest, FileTextToAnswerResponse, GenerateAnswerRequest, RunwayTextToVideoRequest, TextToAudioRequest, TextToCodeRequest, TextToImageRequest, TextToVideoRequest
 
@@ -61,6 +61,7 @@ async def _handle_text_only_input(
             status_code=500,
             detail=f"Failed to process text query: {str(e)}"
         )
+
 
 async def _handle_image_input(
     client: AsyncOpenAI,
@@ -114,6 +115,7 @@ async def _handle_image_input(
     except Exception as e:
         print(f"Vision model error: {str(e)}")
         raise Exception(f"Vision model processing failed: {str(e)}")
+
 
 async def _handle_document_input(
     client: AsyncOpenAI,

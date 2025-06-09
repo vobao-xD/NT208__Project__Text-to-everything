@@ -1,12 +1,14 @@
+from datetime import datetime
 import os
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from db.database import get_db
 from db.models import User
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
+from db.schemas import userInfo
 from fastapi import FastAPI, Request, HTTPException
 from jose import jwt, JWTError
-
 load_dotenv()   
 
 router = APIRouter()
@@ -32,7 +34,7 @@ app = FastAPI()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
-@router.get("/user-info")
+@router.get("/api/user-info")
 async def get_user_info(request: Request,db=Depends(get_db)):
     token = request.cookies.get("access_token")
     if not token:
