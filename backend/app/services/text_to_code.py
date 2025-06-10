@@ -5,7 +5,7 @@ from grpc import Status
 import httpx
 from requests import Session
 from db.schemas import TTCResponse
-from services.output_manager import OutputManager
+from services.history_and_output_manager import HistoryAndOutputManager
 
 load_dotenv()
 
@@ -40,7 +40,7 @@ class TextToCodeService:
                 
                 # return {"code": res["choices"][0]["message"]["content"]}
             
-                OutputManager.log_chat(
+                HistoryAndOutputManager.log_chat(
                     db=db,
                     user_email=user_data["email"],
                     generator_name="text-to-code",

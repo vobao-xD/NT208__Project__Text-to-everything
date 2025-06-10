@@ -7,7 +7,7 @@ from db import get_db
 router = APIRouter()
 
 @router.get("/github") 
-async def github_login(request: Request):
+async def _(request: Request):
     """
         Chuyển hướng người dùng đến trang đăng nhập GitHub để xác thực.
 
@@ -32,7 +32,7 @@ async def github_login(request: Request):
     return await login_with_provider(request, "github")
 
 @router.get("/github/callback")
-async def github_callback(request: Request, db: Session = Depends(get_db)):
+async def _(request: Request, db: Session = Depends(get_db)):
     """
         Xử lý callback từ GitHub, lấy thông tin user, lưu vào database, tạo access token và lưu vào cookie.
 
@@ -64,7 +64,7 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
     return await provider_callback(request, "github", db)
 
 @router.get("/google") 
-async def google_login(request: Request):
+async def _(request: Request):
     """
         Chuyển hướng người dùng đến trang đăng nhập Google để xác thực.
 
@@ -87,7 +87,7 @@ async def google_login(request: Request):
     return await login_with_provider(request, "google")
 
 @router.get("/google/callback")
-async def google_callback(request: Request, db: Session = Depends(get_db)):
+async def _(request: Request, db: Session = Depends(get_db)):
     """
         Xử lý callback từ Google sau khi xác thực, lưu user vào database, tạo access token và lưu vào cookie.
 

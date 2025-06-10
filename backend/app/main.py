@@ -21,7 +21,7 @@ from fastapi_limiter import FastAPILimiter
 
 load_dotenv()
 
-REDIS_URL=os.getenv("REDIS_URL")
+# REDIS_URL=os.getenv("REDIS_URL")
 
 init_db()
 
@@ -54,7 +54,7 @@ app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY")
 # Cấu hình CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Origin của frontend
+    allow_origins=origins,  # Origin của frontend
     allow_credentials=True,                   # Cho phép gửi cookie
     allow_methods=["*"],                      # Cho phép tất cả phương thức (GET, POST, v.v.)
     allow_headers=["*"],                      # Cho phép tất cả header

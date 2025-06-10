@@ -38,7 +38,8 @@ class Transaction(Base):
 
 class Generator(Base):
     __tablename__ = "generators"
-    name = Column(String(100), primary_key=True, index=True, nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), unique=True, index=True, nullable=False)
     input_type = Column(String(50), nullable=False)
     output_type = Column(String(50), nullable=False)
     chat_details = relationship("ChatDetail", back_populates="generator", cascade="all, delete-orphan")
@@ -48,6 +49,7 @@ class ChatHistory(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_email = Column(String(255), ForeignKey("users.email", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(DateTime, default=func.now(), nullable=False)
+    
     user = relationship("User", back_populates="chat_histories")
     chat_details = relationship("ChatDetail", back_populates="chat_history", cascade="all, delete-orphan")
 
@@ -55,13 +57,16 @@ class ChatDetail(Base):
     __tablename__ = "chat_details"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     chat_history_id = Column(UUID(as_uuid=True), ForeignKey("chat_histories.id", ondelete="CASCADE"), nullable=False, index=True)
-    generator_name = Column(String(100), ForeignKey("generators.name", ondelete="RESTRICT"), nullable=False, index=True)
+    generator_id = Column(String(100), ForeignKey("generators.id", ondelete="RESTRICT"), nullable=False, index=True)
+
     input_type = Column(String(50), nullable=False)
-    text_prompt = Column(Text, nullable=True)
+    input_text = Column(Text, nullable=True)
     input_file_path = Column(String(1024), nullable=True)
+
     output_type = Column(String(50), nullable=False)
-    output_content = Column(Text, nullable=True)
+    output_text = Column(Text, nullable=True)
     output_file_path = Column(String(1024), nullable=True)
+    
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
     chat_history = relationship("ChatHistory", back_populates="chat_details")

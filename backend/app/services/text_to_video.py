@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from deep_translator import GoogleTranslator
 from sqlalchemy.orm import Session
 from db.schemas import TTVResponse
-from services.output_manager import OutputManager
+from services.history_and_output_manager import HistoryAndOutputManager
 
 load_dotenv()
 
@@ -41,14 +41,14 @@ class TextToVideoService:
             if response.status_code == 200:
                 print(f"✅ Thành công với key: {key}")
                 
-                save_path = OutputManager.save_output_file(
+                save_path = HistoryAndOutputManager.save_output_file(
                     user_email=user_data["email"],
                     generator_name="text-to-video",
                     file_content=response.content,
                     file_extension="mp4"
                 )
 
-                OutputManager.log_chat(
+                HistoryAndOutputManager.log_chat(
                     db=db,
                     user_email=user_data["email"],
                     generator_name="text-to-video",

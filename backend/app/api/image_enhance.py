@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse
 from requests import Session
 from db.database import get_db
 from services.authentication_and_authorization import verify_user_access_token
-from services import OutputManager
+from services.history_and_output_manager import HistoryAndOutputManager
 import io
 
 router=APIRouter()
@@ -36,14 +36,14 @@ async def enhance_image(request: Request, file: UploadFile=File(...), db: Sessio
         enchane_image.save(output_buffer, format="JPEG", quality=95)
         output_buffer.seek(0)
 
-        save_path = OutputManager.save_output_file(
+        save_path = HistoryAndOutputManager.save_output_file(
                     user_email=user_data["email"],
                     generator_name="image-quality-enhancing",
                     file_content=output_buffer,
                     file_extension="jpeg"
                 )
         
-        OutputManager.log_chat(
+        HistoryAndOutputManager.log_chat(
                     db=db,
                     user_email=user_data["email"],
                     generator_name="image-quality-enhancing",

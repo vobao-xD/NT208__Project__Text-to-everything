@@ -483,6 +483,7 @@ async def enhance(payload: EnhanceTextRequest,client=Depends(get_openai_client))
     except Exception as e: 
         print(f"An unexpected error occurred in /enhance: {str(e)}")
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
+
 @router.post("/advanced/file-text-to-answer", response_model=FileTextToAnswerResponse)
 async def smart_file_text_to_answer(
     request: Request,

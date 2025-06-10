@@ -229,34 +229,6 @@ async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
         
     except Exception as e:
         return e
-async def get_user_info(request: Request, db: Session) -> dict: # Tạm bỏ, không xài nha
-    """
-    Lấy thông tin user từ token, ưu tiên cookie, sau đó header.
-    Trả về: dict chứa email, role, expire.
-    """
-    try:
-        # Ưu tiên cookie, sau đó header
-        try:
-            payload = verify_user_access_token(source="cookie", request=request)
-        except HTTPException as e:
-            if e.status_code == 401 and "No token found in cookies" in e.detail:
-                payload = verify_user_access_token(source="header", request=request)
-            else:
-                raise e
-        
-        user_info = {
-            "email": payload["email"],
-            "role": payload["role"],
-            "expire": payload["exp"]
-        }
-        logging.info(f"User info for frontend: {user_info}")
-        return user_info
-
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        logging.error(f"Error getting user info: {str(e)}")
-        raise HTTPException(status_code=401, detail="Invalid token")
 
 # Login/Logout with Google and Github
 async def login_with_provider(request: Request, provider: str):
@@ -292,7 +264,6 @@ async def provider_callback(request: Request, provider: str, db: Session):
 
         # Lấy token từ provider
         token = await getattr(oauth, provider).authorize_access_token(request)
-        logging.info(f"---> Provider token: {token}")
 
         if provider == "google":
             user_info = token.get("userinfo")
@@ -366,4 +337,3 @@ async def log_out(request: Request, response: Response):
     request.session.clear()
     logging.info("User logged out successfully")
     return RedirectResponse(url=f"{FRONTEND_URL}/login")
-

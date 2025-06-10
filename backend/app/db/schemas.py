@@ -1,14 +1,8 @@
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, HttpUrl, validator
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
 from uuid import UUID
-from typing import Optional, Literal
-from datetime import datetime
-import re
-from fastapi import File, UploadFile, Form
-from fastapi.responses import FileResponse
-from uuid import UUID
+from fastapi import UploadFile
 from enum import Enum
 
 #################### Authentication ####################
@@ -210,23 +204,46 @@ class FileTextToAnswerResponse(BaseModel):
 
 ###################### Chat History ######################
 
-class ChatHistoryBase(BaseModel):
-    user_email: str
-    created_at: Optional[datetime] = None
-
-    class Config:
-        from_attribute = True
+class InputType(str, Enum):
+    text = "text"
+    image = "image"
+    audio = "audio"
+    video = "video"
+    file = "file"
 
 class ChatDetailBase(BaseModel):
-    chat_history_id: UUID
-    generator_name: str
-    input_type: str = "text"
-    text_prompt: Optional[str] = None
+    input_type: InputType
+    input_text: Optional[str] = None
     input_file_path: Optional[str] = None
-    output_type: str = "audio"
-    output_content: Optional[str] = None
-    output_file_path: Optional[str] = None
-    created_at: Optional[datetime] = None
+
+    output_type: Optional[str] = None
+    output_text: Optional[str] = None
+    output_file_path: Optional[HttpUrl] = None
+
+class ChatDetailCreate(ChatDetailBase):
+    generator_id: UUID 
+
+class ChatDetailResponse(ChatDetailBase):
+    id: UUID
+    created_at: datetime
 
     class Config:
-        from_attribute = True
+        from_attributes = True
+
+##################### Chat History #####################
+
+class ChatHistoryBase(BaseModel):
+    pass
+
+class ChatCreate(ChatHistoryBase):
+    details: List[ChatDetailCreate]
+    
+class ChatHistoryResponse(ChatHistoryBase):
+    id: UUID
+    user_email: str
+    created_at: datetime
+    details: List[ChatDetailResponse] = []
+
+    class Config:
+        from_attributes = True
+
