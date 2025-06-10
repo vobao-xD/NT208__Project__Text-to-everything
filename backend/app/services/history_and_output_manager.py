@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from grpc import Status
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
-from db.schemas import ChatCreate, ChatDetailResponse, ChatHistoryResponse
+from db.schemas import ChatCreate, ChatHistoryResponse
 from db.models import ChatHistory, ChatDetail, Generator
 import uuid
 
@@ -82,34 +82,7 @@ class HistoryAndOutputManager:
                 output_file_path=detail.output_file_path,
                 generator_id=detail.generator_id
             )
-
-        # Tải lại new_chat với details để đảm bảo dữ liệu đầy đủ
-        db.refresh(new_chat)
-        new_chat = (
-            db.query(ChatHistory)
-            .options(joinedload(ChatHistory.chat_details).joinedload(ChatDetail.generator))
-            .filter(ChatHistory.id == new_chat.id)
-            .first()
-        )
-        # Chuyển đổi thủ công sang ChatHistoryResponse
-        return ChatHistoryResponse(
-            id=new_chat.id,
-            user_email=new_chat.user_email,
-            created_at=new_chat.created_at,
-            details=[
-                ChatDetailResponse(
-                    id=detail.id,
-                    input_type=detail.input_type,
-                    input_text=detail.input_text,
-                    input_file_path=detail.input_file_path,
-                    output_type=detail.output_type,
-                    output_text=detail.output_text,
-                    output_file_path=detail.output_file_path,
-                    created_at=detail.created_at
-                )
-                for detail in new_chat.chat_details
-            ]
-        )
+        return new_chat
 
     @staticmethod
     def save_output_file(user_email: str, generator_name: str, file_content: bytes, file_extension: str) -> Path:

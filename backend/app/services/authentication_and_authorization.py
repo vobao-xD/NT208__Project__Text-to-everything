@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Response, Request
+from fastapi import Depends, HTTPException, Response, Request
 from jose import JWTError, jwt, ExpiredSignatureError
 from authlib.integrations.starlette_client import OAuth
 from fastapi.responses import RedirectResponse
@@ -11,6 +11,7 @@ import logging
 import secrets
 import os
 
+from db.database import get_db
 from db.models import User
 from db.schemas import UserBase
 
@@ -209,7 +210,7 @@ def verify_microservice_token(
         return decode_microservice_jwt(token)
 
 # Get user information
-async def get_current_user(request: Request, db: Session) -> Optional[UserBase]:
+async def get_current_user(request: Request, db: Session = Depends(get_db)) -> Optional[UserBase]:
     try:
         user_data = verify_user_access_token(source="cookie", request=request)
         email: str = user_data["email"]
