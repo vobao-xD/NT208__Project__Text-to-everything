@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, Response, Request
+from fastapi import Depends, HTTPException, Response, Request, status 
 from jose import JWTError, jwt, ExpiredSignatureError
 from authlib.integrations.starlette_client import OAuth
 from fastapi.responses import RedirectResponse
@@ -229,7 +229,10 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)) -> O
         )
         
     except Exception as e:
-        return e
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e)
+        )
 
 # Login/Logout with Google and Github
 async def login_with_provider(request: Request, provider: str):
