@@ -3,30 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Navigation button component
+// Nút điều hướng đơn giản
 const NavButton = ({ onClick, label }) => (
-  <button
-    onClick={onClick}
-    className="btn_login"
-    type="button"
-    aria-label={label}
-  >
+  <button className="btn_login" onClick={onClick} type="button" aria-label={label}>
     {label}
   </button>
 );
 
-// Header component with animated title
+
 const ContentHeader = ({ title, slogan }) => (
   <div className="body_title content-item">
-    <h1 className="typing--animation">{title}</h1>
+    <h1 style={{ minWidth: '600px', color: 'white' }}>{title}</h1>
     <h3>{slogan}</h3>
   </div>
 );
 
-// Feature list component with icons
+// Danh sách chức năng
 const FeatureList = ({ features }) => (
   <div className="body_description content-item">
-    <h3 className="description_prompt">Tôi có thể giúp gì được cho bạn?</h3>
+    <h2 className="description_prompt">Tôi có thể giúp gì được cho bạn?</h2>
     <ul>
       {features.map((feature, index) => (
         <li key={index}>{feature}</li>
@@ -38,18 +33,19 @@ const FeatureList = ({ features }) => (
 const Home = () => {
   const navigate = useNavigate();
 
-  // Feature list
   const features = [
-    'Text to Speech - Chuyển văn bản thành giọng nói',
+    'Text to Speech (Default) - Chuyển văn bản thành giọng nói mặc định',
+    'Text to Speech (Advanced) - Chuyển văn bản thành giọng nói riêng của bạn',
     'Text to Image - Chuyển văn bản thành hình ảnh',
     'Text to Video - Chuyển văn bản thành video',
-    'Create AI Avatar - Tạo avatar AI',
+    'File to Text  - Chuyển đổi các dạng dữ liệu thành văn bản',
     'Improve Image Quality - Cải thiện chất lượng hình ảnh',
   ];
 
-  // Handle "Get Started" button click
   const handleGetStarted = () => {
-    if (localStorage.getItem('isLoggedIn') === 'true') {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+    if (isLoggedIn) {
       navigate('/generate');
     } else {
       toast.error('Bạn cần đăng nhập trước khi sử dụng tính năng này!', {
@@ -61,13 +57,11 @@ const Home = () => {
         draggable: true,
         theme: 'colored',
       });
-      navigate('/login');
     }
   };
 
   return (
     <div className="full-container">
-      {/* Toast notification */}
       <ToastContainer
         position="top-right"
         autoClose={2500}
@@ -87,7 +81,7 @@ const Home = () => {
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Main Content */}
       <main className="content">
         <nav className="navbar content-item">
           <div className="navbar_btn">
@@ -97,11 +91,13 @@ const Home = () => {
         </nav>
 
         <section className="content_body">
-          <ContentHeader
-            title="CHÀO MỪNG BẠN ĐẾN VỚI AI FUTURE"
-            slogan="Khám phá sức mạnh của trí tuệ nhân tạo"
-          />
-          <FeatureList features={features} />
+          <div>
+            <ContentHeader
+              title="CHÀO MỪNG BẠN ĐẾN VỚI AI FUTURE"
+              slogan="Khám phá sức mạnh của trí tuệ nhân tạo"
+            />
+            <FeatureList features={features} />
+          </div>
           <div>
             <button
               onClick={handleGetStarted}
