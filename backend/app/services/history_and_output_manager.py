@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from fastapi import HTTPException
 from grpc import Status
@@ -33,7 +34,7 @@ class HistoryAndOutputManager:
     @staticmethod
     def get_chat_history_by_id(db: Session, history_id: str, user_email: str) -> ChatHistoryResponse:
         chat = db.query(ChatHistory)\
-            .options(joinedload(ChatHistory.details).joinedload(ChatDetail.generator))\
+            .options(joinedload(ChatHistory.chat_details).joinedload(ChatDetail.generator))\
             .filter(ChatHistory.id == history_id, ChatHistory.user_email == user_email)\
             .first()
 
@@ -48,6 +49,7 @@ class HistoryAndOutputManager:
         ChatHistory.id == history_id,
         ChatHistory.user_email == user_email
         ).first()
+        logging.info(f"AAAAAAAAAAAAAA:{history_id} ; {user_email}")
 
         if not chat_history:
             raise HTTPException(
@@ -59,13 +61,13 @@ class HistoryAndOutputManager:
         return None  # Trả về 204 No Content
 
     @staticmethod
-    def log_chat(
+    def log_chat(   
         chat: ChatCreate,
         db: Session,
         user_email: str,
     ) -> ChatHistoryResponse:
         new_chat = HistoryAndOutputManager.create_chat_history(db, user_email)
-        for detail in chat.details:
+        for detail in chat.chat_details:
             #Kiểm tra generator có tồn tại hay không
             generator = db.query(Generator).get(detail.generator_id)
             if not generator:

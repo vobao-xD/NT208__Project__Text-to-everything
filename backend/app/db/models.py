@@ -57,7 +57,7 @@ class ChatDetail(Base):
     __tablename__ = "chat_details"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     chat_history_id = Column(UUID(as_uuid=True), ForeignKey("chat_histories.id", ondelete="CASCADE"), nullable=False, index=True)
-    generator_id = Column(String(100), ForeignKey("generators.id", ondelete="RESTRICT"), nullable=False, index=True)
+    generator_id = Column(UUID(as_uuid=True), ForeignKey("generators.id", ondelete="RESTRICT"), nullable=False, index=True)
 
     input_type = Column(String(50), nullable=False)
     input_text = Column(Text, nullable=True)

@@ -28,7 +28,7 @@ async def serve_output_file(
     """
     try:
         # Xác thực người dùng
-        user_data = verify_user_access_token(source="cookie", request=request)
+        # user_data = verify_user_access_token(source="cookie", request=request)
 
         # Chuẩn hóa đường dẫn file
         file_path = Path(filename)
@@ -39,8 +39,8 @@ async def serve_output_file(
             raise HTTPException(status_code=403, detail="Access to files outside _outputs directory is forbidden")
 
         # Kiểm tra quyền sở hữu (giả sử file_path chứa email của user, ví dụ: _outputs/user@example.com/...)
-        if user_data["email"] not in str(file_path):
-            raise HTTPException(status_code=403, detail="You do not have permission to access this file")
+        # if user_data["email"] not in str(file_path):
+        #     raise HTTPException(status_code=403, detail="You do not have permission to access this file")
 
         # Kiểm tra file tồn tại
         if not file_path.exists():

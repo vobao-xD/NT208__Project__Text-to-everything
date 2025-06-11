@@ -236,7 +236,7 @@ class ChatHistoryBase(BaseModel):
     pass
 
 class ChatCreate(ChatHistoryBase):
-    details: List[ChatDetailCreate]
+    chat_details: List[ChatDetailCreate]
     
 class ChatHistoryResponse(ChatHistoryBase):
     id: UUID
