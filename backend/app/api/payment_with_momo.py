@@ -18,7 +18,8 @@ router = APIRouter()
 
 MOMO_ENDPOINT = os.getenv("MOMO_ENDPOINT")
 ACCESS_KEY = os.getenv("ACCESS_KEY")
-SECRET_KEY = os.getenv("SECRET_KEY_MOMO")
+# SECRET_KEY = os.getenv("SECRET_KEY_MOMO")
+SECRET_KEY = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
 PARTNER_CODE = "MOMO"
 REDIRECT_URL = os.getenv("REDIRECT_URL")
 IPN_URL = os.getenv("IPN_URL")
@@ -139,7 +140,7 @@ async def callback(request: Request, db=Depends(get_db)):
             # Tạo transaction record
             transaction = Transaction(
                 order_id=order_id,
-                email=email,
+                user_email=email,
                 amount=data.get("amount"),
                 plan=plan,
                 status="success",

@@ -295,7 +295,7 @@ async def provider_callback(request: Request, provider: str, db: Session):
         # Lưu user vào database
         user = db.query(User).filter(User.email == email).first()
         if not user:
-            user = User(email=email, name=name, avatar=avatar, provider=provider, role="basic")
+            user = User(email=email, name=name, avatar=avatar, provider=provider, role="free")
             db.add(user)
         else:
             if user.provider != provider:
