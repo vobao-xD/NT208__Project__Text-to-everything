@@ -105,7 +105,7 @@ def decode_microservice_jwt(token: str, expected_issuer: str = "text-to-everythi
 
         return {
             "issuer": issuer,
-            "subject": subject or "who the fuck make this token???",
+            "subject": subject or "Bad token error.",
             "user_email": user_email,
             "iat": iat or 0,  # Gán mặc định nếu iat không có
             "exp": exp
@@ -295,7 +295,7 @@ async def provider_callback(request: Request, provider: str, db: Session):
         # Lưu user vào database
         user = db.query(User).filter(User.email == email).first()
         if not user:
-            user = User(email=email, name=name, avatar=avatar, provider=provider, role="basic")
+            user = User(email=email, name=name, avatar=avatar, provider=provider, role="free")
             db.add(user)
         else:
             if user.provider != provider:
