@@ -225,7 +225,7 @@ const Generate = () => {
 						headers: {
 							"Content-Type": "application/json",
 						},
-						body: JSON.stringify({ details: [] }),
+						body: JSON.stringify({ chat_details: [] }),
 						credentials: "include", // Gửi cookie
 					}
 				);
@@ -241,30 +241,30 @@ const Generate = () => {
 				setCurrentConversationId(conversationId);
 			}
 
-			let fileUrl = payload.input_file_name
-				? payload.input_file_url
-				: null;
-			if (payload.input_file) {
-				const formData = new FormData();
-				formData.append("file", payload.input_file);
-				const uploadResponse = await fetch(
-					"http://localhost:8000/upload-file",
-					{
-						method: "POST",
-						body: formData,
-						credentials: "include", // Gửi cookie
-					}
-				);
+			// let fileUrl = payload.input_file_name
+			// 	? payload.input_file_url
+			// 	: null;
+			// if (payload.input_file) {
+			// 	const formData = new FormData();
+			// 	formData.append("file", payload.input_file);
+			// 	const uploadResponse = await fetch(
+			// 		"http://localhost:8000/upload-file",
+			// 		{
+			// 			method: "POST",
+			// 			body: formData,
+			// 			credentials: "include", // Gửi cookie
+			// 		}
+			// 	);
 
-				if (!uploadResponse.ok) {
-					throw new Error(
-						`Lỗi upload file: ${await uploadResponse.text()}`
-					);
-				}
+			// 	if (!uploadResponse.ok) {
+			// 		throw new Error(
+			// 			`Lỗi upload file: ${await uploadResponse.text()}`
+			// 		);
+			// 	}
 
-				const uploadData = await uploadResponse.json();
-				fileUrl = uploadData.file_url;
-			}
+			// 	const uploadData = await uploadResponse.json();
+			// 	fileUrl = uploadData.file_url;
+			// }
 
 			const generatorId = generatorIdMap[payload.generator_id];
 			if (!generatorId) {
@@ -1160,16 +1160,35 @@ const Generate = () => {
 			} else {
 				const data = await response.json();
 				if (currentOption === "1") {
-					// Text to Speech
-					console.log("Text to Speech response:", data); // Debug log
+					console.log("Text to Speech response:", data);
+					const token = Cookies.get("access_token");
+					const fileResponse = await fetch(
+						`http://localhost:8000/get-output/${data.file_path}`,
+						{
+							method: "GET",
+							headers: {
+								Authorization: `Bearer ${token}`,
+							},
+							credentials: "include",
+						}
+					);
+
+					if (!fileResponse.ok) {
+						throw new Error(
+							`Lỗi tải file audio: ${await fileResponse.text()}`
+						);
+					}
+
+					const blob = await fileResponse.blob();
+					const audioUrl = URL.createObjectURL(blob);
 					botMessage = {
 						type: "bot",
 						content: {
-							audio_url: data.audio_url,
+							audio_url: audioUrl,
 						},
+						isAudio: true,
 						option: currentOption,
 					};
-					console.log("Bot message with audio:", botMessage); // Debug log
 				} else if (currentOption === "6") {
 					botMessage = {
 						type: "bot",
@@ -1177,20 +1196,48 @@ const Generate = () => {
 						option: currentOption,
 					};
 				} else if (currentOption === "2") {
-					if (selectedMode === "1.1" && role === "pro") {
-						botMessage = {
-							type: "bot",
-							content: { image_url: data.images[0].url },
-							option: currentOption,
-						};
-					} else {
+					try {
+						console.log("Text to Image response:", data); // Debug log
+						const token = Cookies.get("access_token");
+						const fileResponse = await fetch(
+							`http://localhost:8000/get-output/${data.file_path}`,
+							{
+								method: "GET",
+								headers: {
+									Authorization: `Bearer ${token}`,
+								},
+								credentials: "include",
+							}
+						);
+
+						if (!fileResponse.ok) {
+							throw new Error(
+								`Lỗi tải file hình ảnh: ${await fileResponse.text()}`
+							);
+						}
+
+						const blob = await fileResponse.blob();
+						const imageUrl = URL.createObjectURL(blob);
 						botMessage = {
 							type: "bot",
 							content: {
-								image_url: `http://localhost:8000/${data.image_url}`,
+								image_url: imageUrl,
 							},
+							isImage: true, // Thêm thuộc tính này để render thẻ <img>
 							option: currentOption,
 						};
+						console.log("Bot message with image:", botMessage); // Debug log
+					} catch (error) {
+						console.error("Lỗi xử lý file hình ảnh:", error);
+						toast.error(
+							"Không thể tải file hình ảnh: " + error.message,
+							{
+								closeButton: true,
+								className:
+									"p-0 w-[400px] border border-red-600/40 backdrop-blur-lg",
+								ariaLabel: "Error",
+							}
+						);
 					}
 				} else if (currentOption === "7") {
 					botMessage = {
@@ -1242,14 +1289,14 @@ const Generate = () => {
 			}
 
 			// Lưu chat detail
-			await addChatDetail(
-				payload,
-				currentConversationId,
-				setCurrentConversationId,
-				setConversations,
-				conversations,
-				generatorIdMap
-			);
+			// await addChatDetail(
+			// 	payload,
+			// 	currentConversationId,
+			// 	setCurrentConversationId,
+			// 	setConversations,
+			// 	conversations,
+			// 	generatorIdMap
+			// );
 
 			if (!isManualSelection) setSelectedOption("0");
 
