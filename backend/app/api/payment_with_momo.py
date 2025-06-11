@@ -23,7 +23,6 @@ PARTNER_CODE = "MOMO"
 REDIRECT_URL = os.getenv("REDIRECT_URL")
 IPN_URL = os.getenv("IPN_URL")
 
-
 @router.post("/momo/create-payment")
 async def create_payment(request: PaymentRequest):
     amount = request.amount
@@ -67,7 +66,6 @@ async def create_payment(request: PaymentRequest):
     response = requests.post(MOMO_ENDPOINT, json=payload, headers=headers)
 
     return response.json()
-
 
 @router.post("/momo/callback")
 async def callback(request: Request, db=Depends(get_db)):
@@ -176,6 +174,7 @@ async def callback(request: Request, db=Depends(get_db)):
         db.rollback()  # Rollback nếu có lỗi
         print(f"Error in callback: {ex}")
         raise HTTPException(status_code=400, detail=f"Lỗi xử lý callback: {ex}")
+
 @router.get("/user-subscription", response_model=UserSubscription)
 async def get_user_subscription(email: str, db=Depends(get_db)):
     try:

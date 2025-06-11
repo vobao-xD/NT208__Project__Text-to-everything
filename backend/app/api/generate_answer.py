@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -12,8 +12,11 @@ client = OpenAI(
 )
 
 @router.post("/generate_answer")
-async def generate_answer(request: dict):
-    user_question = request.get("question")
+async def generate_answer(
+    request: Request, 
+    generate_request: dict
+):
+    user_question = generate_request.get("question")
     if not user_question:
         return {"error": "Missing 'question' in request body"}
 

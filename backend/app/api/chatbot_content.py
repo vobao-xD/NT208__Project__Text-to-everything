@@ -1,31 +1,28 @@
-import requests
-from fastapi import APIRouter
-from pydantic import BaseModel
-from db.schemas import ChatRequest
-import os
+import httpx
+from fastapi import APIRouter, HTTPException, Request
+from db.schemas import ChatbotContentRequest
+from services.authentication_and_authorization import verify_user_access_token
+
 router = APIRouter()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-
 @router.post("/chatbot/content")
-def chatbot_content(data: ChatRequest):
-    url = "https://openrouter.ai/api/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    body = {
-        "model": "openai/gpt-3.5-turbo",  # Hoặc dùng model khác như "mistralai/mixtral-8x7b"
-        "messages": [
-            {"role": "system", "content": "Bạn là một chatbot sáng tạo nội dung."},
-            {"role": "user", "content": data.prompt}
-        ]
-    }
+async def chatbot_content(
+    request: Request,
+    payload: ChatbotContentRequest
+):
+    try:
+        user_data = verify_user_access_token(source="cookie", request=request)
 
-    response = requests.post(url, headers=headers, json=body)
-    response.raise_for_status()
+        async with httpx.AsyncClient(base_url="http://localhost:8000", timeout=600.0) as internal_client:
+            response = await internal_client.post(
+                "/advanced/chatbot-content",
+                json=payload.model_dump()
+            )
 
-    reply = response.json()
-    return {
-        "response": reply["choices"][0]["message"]["content"]
-    }
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+        
+        return response.json()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

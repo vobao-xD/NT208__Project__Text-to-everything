@@ -26,7 +26,17 @@ router = APIRouter()
 REDIS_URL=os.getenv("REDIS_URL")
 pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
-# === 1. Chuẩn hóa đầu vào sang văn bản ===
+def extract_text_from_pdf(file: UploadFile):
+    file.file.seek(0)
+    with fitz.open(stream=file.file.read(), filetype="pdf") as doc:
+        return "\n".join([page.get_text() for page in doc])
+
+def extract_text_from_docx(file: UploadFile):
+    file.file.seek(0)
+    doc = docx.Document(io.BytesIO(file.file.read()))
+    return "\n".join(p.text for p in doc.paragraphs)
+
+# 1. Chuẩn hóa đầu vào sang văn bản
 @router.post("/input/text")
 async def input_text(text: str):
     return {"text": text}
@@ -94,7 +104,6 @@ async def input_image(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi xử lý hình ảnh: {str(e)}")
 
-
 # 4. Chuyển âm thanh của video sang text
 @router.post("/input/video")
 async def input_video(file: UploadFile = File(...)):
@@ -141,16 +150,6 @@ async def input_file(file: UploadFile = File(...)):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
     return {"text": text}
-
-def extract_text_from_pdf(file: UploadFile):
-    file.file.seek(0)
-    with fitz.open(stream=file.file.read(), filetype="pdf") as doc:
-        return "\n".join([page.get_text() for page in doc])
-
-def extract_text_from_docx(file: UploadFile):
-    file.file.seek(0)
-    doc = docx.Document(io.BytesIO(file.file.read()))
-    return "\n".join(p.text for p in doc.paragraphs)
 
 # 6. Phân tích yêu cầu của người dùng
 @router.post("/analyze")

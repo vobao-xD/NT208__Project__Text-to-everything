@@ -316,7 +316,7 @@ async def provider_callback(request: Request, provider: str, db: Session):
         response.set_cookie(
             key="access_token",
             value=access_token,
-            httponly=True,
+            httponly=False,
             secure=ENV == "production",
             samesite="lax",
             max_age=COOKIE_MAX_AGE,
