@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-
-import {
-	EmailShareButton,
-	EmailIcon,
-	FacebookShareButton,
-	FacebookIcon,
-} from "react-share";
-
 import FileUpload from "../components/FileUpload";
 import { toast, ToastContainer, Slide } from "react-toastify";
 import { BadgeCheck, CircleAlert, Info, TriangleAlert } from "lucide-react";
@@ -38,17 +30,18 @@ const Generate = () => {
 	const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
 	const [isManualMode, setIsManualMode] = useState(false);
 	const generatorIdMap = {
-		1: "01010101-0101-0101-0101-010101010101",
-		2: "22222222-2222-2222-2222-222222222222",
-		3: "33333333-3333-3333-3333-333333333333",
-		4: "",
-		5: "55555555-5555-5555-5555-555555555555",
-		6: "66666666-6666-6666-6666-666666666666",
-		7: "77777777-7777-7777-7777-777777777777",
-		8: "88888888-8888-8888-8888-888888888888",
-		9: "99999999-9999-9999-9999-999999999999",
-		10: "10101010-1010-1010-1010-101010101010",
-		11: "11111111-1111-1111-1111-111111111111",
+		0: "00000000-0000-0000-0000-000000000000", // Auto analyze
+		1: "01010101-0101-0101-0101-010101010101", // Text to speech (default)
+		2: "22222222-2222-2222-2222-222222222222", // Text to image
+		3: "33333333-3333-3333-3333-333333333333", // Text to video
+		4: "44444444-4444-4444-4444-444444444444", // Text to speech (custom)
+		5: "55555555-5555-5555-5555-555555555555", // Enhance image
+		6: "66666666-6666-6666-6666-666666666666", // AI - chatbot
+		7: "77777777-7777-7777-7777-777777777777", // Answer question
+		8: "88888888-8888-8888-8888-888888888888", // Generate code
+		9: "99999999-9999-9999-9999-999999999999", // Speech to text
+		10: "10101010-1010-1010-1010-101010101010", // Video to text
+		11: "11111111-1111-1111-1111-111111111111", // File to text
 	};
 
 	// Tạo map ngược lại từ UUID sang option
@@ -91,7 +84,7 @@ const Generate = () => {
 					return;
 				}
 				localStorage.setItem("email", data1.email);
-				fetchChatHistories();
+				fetchChatHistories(setConversations);
 				const res2 = await fetch(
 					`http://localhost:8000/user-subscription?email=${data1.email}`
 				);
@@ -115,13 +108,13 @@ const Generate = () => {
 	const detectInputFileType = (filename) => {
 		const ext = filename.split(".").pop().toLowerCase();
 		if (["mp3", "wav"].includes(ext)) return "audio";
+		if (["png", "jpg", "jpeg"].includes(ext)) return "image";
 		if (["mp4", "avi", "mov"].includes(ext)) return "video";
 		if (["pdf", "txt", "doc", "docx"].includes(ext)) return "file";
 		return "file";
 	};
 
 	const normalizeBotMessageContent = (botMessage) => {
-		// Xử lý đặc biệt cho output text của code generation
 		let outputText = null;
 		if (botMessage.option === "8") {
 			outputText =
@@ -139,34 +132,78 @@ const Generate = () => {
 				? "video"
 				: botMessage.content.audio_url
 				? "audio"
+				: botMessage.content.file_url
+				? "file"
 				: "text",
+			isText:
+				!botMessage.content.image_url &&
+				!botMessage.content.video_url &&
+				!botMessage.content.audio_url &&
+				!botMessage.content.file_url,
+			isImage: !!botMessage.content.image_url,
+			isVideo: !!botMessage.content.video_url,
+			isAudio: !!botMessage.content.audio_url,
+			isFile: !!botMessage.content.file_url,
 			text: outputText,
 			image_url: botMessage.content.image_url || null,
 			video_url: botMessage.content.video_url || null,
 			audio_url: botMessage.content.audio_url || null,
+			file_url: botMessage.content.file_url || null,
+			file_name: botMessage.content.file_name || null,
 		};
+	};
+
+	const mapOptionToType = (option) => {
+		switch (option) {
+			case "1":
+				return "audio";
+			case "2":
+				return "image";
+			case "3":
+				return "video";
+			case "4":
+				return "file";
+			case "8":
+				return "text";
+			default:
+				return "text";
+		}
 	};
 
 	const prepareChatDetailPayload = (
 		inputText,
 		inputFileName,
+		inputFile,
 		normalizedContent,
-		generatorId
+		generatorId,
+		selectedOption
 	) => {
 		return {
-			input: {
-				text: inputFileName ? null : inputText,
-				file: inputFileName,
-			},
 			input_type: inputFileName
 				? detectInputFileType(inputFileName)
-				: "text",
-			output: normalizedContent,
+				: mapOptionToType(selectedOption),
+			input_text: inputFileName ? null : inputText,
+			input_file_name: inputFileName || null,
+			input_file: inputFile || null,
+			output_type: normalizedContent.type,
+			output_text: normalizedContent.text || null,
+			output_image_url: normalizedContent.image_url || null,
+			output_audio_url: normalizedContent.audio_url || null,
+			output_video_url: normalizedContent.video_url || null,
+			output_file_url: normalizedContent.file_url || null,
+			output_file_name: normalizedContent.file_name || null,
 			generator_id: generatorId,
 		};
 	};
 
-	const addChatDetail = async (payload) => {
+	const addChatDetail = async (
+		payload,
+		currentConversationId,
+		setCurrentConversationId,
+		setConversations,
+		conversations,
+		generatorIdMap
+	) => {
 		try {
 			const token = Cookies.get("access_token");
 			if (!token) {
@@ -179,19 +216,17 @@ const Generate = () => {
 				return;
 			}
 
-			if (!currentConversationId) {
-				// Nếu chưa có conversation, tạo mới
+			let conversationId = currentConversationId;
+			if (!conversationId) {
 				const newChatResponse = await fetch(
-					"http://127.0.0.1:8000/chat-history",
+					"http://localhost:8000/chat-history",
 					{
 						method: "POST",
 						headers: {
 							"Content-Type": "application/json",
-							Authorization: `Bearer ${token}`,
 						},
-						body: JSON.stringify({
-							details: [],
-						}),
+						body: JSON.stringify({ details: [] }),
+						credentials: "include", // Gửi cookie
 					}
 				);
 
@@ -202,10 +237,35 @@ const Generate = () => {
 				}
 
 				const newChatData = await newChatResponse.json();
-				setCurrentConversationId(newChatData.id);
+				conversationId = newChatData.id;
+				setCurrentConversationId(conversationId);
 			}
 
-			// Lấy UUID tương ứng với option từ generatorIdMap
+			let fileUrl = payload.input_file_name
+				? payload.input_file_url
+				: null;
+			if (payload.input_file) {
+				const formData = new FormData();
+				formData.append("file", payload.input_file);
+				const uploadResponse = await fetch(
+					"http://localhost:8000/upload-file",
+					{
+						method: "POST",
+						body: formData,
+						credentials: "include", // Gửi cookie
+					}
+				);
+
+				if (!uploadResponse.ok) {
+					throw new Error(
+						`Lỗi upload file: ${await uploadResponse.text()}`
+					);
+				}
+
+				const uploadData = await uploadResponse.json();
+				fileUrl = uploadData.file_url;
+			}
+
 			const generatorId = generatorIdMap[payload.generator_id];
 			if (!generatorId) {
 				throw new Error(
@@ -213,71 +273,67 @@ const Generate = () => {
 				);
 			}
 
-			// Chuẩn bị payload dựa trên input_type
 			const chatDetailPayload = {
 				input_type: payload.input_type,
-				text_prompt: payload.input.text || null,
-				input_file_name: payload.input.file || null,
-				output_type: payload.output.type,
-				output_text: payload.output.text || null,
-				output_url:
-					payload.output.audio_url ||
-					payload.output.image_url ||
-					payload.output.video_url ||
-					null,
+				input_text: payload.input_text,
+				input_file_name: payload.input_file_name,
+				input_file_path: fileUrl,
+				output_type: payload.output_type,
+				output_text: payload.output_text,
+				output_image_url: payload.output_image_url,
+				output_audio_url: payload.output_audio_url,
+				output_video_url: payload.output_video_url,
+				output_file_path: payload.output_file_url,
+				output_file_name: payload.output_file_name,
 				generator_id: generatorId,
 			};
 
-			console.log("Sending chat detail:", chatDetailPayload);
-
 			const response = await fetch(
-				`http://127.0.0.1:8000/chat-history/${currentConversationId}/add-detail`,
+				`http://localhost:8000/chat-history/${conversationId}/add-detail`,
 				{
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
 					},
 					body: JSON.stringify(chatDetailPayload),
+					credentials: "include", // Gửi cookie
 				}
 			);
 
 			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(`Lỗi lưu chi tiết chat: ${errorText}`);
+				throw new Error(
+					`Lỗi lưu chi tiết chat: ${await response.text()}`
+				);
 			}
 
 			const savedDetail = await response.json();
 			console.log("Saved chat detail:", savedDetail);
 
-			// Cập nhật lại danh sách conversations mà không thay đổi tiêu đề
 			const updatedConversations = await fetch(
-				"http://127.0.0.1:8000/chat-history",
+				"http://localhost:8000/chat-history?limit=50",
 				{
 					method: "GET",
 					headers: {
 						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
 					},
+					credentials: "include", // Gửi cookie
 				}
 			).then((res) => res.json());
 
 			setConversations(
 				updatedConversations.map((c) => {
-					// Giữ nguyên tiêu đề từ conversation hiện tại nếu đã có
 					const existingConversation = conversations.find(
 						(existing) => existing.id === c.id
 					);
 					const title = existingConversation
 						? existingConversation.title
 						: (
-								c.details[0]?.text_prompt ||
+								c.details[0]?.input_text ||
 								"Cuộc trò chuyện mới"
 						  ).substring(0, 30) + "...";
-
 					return {
 						id: c.id,
-						title: title,
+						title,
 						messages: c.details,
 					};
 				})
@@ -293,9 +349,17 @@ const Generate = () => {
 		}
 	};
 
-	const handleNewChat = async () => {
+	const handleNewChat = async (
+		setCurrentConversationId,
+		setConversations,
+		setChatHistory,
+		chatHistory
+	) => {
 		try {
+			if (chatHistory.length <= 0) return;
+
 			const token = Cookies.get("access_token");
+			console.log(`Chat cookie: ${token}`);
 			if (!token) {
 				toast.error("Không tìm thấy token xác thực", {
 					closeButton: true,
@@ -306,15 +370,13 @@ const Generate = () => {
 				return;
 			}
 
-			const response = await fetch("http://127.0.0.1:8000/chat-history", {
+			const response = await fetch("http://localhost:8000/chat-history", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
-				body: JSON.stringify({
-					details: [],
-				}),
+				body: JSON.stringify({ chat_details: [] }),
+				credentials: "include",
 			});
 
 			if (!response.ok) {
@@ -324,25 +386,25 @@ const Generate = () => {
 			}
 
 			const data = await response.json();
-			const conversation_id = data.id;
+			const conversationId = data.id;
 
 			if (chatHistory.length > 0) {
-				// Lấy prompt đầu tiên từ chat history
 				const firstPrompt = chatHistory[0].content;
 				const title =
 					firstPrompt.length > 30
 						? firstPrompt.substring(0, 30) + "..."
 						: firstPrompt;
-
-				const newConversation = {
-					id: conversation_id,
-					messages: [...chatHistory],
-					title: title,
-				};
-				setConversations((prev) => [...prev, newConversation]);
+				setConversations((prev) => [
+					...prev,
+					{
+						id: conversationId,
+						messages: [...chatHistory],
+						title,
+					},
+				]);
 			}
 
-			setCurrentConversationId(conversation_id);
+			setCurrentConversationId(conversationId);
 			setChatHistory([]);
 		} catch (error) {
 			console.error("Error:", error);
@@ -358,21 +420,25 @@ const Generate = () => {
 		}
 	};
 
-	const fetchChatHistories = async () => {
+	const fetchChatHistories = async (setConversations) => {
 		try {
 			const token = Cookies.get("access_token");
+			console.log(`Chat cookie: ${token}`);
 			if (!token) {
 				console.error("Không tìm thấy token xác thực");
 				return;
 			}
 
-			const response = await fetch("http://127.0.0.1:8000/chat-history", {
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-			});
+			const response = await fetch(
+				"http://localhost:8000/chat-history?limit=50",
+				{
+					method: "GET",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					credentials: "include", // Gửi cookie
+				}
+			);
 
 			if (!response.ok) {
 				throw new Error(
@@ -383,17 +449,15 @@ const Generate = () => {
 			const data = await response.json();
 			setConversations(
 				data.map((c) => {
-					// Lấy prompt đầu tiên từ details
 					const firstPrompt =
-						c.details[0]?.text_prompt || "Cuộc trò chuyện mới";
+						c.details[0]?.input_text || "Cuộc trò chuyện mới";
 					const title =
 						firstPrompt.length > 30
 							? firstPrompt.substring(0, 30) + "..."
 							: firstPrompt;
-
 					return {
 						id: c.id,
-						title: title,
+						title,
 						messages: c.details,
 					};
 				})
@@ -409,7 +473,12 @@ const Generate = () => {
 		}
 	};
 
-	const loadConversation = async (conversationId) => {
+	const loadConversation = async (
+		conversationId,
+		setChatHistory,
+		setCurrentConversationId,
+		generatorIdMap
+	) => {
 		try {
 			const token = Cookies.get("access_token");
 			if (!token) {
@@ -423,13 +492,13 @@ const Generate = () => {
 			}
 
 			const response = await fetch(
-				`http://127.0.0.1:8000/chat-history/${conversationId}`,
+				`http://localhost:8000/chat-history/${conversationId}`,
 				{
 					method: "GET",
 					headers: {
 						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
 					},
+					credentials: "include", // Gửi cookie
 				}
 			);
 
@@ -440,71 +509,58 @@ const Generate = () => {
 			}
 
 			const data = await response.json();
-			console.log("Data from API:", data);
-
 			const messages = [];
 
 			for (let detail of data.details) {
-				// USER MESSAGE
 				const userMsg = {
 					type: "user",
 					content:
-						detail.text_prompt ||
-						`[Đã gửi tệp: ${detail.input_file_name}]`,
+						detail.input_text ||
+						`[Đã gửi tệp: ${detail.input_file_name || "File"}]`,
+					isText: !detail.input_file_name,
+					isAudio: detail.input_type === "audio",
+					isImage: detail.input_type === "image",
+					isVideo: detail.input_type === "video",
+					isFile: detail.input_type === "file",
+					audio_url:
+						detail.input_type === "audio"
+							? detail.input_file_path
+							: null,
+					image_url:
+						detail.input_type === "image"
+							? detail.input_file_path
+							: null,
+					video_url:
+						detail.input_type === "video"
+							? detail.input_file_path
+							: null,
+					file_url:
+						detail.input_type === "file"
+							? detail.input_file_path
+							: null,
+					file_name: detail.input_file_name || null,
 				};
-
-				if (detail.input_type === "audio") {
-					userMsg.audio_url = detail.input_file_url;
-				} else if (detail.input_type === "video") {
-					userMsg.video_url = detail.input_file_url;
-				} else if (detail.input_type === "image") {
-					userMsg.image_url = detail.input_file_url;
-				} else if (detail.input_type === "file") {
-					userMsg.file_url = detail.input_file_url;
-				}
-
 				messages.push(userMsg);
 
-				// BOT MESSAGE
 				const botMsg = {
 					type: "bot",
-					content: {},
-					option: getOptionFromGeneratorId(detail.generator_id),
+					content: {
+						text: detail.output_text || null,
+						image_url: detail.output_image_url || null,
+						audio_url: detail.output_audio_url || null,
+						video_url: detail.output_video_url || null,
+						file_url: detail.output_file_path || null,
+						file_name: detail.output_file_name || null,
+					},
+					isText: detail.output_type === "text",
+					isAudio: detail.output_type === "audio",
+					isImage: detail.output_type === "image",
+					isVideo: detail.output_type === "video",
+					isFile: detail.output_type === "file",
+					option: Object.keys(generatorIdMap).find(
+						(key) => generatorIdMap[key] === detail.generator_id
+					),
 				};
-
-				if (detail.output_text) {
-					botMsg.content.text = detail.output_text;
-				}
-
-				const outputUrl = detail.output_url;
-				const outputType = detail.output_type;
-
-				if (outputUrl) {
-					if (
-						outputType === "audio" ||
-						botMsg.option === "1" ||
-						botMsg.option === "9"
-					) {
-						botMsg.content.audio_url = outputUrl;
-					} else if (
-						outputType === "video" ||
-						botMsg.option === "3" ||
-						botMsg.option === "10"
-					) {
-						botMsg.content.video_url = outputUrl;
-					} else if (
-						outputType === "image" ||
-						botMsg.option === "2" ||
-						botMsg.option === "5"
-					) {
-						if (detail.generator_id === generatorIdMap["5"]) {
-							botMsg.content.improved_image_url = outputUrl;
-						} else {
-							botMsg.content.image_url = outputUrl;
-						}
-					}
-				}
-
 				messages.push(botMsg);
 			}
 
@@ -524,9 +580,15 @@ const Generate = () => {
 		}
 	};
 
-	const handleDeleteConversation = async (conversationId) => {
+	const handleDeleteConversation = async (
+		conversationId,
+		currentConversationId,
+		setConversations,
+		setChatHistory,
+		setCurrentConversationId
+	) => {
 		const confirmDelete = window.confirm(
-			"Bạn có chắc chắn muốn xoá đoạn chat này?"
+			"Bạn có chắc chắn muốn xóa đoạn chat này?"
 		);
 		if (!confirmDelete) return;
 
@@ -543,13 +605,13 @@ const Generate = () => {
 			}
 
 			const response = await fetch(
-				`http://127.0.0.1:8000/chat-history/${conversationId}`,
+				`http://localhost:8000/chat-history/${conversationId}`,
 				{
 					method: "DELETE",
 					headers: {
 						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
 					},
+					credentials: "include", // Gửi cookie
 				}
 			);
 
@@ -569,7 +631,7 @@ const Generate = () => {
 		} catch (err) {
 			console.error("Xoá chat lỗi:", err);
 			toast.error(
-				"Có lỗi xảy ra khi xoá cuộc trò chuyện: " + err.message,
+				"Có lỗi xảy ra khi xóa cuộc trò chuyện: " + err.message,
 				{
 					closeButton: true,
 					className:
@@ -597,7 +659,7 @@ const Generate = () => {
 
 	const handleAutoAnalyze = async (text) => {
 		try {
-			const response = await fetch("http://127.0.0.1:8000/analyze", {
+			const response = await fetch("http://localhost:8000/analyze", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -731,13 +793,13 @@ const Generate = () => {
 			let fileType;
 			// Xác định API dựa trên loại file
 			if (["mp4", "avi", "mov"].includes(fileExtension)) {
-				apiUrl = "http://127.0.0.1:8000/input/video";
+				apiUrl = "http://localhost:8000/input/video";
 				fileType = "video";
 			} else if (["mp3", "wav"].includes(fileExtension)) {
-				apiUrl = "http://127.0.0.1:8000/input/speech";
+				apiUrl = "http://localhost:8000/input/speech";
 				fileType = "audio";
 			} else if (["txt", "doc", "docx", "pdf"].includes(fileExtension)) {
-				apiUrl = "http://127.0.0.1:8000/input/document";
+				apiUrl = "http://localhost:8000/input/document";
 				fileType = "document";
 			} else {
 				alert("Loại file không được hỗ trợ.");
@@ -972,16 +1034,17 @@ const Generate = () => {
 			if (currentOption === "1") {
 				apiUrl =
 					selectedMode === "1.1" && role === "pro"
-						? "http://127.0.0.1:8000/advanced/text-to-speech"
-						: "http://127.0.0.1:8000/text-to-speech";
+						? "http://localhost:8000/advanced/text-to-speech"
+						: "http://localhost:8000/text-to-speech/default";
 				requestBody = {
 					text: finalText,
-					voice: "banmai",
-					speed: "0",
+					language: "Tiếng Việt",
+					gender: "male",
+					style: "default",
 				};
 			} else if (currentOption === "2") {
 				if (selectedMode === "1.1" && role === "pro") {
-					apiUrl = "http://127.0.0.1:8000/advanced/text-to-image";
+					apiUrl = "http://localhost:8000/advanced/text-to-image";
 					requestBody = {
 						prompt: finalText,
 						n: 1,
@@ -991,7 +1054,7 @@ const Generate = () => {
 						response_format: "url",
 					};
 				} else {
-					apiUrl = "http://127.0.0.1:8000/text-to-image";
+					apiUrl = "http://localhost:8000/text-to-image";
 					requestBody = {
 						prompt: finalText,
 						steps: 0,
@@ -1009,7 +1072,7 @@ const Generate = () => {
 					setIsLoading(false);
 					return;
 				}
-				apiUrl = "http://127.0.0.1:8000/text-to-video";
+				apiUrl = "http://localhost:8000/text-to-video";
 				requestBody = {
 					prompt: finalText,
 					negative_prompt: "blurry, low quality, distorted",
@@ -1021,7 +1084,7 @@ const Generate = () => {
 				};
 			} else if (currentOption === "6") {
 				if (selectedMode === "1.1" && role === "pro") {
-					apiUrl = "http://127.0.0.1:8000/advanced/chatbot-content";
+					apiUrl = "http://localhost:8000/advanced/chatbot-content";
 					requestBody = {
 						user_input: finalText,
 						history: [],
@@ -1030,35 +1093,35 @@ const Generate = () => {
 						max_tokens: 500,
 					};
 				} else {
-					apiUrl = "http://127.0.0.1:8000/chatbot/content";
+					apiUrl = "http://localhost:8000/chatbot/content";
 					requestBody = {
 						prompt: finalText,
 					};
 				}
 			} else if (currentOption === "7") {
 				if (selectedMode === "1.1" && role === "pro") {
-					apiUrl = "http://127.0.0.1:8000/advanced/generate-answer";
+					apiUrl = "http://localhost:8000/advanced/generate-answer";
 					requestBody = {
 						question: finalText,
 						context: "string",
 						max_tokens: 500,
 					};
 				} else {
-					apiUrl = "http://127.0.0.1:8000/generate_answer";
+					apiUrl = "http://localhost:8000/generate_answer";
 					requestBody = {
 						question: finalText,
 					};
 				}
 			} else if (currentOption === "8") {
 				if (selectedMode === "1.1" && role === "pro") {
-					apiUrl = "http://127.0.0.1:8000/advanced/text-to-code";
+					apiUrl = "http://localhost:8000/advanced/text-to-code";
 					requestBody = {
 						prompt: finalText,
 						language: "python",
 						max_tokens: 150,
 					};
 				} else {
-					apiUrl = "http://127.0.0.1:8000/text-to-code";
+					apiUrl = "http://localhost:8000/text-to-code";
 					requestBody = {
 						prompt: finalText,
 					};
@@ -1077,6 +1140,7 @@ const Generate = () => {
 				method: "POST",
 				headers: headers,
 				body: JSON.stringify(requestBody),
+				credentials: "include",
 			});
 
 			if (!response.ok) {
@@ -1123,7 +1187,7 @@ const Generate = () => {
 						botMessage = {
 							type: "bot",
 							content: {
-								image_url: `http://127.0.0.1:8000/${data.image_url}`,
+								image_url: `http://localhost:8000/${data.image_url}`,
 							},
 							option: currentOption,
 						};
@@ -1169,7 +1233,12 @@ const Generate = () => {
 
 			// Đảm bảo có conversation ID trước khi lưu
 			if (!currentConversationId) {
-				await handleNewChat();
+				await handleNewChat(
+					setCurrentConversationId,
+					setConversations,
+					setChatHistory,
+					chatHistory
+				);
 			}
 
 			// Lưu chat detail
@@ -1224,7 +1293,7 @@ const Generate = () => {
 			const formData = new FormData();
 			formData.append("file", file);
 
-			const response = await fetch("http://127.0.0.1:8000/input/speech", {
+			const response = await fetch("http://localhost:8000/input/speech", {
 				method: "POST",
 				body: formData,
 			});
@@ -1274,7 +1343,7 @@ const Generate = () => {
 			const formData = new FormData();
 			formData.append("file", file);
 
-			const response = await fetch("http://127.0.0.1:8000/input/video", {
+			const response = await fetch("http://localhost:8000/input/video", {
 				method: "POST",
 				body: formData,
 			});
@@ -1325,7 +1394,7 @@ const Generate = () => {
 			const formData = new FormData();
 			formData.append("file", file);
 
-			const response = await fetch("http://127.0.0.1:8000/input/file", {
+			const response = await fetch("http://localhost:8000/input/file", {
 				method: "POST",
 				body: formData,
 			});
@@ -1375,7 +1444,7 @@ const Generate = () => {
 			const formData = new FormData();
 			formData.append("file", file);
 
-			const response = await fetch("http://127.0.0.1:8000/enhance", {
+			const response = await fetch("http://localhost:8000/enhance", {
 				method: "POST",
 				body: formData,
 			});
@@ -1511,10 +1580,14 @@ const Generate = () => {
 							disabled={isLoading}
 						>
 							<option value="0">Auto Analyze</option>
-							<option value="1">Text to Speech</option>
+							<option value="1">
+								Text to Speech (Default Voice)
+							</option>
 							<option value="2">Text to Image</option>
 							<option value="3">Text to Video</option>
-							<option value="4">Create AI Avatar</option>
+							<option value="4">
+								Text to Speech (Custom Voice)
+							</option>
 							<option value="5">Improve Image Quality</option>
 							<option value="6">AI Chatbox</option>
 							<option value="7">Answer Question</option>
@@ -1531,7 +1604,14 @@ const Generate = () => {
 						className={`generate_btn ${
 							isLoading ? "disabled" : ""
 						}`}
-						onClick={handleNewChat}
+						onClick={() =>
+							handleNewChat(
+								setCurrentConversationId,
+								setConversations,
+								setChatHistory,
+								chatHistory
+							)
+						}
 						disabled={isLoading}
 					>
 						+ Cuộc trò chuyện mới
@@ -1603,7 +1683,11 @@ const Generate = () => {
 									onClick={(e) => {
 										e.stopPropagation();
 										handleDeleteConversation(
-											conversation.id
+											conversation.id,
+											currentConversationId,
+											setConversations,
+											setChatHistory,
+											setCurrentConversationId
 										);
 									}}
 									style={{
@@ -1658,175 +1742,142 @@ const Generate = () => {
 					{chatHistory.map((message, index) => (
 						<div
 							key={index}
-							className={`message ${message.type}-message${
-								message.video_url ? " video-message" : ""
-							}${message.audio_url ? " audio-message" : ""}${
-								message.image_url ? " image-message" : ""
-							}`}
+							className={`message ${message.type}-message ${
+								message.isAudio ? "audio-message" : ""
+							} ${message.isImage ? "image-message" : ""} ${
+								message.isVideo ? "video-message" : ""
+							} ${message.isFile ? "file-message" : ""}`}
 						>
 							{message.type === "user" ? (
-								message.audio_url ? (
+								message.isAudio ? (
 									<audio
 										controls
 										src={message.audio_url}
 										style={{
 											width: "100%",
 											maxWidth: "500px",
-											maxHeight: "300px",
 											borderRadius: "10px",
 										}}
+										onError={() =>
+											alert("Không thể tải audio.")
+										}
 									/>
-								) : message.video_url ? (
+								) : message.isImage ? (
+									<img
+										src={message.image_url}
+										alt="Ảnh đã gửi"
+										style={{
+											width: "100%",
+											maxWidth: "300px",
+											borderRadius: "10px",
+										}}
+										onError={() =>
+											alert("Không thể tải hình ảnh.")
+										}
+									/>
+								) : message.isVideo ? (
 									<video
 										controls
 										src={message.video_url}
 										style={{
 											width: "100%",
 											maxWidth: "500px",
-											maxHeight: "300px",
 											borderRadius: "10px",
 										}}
+										onError={() =>
+											alert("Không thể tải video.")
+										}
 									/>
-								) : message.image_url ? (
-									<img
-										src={message.image_url}
-										alt="Ảnh đã gửi"
-										style={{
-											maxWidth: "300px",
-											borderRadius: "10px",
-										}}
-									/>
-								) : message.file_url ? (
+								) : message.isFile ? (
 									<a
 										href={message.file_url}
-										download
+										download={message.file_name || "file"}
 										target="_blank"
 										rel="noopener noreferrer"
 										className="file-link"
-										style={{ fontSize: "30px" }}
-									>
-										📄
-									</a>
-								) : (
-									message.content
-								)
-							) : message.option === "1" ? (
-								<>
-									<audio
-										controls
-										src={message.content.audio_url}
-										style={{
-											minwidth: "100%",
-											maxWidth: "800px",
-											borderRadius: "10px",
-											marginBottom: "10px",
-										}}
-									/>
-									<div
 										style={{
 											display: "flex",
-											gap: "10px",
-											marginTop: "10px",
+											alignItems: "center",
+											gap: "8px",
 										}}
 									>
-										<EmailShareButton
-											subject="My content was created by Nhom1, check it out!"
-											body="My content was created by Nhom 1! Check it out!"
-											className="share"
-											style={{ color: "white" }}
-										>
-											<EmailIcon size={48} round={true} />
-										</EmailShareButton>
-
-										<FacebookShareButton hashtag="#AI">
-											<FacebookIcon
-												size={48}
-												round={true}
-											/>
-										</FacebookShareButton>
-									</div>
-								</>
-							) : message.option === "2" ? (
-								<>
-									<img
-										src={message.content.image_url}
-										alt="Generated"
-										style={{
-											maxWidth: "100%",
-											borderRadius: "10px",
-										}}
-									/>
-									<EmailShareButton
-										subject="My content was created by Nhom1, check it out!"
-										body="My content was created by Nhom 1! Check it out!"
-										className="share"
-										style={{ color: "white" }}
-									>
-										<EmailIcon size={48} round={true} />
-									</EmailShareButton>
-
-									<FacebookShareButton hashtag="#AI">
-										<FacebookIcon size={48} round={true} />
-									</FacebookShareButton>
-								</>
-							) : message.option === "3" ? (
-								<>
-									<video
-										controls
-										width="100%"
-										src={message.content.video_url}
-									/>
-									<EmailShareButton
-										subject="My content was created by Nhom1, check it out!"
-										body="My content was created by Nhom 1! Check it out!"
-										className="share"
-										style={{
-											color: "white",
-											borderRadius: "10px",
-										}}
-									>
-										<EmailIcon size={48} round={true} />
-									</EmailShareButton>
-
-									<FacebookShareButton hashtag="#AI">
-										<FacebookIcon size={48} round={true} />
-									</FacebookShareButton>
-								</>
-							) : message.option === "5" ? (
-								<>
-									<img
-										src={message.content.improved_image_url}
-										alt="Improved"
-										style={{
-											width: "100%",
-											maxWidth: "500px",
-											maxHeight: "300px",
-											borderRadius: "10px",
-											display: "block",
-										}}
-									/>
-									<EmailShareButton
-										subject="My content was created by Nhom1, check it out!"
-										body="My content was created by Nhom 1! Check it out!"
-										className="share"
-										style={{ color: "white" }}
-									>
-										<EmailIcon size={48} round={true} />
-									</EmailShareButton>
-									<FacebookShareButton hashtag="#AI">
-										<FacebookIcon size={48} round={true} />
-									</FacebookShareButton>
-								</>
-							) : message.option === "6" ||
-							  message.option === "7" ||
-							  message.option === "8" ||
-							  message.option === "9" ||
-							  message.option === "10" ||
-							  message.option === "11" ||
-							  message.option === "12" ? (
-								<div className="text-response">
+										<span style={{ fontSize: "24px" }}>
+											📄
+										</span>
+										<span>
+											{message.file_name ||
+												"Tệp đính kèm"}
+										</span>
+									</a>
+								) : (
+									<p className="text-message">
+										{message.content}
+									</p>
+								)
+							) : message.isAudio ? (
+								<audio
+									controls
+									src={message.content.audio_url}
+									style={{
+										width: "100%",
+										maxWidth: "500px",
+										borderRadius: "10px",
+									}}
+									onError={() =>
+										alert("Không thể tải audio.")
+									}
+								/>
+							) : message.isImage ? (
+								<img
+									src={message.content.image_url}
+									alt="Generated"
+									style={{
+										width: "100%",
+										maxWidth: "500px",
+										borderRadius: "10px",
+									}}
+									onError={() =>
+										alert("Không thể tải hình ảnh.")
+									}
+								/>
+							) : message.isVideo ? (
+								<video
+									controls
+									src={message.content.video_url}
+									style={{
+										width: "100%",
+										maxWidth: "500px",
+										borderRadius: "10px",
+									}}
+									onError={() =>
+										alert("Không thể tải video.")
+									}
+								/>
+							) : message.isFile ? (
+								<a
+									href={message.content.file_url}
+									download={
+										message.content.file_name || "file"
+									}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="file-link"
+									style={{
+										display: "flex",
+										alignItems: "center",
+										gap: "8px",
+									}}
+								>
+									<span style={{ fontSize: "24px" }}>📄</span>
+									<span>
+										{message.content.file_name ||
+											"Tệp đính kèm"}
+									</span>
+								</a>
+							) : message.isText ? (
+								<p className="text-message">
 									{message.content.text}
-								</div>
+								</p>
 							) : null}
 						</div>
 					))}
