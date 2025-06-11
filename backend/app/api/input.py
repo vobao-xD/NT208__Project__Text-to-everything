@@ -1,6 +1,6 @@
 from datetime import time, timedelta
 from PIL import Image
-from fastapi import APIRouter, Depends, Request, UploadFile, File,HTTPException,status
+from fastapi import APIRouter, Depends, Request, UploadFile, File,HTTPException,status,Header
 from fastapi.responses import JSONResponse
 from fastapi_limiter import FastAPILimiter
 from pydantic import BaseModel
@@ -156,8 +156,8 @@ async def input_file(file: UploadFile = File(...)):
 async def analyze_text(
     input: TextInput,
     request: Request,
-    user_email: str,
-    user_role: str
+    user_email: str=Header(...,alias="X-User-email"),
+    user_role: str=Header(...,alias="X-User-role")
 ):
     """
     Phân tích intent của người dùng. Giới hạn 10 lượt/ngày cho role 'free'.

@@ -633,25 +633,25 @@ TASK_LIST_DESCRIPTION = """
 Here are the available task types and their keys:
 
 1. Text to Code
-Key: "text-to-code"
+Key: "generate_code"
 Description: Generate code from a text description.
 Relevant input: User's text prompt describing the code, target language.
 parameters: (prompt:str),(language:Optional[str] = "python"),(max_tokens:Optional[int] = 150)
 
 2. Text to Image
-Key: "text-to-image"
+Key: "generate_image"
 Description: Generate an image from a text description.
 Relevant input: User's text prompt describing the im
 parameters: (prompt:str),(model:Optional[str]="dall-e-3"),(n:Optional[int] = 1),(size:Optional[str] = "1024x1024"),(quality:Optional[str] = "standard"),(style:Optional[str] = "vivid"),(response_format:Optional[str] = "url")
 
 3. Text to Audio
-Key: "text-to-audio"
+Key: "generate_speech"
 Description: Convert text to speech.
 Relevant input: User's text to be converted.
 parameters: (text:str),(voice:Optional[str] = "alloy"),(model:Optional[str] = "gpt-4o-mini-tts"),(response_format:Optional[str] = "mp3"),(speed:Optional[float] = 1.0),(instructions:Optional[str] = None)
 
 4. Text to Answer (Question Answering)
-Key: "generate-answer"
+Key: "generate_answer"
 Description: Answer a question, possibly with context.
 Relevant input: User's question, optional context.
 parameters: (question:str),(max_tokens:Optional[int] = 150),(context:Optional[str] = None)
@@ -762,7 +762,7 @@ async def analyze(
         if task not in VALID_TASK_KEYS:
             print(f"Warning: AI returned a task ('{task}') not in the predefined VALID_TASK_KEYS. Treating as 'unknown_task'. Original JSON: {result_json}")
 
-        return result_json
+        return {"intent_analysis": task}
 
     except httpx.HTTPStatusError as e: # Catch errors from OpenAI client (e.g., auth, rate limits)
         error_detail_msg = str(e)
