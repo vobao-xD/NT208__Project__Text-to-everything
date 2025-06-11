@@ -38,7 +38,7 @@ class TextToVideoService:
             )
 
             if response.status_code == 200:
-                print(f"✅ Thành công với key: {key}")
+                print(f"Thành công với key: {key}")
                 
                 save_path = HistoryAndOutputManager.save_output_file(
                     user_email=user_data["email"],
@@ -55,7 +55,7 @@ class TextToVideoService:
             # Nếu API Key hết credit 
             if (response.status_code == 406 or 
                 "insufficient credits" in response.text.lower()):
-                print(f"⚠️ API key {key} đã hết credit. Thử key tiếp theo...")
+                print(f"API key {key} đã hết credit. Thử key tiếp theo...")
                 last_error = f"{response.status_code} - {response.text}"
                 continue
 
