@@ -1242,7 +1242,14 @@ const Generate = () => {
 			}
 
 			// Lưu chat detail
-			await addChatDetail(payload);
+			await addChatDetail(
+				payload,
+				currentConversationId,
+				setCurrentConversationId,
+				setConversations,
+				conversations,
+				generatorIdMap
+			);
 
 			if (!isManualSelection) setSelectedOption("0");
 
@@ -1636,7 +1643,12 @@ const Generate = () => {
 										: ""
 								}`}
 								onClick={() =>
-									loadConversation(conversation.id)
+									loadConversation(
+										conversation.id,
+										setChatHistory,
+										setCurrentConversationId,
+										generatorIdMap
+									)
 								}
 								style={{
 									padding: "10px 15px",
