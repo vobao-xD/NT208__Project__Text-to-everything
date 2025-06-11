@@ -15,12 +15,11 @@ api_key = os.getenv("TEXT_TO_CODE_API_KEY")
 @router.post("/", response_model=TTCResponse)
 async def text_to_code(
     request: Request,
-    TTC_request: TTCRequest,
-    db: Session = Depends(get_db)
+    TTC_request: TTCRequest
     ):
     try:
-        user_data = verify_user_access_token(source="header", request=request)
-        return await service.text_to_code(db, user_data, TTC_request.prompt)
+        user_data = verify_user_access_token(source="cookie", request=request)
+        return await service.text_to_code(user_data, TTC_request.prompt)
     except HTTPException as e:
         return {"Status": e.status_code, "Error": e.detail}
     except Exception as e:

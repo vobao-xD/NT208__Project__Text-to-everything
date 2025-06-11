@@ -13,7 +13,7 @@ class TextToCodeService:
     api_key = os.getenv("TEXT_TO_CODE_API_KEY")
 
     @staticmethod
-    async def text_to_code(db: Session, user_data: dict, prompt: str):
+    async def text_to_code(user_data: dict, prompt: str):
         
         headers = {
             "Authorization": f"Bearer {TextToCodeService.api_key}",
@@ -40,16 +40,6 @@ class TextToCodeService:
                 
                 # return {"code": res["choices"][0]["message"]["content"]}
             
-                HistoryAndOutputManager.log_chat(
-                    db=db,
-                    user_email=user_data["email"],
-                    generator_name="text-to-code",
-                    input_type="text",
-                    text_prompt=prompt,
-                    output_type="code",
-                    output_content=res["choices"][0]["message"]["content"]
-                )
-
                 return TTCResponse(
                     success=True,
                     code=res["choices"][0]["message"]["content"]

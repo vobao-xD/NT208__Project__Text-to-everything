@@ -2,7 +2,6 @@ import os
 import requests
 from dotenv import load_dotenv
 from deep_translator import GoogleTranslator
-from sqlalchemy.orm import Session
 from db.schemas import TTVResponse
 from services.history_and_output_manager import HistoryAndOutputManager
 
@@ -25,7 +24,7 @@ class TextToVideoService:
         return translated
         
     @staticmethod
-    def textToVideo(db: Session, user_data: dict, payload: dict) -> bytes:
+    def textToVideo(user_data: dict, payload: dict) -> bytes:
         last_error = None
 
         for key in TextToVideoService.TTV_API_KEYS:
@@ -46,16 +45,6 @@ class TextToVideoService:
                     generator_name="text-to-video",
                     file_content=response.content,
                     file_extension="mp4"
-                )
-
-                HistoryAndOutputManager.log_chat(
-                    db=db,
-                    user_email=user_data["email"],
-                    generator_name="text-to-video",
-                    input_type="text",
-                    text_prompt=str(payload),
-                    output_type="video",
-                    output_file_path=str(save_path)
                 )
 
                 return TTVResponse(

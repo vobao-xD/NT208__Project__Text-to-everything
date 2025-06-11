@@ -1,19 +1,11 @@
-import logging
 import os
 from typing import Optional
 from dotenv import load_dotenv
-from fastapi import Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import HTTPException, UploadFile
 import httpx
-from db.schemas import UserBase, TTSRequest, TTSResponse
+from db.schemas import TTSRequest, TTSResponse
 from services.history_and_output_manager import HistoryAndOutputManager
-from services.authentication_and_authorization import create_user_access_token
-from sqlalchemy.orm import Session
-from datetime import datetime
-from pathlib import Path
-from db.models import User
-from uuid import UUID
-from db import get_db
-import jwt
+from services.authentication_and_authorization import create_microservice_token
 
 load_dotenv()
 
@@ -23,9 +15,8 @@ class TextToSpeechService:
     
     @staticmethod
     async def text_to_speech_with_default_voice(
-        TTS_request: TTSRequest,    
         user_data: dict,
-        db: Session
+        TTS_request: TTSRequest    
     ) -> TTSResponse:
         async with httpx.AsyncClient(timeout=600.0) as client:
             try:
@@ -68,16 +59,6 @@ class TextToSpeechService:
                     file_extension="wav"
                 )
 
-                HistoryAndOutputManager.log_chat(
-                    db=db,
-                    user_email=user_data["email"],
-                    generator_name="text-to-speech-default",
-                    input_type="text",
-                    text_prompt=TTS_request.text,
-                    output_type="audio",
-                    output_file_path=str(save_path)
-                )
-
                 return TTSResponse(
                     success=True,
                     file_path=str(save_path),
@@ -92,7 +73,6 @@ class TextToSpeechService:
 
     @staticmethod
     async def text_to_speech_with_custom_voice(
-        db: Session,
         user_data: dict,
         text: str,
         language: str,
@@ -145,16 +125,6 @@ class TextToSpeechService:
                     generator_name="text-to-speech-custom",
                     file_content=wav_response.content,
                     file_extension="wav"
-                )
-
-                HistoryAndOutputManager.log_chat(
-                    db=db,
-                    user_email=user_data["email"],
-                    generator_name="text-to-speech-custom",
-                    input_type="text",
-                    text_prompt=text,
-                    output_type="audio",
-                    output_file_path=str(save_path)
                 )
 
                 return TTSResponse(

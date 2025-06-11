@@ -1,3 +1,4 @@
+import logging
 import requests
 import asyncio
 import base64
@@ -5,8 +6,8 @@ import json
 import os
 from dotenv import load_dotenv
 from googletrans import Translator
-from sqlalchemy.orm import Session
 from db.schemas import TTIPrompt, TTIResponse
+from services.history_and_output_manager import HistoryAndOutputManager
 
 load_dotenv()
 
@@ -37,7 +38,7 @@ class TextToImageService:
         
     # Tạo ảnh tốc độ nhanh
     @staticmethod
-    def getImage(db, user_data, prompt: str | None, steps: int = 4):
+    def getImage(user_data, prompt: str | None, steps: int = 4):
         """
         .. |language| replace:: Python
         Gửi yêu cầu chuyển đổi văn bản thành hình ảnh bằng API của Cloudflare\n
@@ -53,34 +54,24 @@ class TextToImageService:
         elif len(prompt) > 2048:
             return 'Error 404: Prompt too long'
         url = f'https://api.cloudflare.com/client/v4/accounts/{TextToImageService.accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell'
-        body = json.dumps(
-                {
-                    'prompt':prompt,
-                    'steps':steps
-                }
-            )
-        response = requests.post(url, body, headers=TextToImageService.head)
+        body = {
+            'prompt': prompt,
+            'steps': steps
+        }
+        response = requests.post(url, json=body, headers=TextToImageService.head)
+        logging.info(f"Response Status Code: {response.status_code}")
+        logging.info(f"Response Body: {response.text}")
+        logging.info(f"API Key: {os.getenv('TTI_API_KEY')}")
         successCode = response.status_code
         if successCode == 200:
-            from services import OutputManager
             image = json.loads(response.text)['result']['image']
             image_bytes = base64.b64decode(image)
 
-            save_path = OutputManager.save_output_file(
+            save_path = HistoryAndOutputManager.save_output_file(
                 user_email=user_data["email"],
                 generator_name="text-to-image",
                 file_content=image_bytes,
                 file_extension="png"
-            )
-
-            OutputManager.log_chat(
-                db=db,
-                user_email=user_data["email"],
-                generator_name="text-to-image",
-                input_type="text",
-                text_prompt=prompt,
-                output_type="image",
-                output_file_path=str(save_path)
             )
 
             return TTIResponse(
@@ -88,14 +79,17 @@ class TextToImageService:
                     file_path=str(save_path),
                 )
         else:
-            return f"Error {response.status_code}: {response.text}"
+            return TTIResponse(
+                success=False,
+                file_path=f"{response.text}"
+            )
         
     # Tạo ảnh tốc độ nhanh
     @staticmethod
-    def textToImage(prompt: TTIPrompt, user_data: dict, db: Session):
+    def textToImage(user_data: dict, prompt: TTIPrompt):
         '''
         prompt: str
         steps: int | None = None
         '''
         enPrompt = asyncio.run(TextToImageService.translateText(prompt.prompt)).text
-        return TextToImageService.getImage(db, user_data ,enPrompt, prompt.steps)
+        return TextToImageService.getImage(user_data, enPrompt, prompt.steps)
