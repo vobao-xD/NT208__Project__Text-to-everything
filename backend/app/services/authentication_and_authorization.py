@@ -105,7 +105,7 @@ def decode_microservice_jwt(token: str, expected_issuer: str = "text-to-everythi
 
         return {
             "issuer": issuer,
-            "subject": subject or "who the fuck make this token???",
+            "subject": subject or "Bad token error.",
             "user_email": user_email,
             "iat": iat or 0,  # Gán mặc định nếu iat không có
             "exp": exp
