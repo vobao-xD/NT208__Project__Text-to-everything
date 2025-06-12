@@ -218,7 +218,7 @@ class ChatDetailBase(BaseModel):
 
     output_type: Optional[str] = None
     output_text: Optional[str] = None
-    output_file_path: Optional[HttpUrl] = None
+    output_file_path: Optional[str] = None
 
 class ChatDetailCreate(ChatDetailBase):
     generator_id: UUID 

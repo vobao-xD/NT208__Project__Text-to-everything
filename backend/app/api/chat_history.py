@@ -57,27 +57,29 @@ def add_detail_to_chat(
     db: Session = Depends(get_db), 
     current_user=Depends(get_current_user)
 ):
-    chat = db.query(ChatHistory).filter(ChatHistory.id == history_id, ChatHistory.user_id == current_user.id).first()
+    chat = db.query(ChatHistory).filter(ChatHistory.id == history_id).first()
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
     
-    if detail.input_file_name and not validate_file_type(detail.input_file_name, detail.input_type):
+    if detail.input_file_path and not validate_file_type(detail.input_file_path, detail.input_type):
         raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.input_type}")
-    if detail.output_file_name and not validate_file_type(detail.output_file_name, detail.output_type):
+    if detail.output_file_path and not validate_file_type(detail.output_file_path, detail.output_type):
         raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.output_type}")
 
+    # Hu hu ông nào code phần này mà bug tùm lum vậy trời ...
     return HistoryAndOutputManager.add_chat_detail(
+        db=db,
         chat_history_id=history_id,
         input_type=detail.input_type,
         input_text=detail.input_text,
         input_file_path=detail.input_file_path,
         output_type=detail.output_type,
         output_text=detail.output_text,
-        output_image_url=detail.output_image_url,
-        output_audio_url=detail.output_audio_url,
-        output_video_url=detail.output_video_url,
+        # output_image_url=detail.output_image_url,
+        # output_audio_url=detail.output_audio_url,
+        # output_video_url=detail.output_video_url,
         output_file_path=detail.output_file_path,
-        output_file_name=detail.output_file_name,
+        # output_file_name=detail.output_file_name,
         generator_id=detail.generator_id
     )
 
