@@ -30,6 +30,7 @@
   font-weight: 400;
   font-style: normal;
   font-variation-settings: "wdth" 100;
+  background-color: transparent;
 }
 
 .error-message {
@@ -328,6 +329,11 @@
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
+  
+}
+
+.fa,option {
+  background-color: transparent;
 }
 
 .back-button {

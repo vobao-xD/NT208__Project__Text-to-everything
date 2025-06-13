@@ -204,6 +204,7 @@ const Generate = () => {
 		conversations,
 		generatorIdMap
 	) => {
+		console.log(payload);
 		try {
 			const token = Cookies.get("access_token");
 			if (!token) {
@@ -277,7 +278,8 @@ const Generate = () => {
 				input_type: payload.input_type,
 				input_text: payload.input_text,
 				input_file_name: payload.input_file_name,
-				input_file_path: fileUrl,
+				// input_file_path: fileUrl,
+				input_file_path: null,
 				output_type: payload.output_type,
 				output_text: payload.output_text,
 				output_image_url: payload.output_image_url,
@@ -762,7 +764,7 @@ const Generate = () => {
 
 	const handleFileSelect = (event) => {
 		if (role === "free") {
-			alert(
+			toast.error(
 				"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
 			);
 			navigate("/advanced");
@@ -777,7 +779,7 @@ const Generate = () => {
 
 	const handleFileUpload = async (file) => {
 		if (role === "free") {
-			alert(
+			toast.error(
 				"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
 			);
 			navigate("/advanced");
@@ -802,7 +804,7 @@ const Generate = () => {
 				apiUrl = "http://localhost:8000/input/document";
 				fileType = "document";
 			} else {
-				alert("Loại file không được hỗ trợ.");
+				toast.error("Loại file không được hỗ trợ.");
 				setIsLoading(false);
 				return;
 			}
@@ -858,13 +860,13 @@ const Generate = () => {
 					)
 				);
 			} else {
-				alert(
+				toast.error(
 					analyzeResult.error || "Không thể phân tích nội dung file."
 				);
 			}
 		} catch (error) {
 			console.error("Lỗi khi xử lý file:", error);
-			alert("Có lỗi xảy ra khi xử lý file: " + error.message);
+			toast.error("Có lỗi xảy ra khi xử lý file: " + error.message);
 		} finally {
 			setIsLoading(false);
 			setSelectedFile(null);
@@ -886,7 +888,7 @@ const Generate = () => {
 
 	const handleImageSelect = (event) => {
 		if (role === "free") {
-			alert(
+			toast.error(
 				"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
 			);
 			navigate("/advanced");
@@ -901,7 +903,7 @@ const Generate = () => {
 			};
 			reader.readAsDataURL(file);
 		} else {
-			alert("Vui lòng chọn file ảnh");
+			toast.error("Vui lòng chọn file ảnh");
 		}
 	};
 
@@ -1089,13 +1091,17 @@ const Generate = () => {
 						user_input: finalText,
 						history: [],
 						system_prompt:
-							"You are a helpful and friendly chatbot.",
+							"You are a helpful and friendly chatbot. You will give as much detail as possible within a very short sentence.",
 						max_tokens: 500,
 					};
 				} else {
 					apiUrl = "http://localhost:8000/chatbot/content";
 					requestBody = {
-						prompt: finalText,
+						user_input: finalText,
+						history: [],
+						system_prompt:
+							"You are a helpful and friendly chatbot.",
+						max_tokens: 500,
 					};
 				}
 			} else if (currentOption === "7") {
@@ -1271,9 +1277,11 @@ const Generate = () => {
 
 			// Chuẩn bị và lưu chat detail
 			const normalizedContent = normalizeBotMessageContent(botMessage);
+			const inputFile = null; // TODO: add data in this thing
 			const payload = prepareChatDetailPayload(
 				finalText,
 				fileName,
+				inputFile,
 				normalizedContent,
 				currentOption
 			);
@@ -1289,14 +1297,14 @@ const Generate = () => {
 			}
 
 			// Lưu chat detail
-			// await addChatDetail(
-			// 	payload,
-			// 	currentConversationId,
-			// 	setCurrentConversationId,
-			// 	setConversations,
-			// 	conversations,
-			// 	generatorIdMap
-			// );
+			await addChatDetail(
+			payload,
+			currentConversationId,
+			setCurrentConversationId,
+			setConversations,
+			conversations,
+			generatorIdMap
+			);
 
 			if (!isManualSelection) setSelectedOption("0");
 
@@ -1328,7 +1336,7 @@ const Generate = () => {
 
 	const handleSpeechFile = async (file) => {
 		if (role === "free") {
-			alert(
+			toast.error(
 				"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
 			);
 			navigate("/advanced");
@@ -1378,7 +1386,7 @@ const Generate = () => {
 
 	const handleVideoFile = async (file) => {
 		if (role === "free") {
-			alert(
+			toast.error(
 				"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
 			);
 			navigate("/advanced");
@@ -1429,7 +1437,7 @@ const Generate = () => {
 
 	const handleDocFile = async (file) => {
 		if (role === "free") {
-			alert(
+			toast.error(
 				"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
 			);
 			navigate("/advanced");
@@ -1479,7 +1487,7 @@ const Generate = () => {
 
 	const handleImproveImage = async (file) => {
 		if (role === "free") {
-			alert(
+			toast.error(
 				"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
 			);
 			navigate("/advanced");
@@ -1568,7 +1576,7 @@ const Generate = () => {
 			/>
 			<div className="sidebar">
 				<button className="back-button" onClick={() => navigate("/")}>
-					<i className="fa fa-home"></i>
+					<i className="fa fa-home" aria-hidden="true"></i>
 				</button>
 				<div className="sidebar_title">
 					<h2>Sidebar</h2>
@@ -1818,7 +1826,7 @@ const Generate = () => {
 											borderRadius: "10px",
 										}}
 										onError={() =>
-											alert("Không thể tải audio.")
+											toast.error("Không thể tải audio.")
 										}
 									/>
 								) : message.isImage ? (
@@ -1831,7 +1839,7 @@ const Generate = () => {
 											borderRadius: "10px",
 										}}
 										onError={() =>
-											alert("Không thể tải hình ảnh.")
+											toast.error("Không thể tải hình ảnh.")
 										}
 									/>
 								) : message.isVideo ? (
@@ -1844,7 +1852,7 @@ const Generate = () => {
 											borderRadius: "10px",
 										}}
 										onError={() =>
-											alert("Không thể tải video.")
+											toast.error("Không thể tải video.")
 										}
 									/>
 								) : message.isFile ? (
@@ -1883,7 +1891,7 @@ const Generate = () => {
 										borderRadius: "10px",
 									}}
 									onError={() =>
-										alert("Không thể tải audio.")
+										toast.error("Không thể tải audio.")
 									}
 								/>
 							) : message.isImage ? (
@@ -1896,7 +1904,7 @@ const Generate = () => {
 										borderRadius: "10px",
 									}}
 									onError={() =>
-										alert("Không thể tải hình ảnh.")
+										toast.error("Không thể tải hình ảnh.")
 									}
 								/>
 							) : message.isVideo ? (
@@ -1909,7 +1917,7 @@ const Generate = () => {
 										borderRadius: "10px",
 									}}
 									onError={() =>
-										alert("Không thể tải video.")
+										toast.error("Không thể tải video.")
 									}
 								/>
 							) : message.isFile ? (
