@@ -984,7 +984,7 @@ const Generate = () => {
 				setChatHistory((prev) => [...prev, botMessage]);
 
 				// Reset về Auto Analyze sau khi xử lý xong
-				setSelectedOption("0");
+				// setSelectedOption("0");
 
 				// Reset file và preview
 				setSelectedFile(null);
@@ -1309,7 +1309,7 @@ const Generate = () => {
 			if (!isManualSelection) setSelectedOption("0");
 
 			// Reset về Auto Analyze sau khi xử lý xong
-			setSelectedOption("0");
+			// setSelectedOption("0");
 
 			// Reset file và preview
 			setSelectedFile(null);
@@ -1328,7 +1328,7 @@ const Generate = () => {
 				ariaLabel: "Error",
 			});
 			// Reset về Auto Analyze khi có lỗi
-			setSelectedOption("0");
+			// setSelectedOption("0");
 		} finally {
 			setIsLoading(false);
 		}
