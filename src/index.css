@@ -339,7 +339,24 @@
 	animation: shimmer 2s linear infinite;
 	margin-bottom: 0.5rem;
 	transition: all 250ms;
+}
+.body_title > h1 {
+	font-size: 2rem;
+	font-weight: 300;
+	margin-bottom: 0.5rem;
+}
+
+@keyframes shimmer {
+	to {
+		background-position: 100%;
+	}
+}
+
+.body_title > h3 {
 	margin: 0 auto;
+}
+
+.body_title > h3 {
 	margin: 0 auto;
 	font-size: 1.2rem;
 	font-weight: 200;
@@ -1363,6 +1380,8 @@ body.signin-page p {
 	color: transparent;
 	animation: shimmer 2s linear infinite;
 	transition: all 500ms;
+	/* text-align: left; */
+	/* padding-right: 100px; */
 }
 
 .footer_content {
