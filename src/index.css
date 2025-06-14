@@ -383,6 +383,7 @@
 	animation: shimmer 2s linear infinite;
   margin-bottom: 0.5rem;
   transition: all 250ms;
+}
 .body_title > h1 {
 	font-size: 2rem;
 	font-weight: 300;
@@ -393,6 +394,7 @@
 
 .body_title>h3 {
   margin: 0 auto;
+}
 
 .body_title > h3 {
 	margin: 0 auto;
@@ -1592,10 +1594,12 @@ body.signin-page p {
 
 
 .emphasize {
-  background: linear-gradient(to right, var(--primary-color) 10%, #25abe8 50%, var(--secondary-color) 60%) -100%/ 200%;
-  -webkit-background-clip: text;
+ 	background: linear-gradient(to right, var(--primary-color) 10%, #25abe8 50%, var(--secondary-color) 60%) -100%/ 200%;
+  	-webkit-background-clip: text;
 	background-clip: text;
-  color: transparent;
+  	color: transparent;
 	animation: shimmer 2s linear infinite;
-  transition: all 500ms;
+  	transition: all 500ms;
+	/* text-align: left; */
+	/* padding-right: 100px; */
 }

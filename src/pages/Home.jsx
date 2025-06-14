@@ -17,7 +17,7 @@ const NavButton = ({ onClick, label }) => (
 );
 
 const ContentHeader = ({ title, slogan }) => (
-	<div className="body_title text-center space-y-4">
+	<div className="body_title text-center space-x-4">
 		<h1 className="text-4xl md:text-5xl font-bold text-white">{title}</h1>
 		<h3 className="text-xl md:text-3xl text-gray-300">{slogan}</h3>
 	</div>
@@ -26,16 +26,17 @@ const ContentHeader = ({ title, slogan }) => (
 // Danh sách chức năng
 const FeatureList = ({ features }) => (
 	<div className="mt-12">
-		<h2 className="slogan text-2xl font-semibold text-center mb-6">Tôi có thể giúp gì được cho bạn?</h2>
-		<ul>
+		<h2 className="slogan text-2xl font-semibold text-center py-8" style={{paddingBottom:"10px"}}>Tôi có thể giúp gì được cho bạn?</h2>
+		<div className="grid grid-cols-3 gap-8 justify-items-stretch m-4">
 			{features.map((feature, index) => (
-				<li key={index}>
-					<span>{feature.split(":")[0]}</span>
-					<span className="emphasize">{feature.split(":")[1]} </span>
-					<span>{feature.split(":")[2]}</span>
-				</li>
+				<div key={index} className="grid justify-items-center grid-flow-col grid-rows-3">
+					<div className="place-content-center row-span-3">{feature.split(":")[0]}</div>
+					<div className="emphasize col-span-2">{feature.split(":")[1]} </div>
+					<div className="col-span-2 row-span-2">{feature.split(":")[2]}</div>
+				</div>
 			))}
-		</ul>
+		</div>
+		<div className="text-3xl font-semibold text-center" style={{paddingTop:"10px"}}>🔥Và đó mới chỉ là khởi đầu...</div>
 		<h3 className="slogan text-2xl font-semibold text-center mb-6">Hàng loạt tính năng AI thông minh, sáng tạo và đột phá đang chờ bạn khám phá!</h3>
 	</div>
 );
@@ -44,13 +45,12 @@ const Home = () => {
 	const navigate = useNavigate();
 
 	const features = [
-		"🎤:Text to Speech (Cơ bản):Biến văn bản thành giọng nói mượt mà, tự nhiên chỉ trong tích tắc.",
-		"🎤:Text to Speech (Cá nhân hóa):Tạo ra giọng nói của riêng bạn — độc quyền, độc đáo, không ai giống ai!",
-		"🖼️:Text to Image:Tưởng tượng ra gì, AI vẽ ngay cho bạn! Biến mô tả thành tác phẩm nghệ thuật sống động.",
-		"📺:Text to Video:Chỉ cần ý tưởng — AI dựng video giúp bạn! Hoàn hảo cho sáng tạo nội dung, TikTok, YouTube…",
-		"📁:File to Text:Chuyển đổi mọi loại file (âm thanh, hình ảnh, tài liệu) thành văn bản dễ xử lý, siêu nhanh.",
-		"✨:Nâng Cấp Ảnh Chất Lượng Thấp:Ảnh mờ, ảnh cũ? Để AI biến nó thành hình ảnh sắc nét và rõ ràng như mới!",
-		"🔥:Và đó mới chỉ là khởi đầu...",
+		"🎙️:Text to Speech (Cơ bản): Chuyển văn bản thành giọng đọc tự nhiên",
+		"🎤:Text to Speech (Cá nhân hóa):Tạo giọng nói riêng của bạn, độc quyền, độc đáo, không ai giống ai!",
+		"🖼️:Text to Image:Biến mô tả thành tác phẩm nghệ thuật sống động với AI",
+		"📺:Text to Video:Chỉ cần ý tưởng — AI dựng video giúp bạn!",
+		"📁:File to Text:Trích xuất văn bản từ âm thanh, hình ảnh hoặc tài liệu",
+		"✨:Nâng Cấp Ảnh Chất Lượng Thấp:Cải thiện chất lượng ảnh mờ, khiến ảnh trở nên sắc nét",
 	];
 
 	const handleGetStarted = () => {
