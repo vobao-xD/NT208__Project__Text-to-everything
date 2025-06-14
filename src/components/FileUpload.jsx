@@ -1,37 +1,36 @@
-import React, { useRef } from "react";
+import { useContext, useRef } from "react";
+import { ChatContext } from "@/context/ChatContext";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
-const FileUpload = ({
-	onFileSend,
-	accept = ".mp3,.wav,.png,.jpg,.jpeg,.mp4,.webm,.pdf,.doc,.docx,.txt",
-	disabled = false,
-	selectedOption,
-}) => {
-	const inputRef = useRef();
-
-	const handleFileChange = async (e) => {
-		const file = e.target.files[0];
-		if (file) {
-			const data = {
-				file,
-				file_name: file.name,
-				option: selectedOption,
-			};
-			onFileSend(null, data, selectedOption);
-		}
-	};
+const FileUpload = ({ onFileSend, accept, disabled, selectedOption }) => {
+	const { role } = useContext(ChatContext);
+	const navigate = useNavigate();
+	const inputRef = useRef(null);
 
 	const getAcceptFormats = () => {
 		switch (selectedOption) {
-			case "1":
+			case "5":
+				return ".jpg,.png,.jpeg";
+			case "9":
 				return ".mp3,.wav";
-			case "2":
-				return ".png,.jpg,.jpeg";
-			case "3":
+			case "10":
 				return ".mp4,.webm";
-			case "4":
+			case "11":
 				return ".pdf,.doc,.docx,.txt";
 			default:
-				return accept;
+				return (
+					accept ||
+					".mp3,.wav,.png,.jpg,.jpeg,.mp4,.webm,.pdf,.doc,.docx,.txt"
+				);
+		}
+	};
+
+	const handleFileChange = (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			onFileSend(null, { file, file_name: file.name }, selectedOption);
+			if (inputRef.current) inputRef.current.value = "";
 		}
 	};
 
@@ -39,14 +38,14 @@ const FileUpload = ({
 		<>
 			<button
 				onClick={() => {
-					const role = localStorage.getItem("role");
 					if (role === "free") {
-						alert(
-							"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
+						toast.error(
+							"Tài khoản miễn phí không được phép upload!"
 						);
+						navigate("/advanced");
 						return;
 					}
-					inputRef.current.click();
+					inputRef.current?.click();
 				}}
 				className={`upload-btn ${disabled ? "disabled" : ""}`}
 				disabled={disabled}
@@ -55,11 +54,10 @@ const FileUpload = ({
 			</button>
 			<input
 				type="file"
-				accept={getAcceptFormats()}
-				style={{ display: "none" }}
 				ref={inputRef}
 				onChange={handleFileChange}
-				disabled={disabled}
+				style={{ display: "none" }}
+				accept={getAcceptFormats()}
 			/>
 		</>
 	);

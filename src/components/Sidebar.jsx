@@ -1,41 +1,43 @@
-import React from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChatContext } from "@/context/ChatContext";
+import { toast } from "react-toastify";
 
-const Sidebar = ({
-	selectedOption,
-	setSelectedOption,
-	setChatHistory,
-	chatHistory,
-	conversations,
-	setConversations,
-	setCurrentConversationId,
-	currentConversationId,
-}) => {
+const Sidebar = () => {
 	const navigate = useNavigate();
+	const {
+		role,
+		selectedOption,
+		setSelectedOption,
+		messages,
+		conversations,
+		currentConversationId,
+		loadConversation,
+		createConversation,
+		deleteConversation,
+	} = useContext(ChatContext);
+	const [isManualMode, setIsManualMode] = useState(false);
+	const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
 
-	const handleNewChat = () => {
-		// Lưu cuộc trò chuyện hiện tại nếu có
-		if (chatHistory.length > 0) {
-			const newConversation = {
-				id: Date.now(),
-				messages: [...chatHistory],
-				title: chatHistory[0].image_url
-					? "Image Conversation"
-					: chatHistory[0].content || "New Conversation",
-			};
-			setConversations((prev) => [...prev, newConversation]);
+	const handleModeChange = (e) => {
+		const newMode = e.target.value;
+		if (newMode === "1.1" && role !== "pro") {
+			toast.error("Chỉ tài khoản Pro mới được phép sử dụng chế độ 1.1!");
+			navigate("/advanced");
+			return;
 		}
-		// Reset chat history cho cuộc trò chuyện mới
-		setChatHistory([]);
-		setCurrentConversationId(null);
+		setSelectedOption(newMode);
 	};
 
-	const loadConversation = (conversationId) => {
-		const conversation = conversations.find((c) => c.id === conversationId);
-		if (conversation) {
-			setChatHistory(conversation.messages);
-			setCurrentConversationId(conversationId);
-		}
+	const handleManualModeToggle = () => {
+		const newMode = !isManualMode;
+		setIsManualMode(newMode);
+		setShowFunctionDropdown(newMode);
+		if (!newMode) setSelectedOption("0");
+	};
+
+	const handleOptionChange = (e) => {
+		setSelectedOption(e.target.value);
 	};
 
 	return (
@@ -46,34 +48,59 @@ const Sidebar = ({
 			<div className="sidebar_title">
 				<h2>Sidebar</h2>
 			</div>
-
-			<div className="choices">
+			<div className="mode-selection">
 				<select
 					className="options"
 					value={selectedOption}
-					onChange={(e) => setSelectedOption(e.target.value)}
+					onChange={handleModeChange}
+					disabled={messages.length > 0}
 				>
-					<option value="1">Text to Speech</option>
-					<option value="2">Text to Image</option>
-					<option value="3">Text to Video</option>
-					<option value="4">Create AI Avatar</option>
-					<option value="5">Improve Image Quality</option>
-					<option value="6">AI Chatbox</option>
-					<option value="7">Auto analyze</option>
+					<option value="1">API-Model 1</option>
+					<option value="1.1">API-Model 1.1</option>
 				</select>
 			</div>
-
+			<div className="manual-mode-toggle">
+				<button
+					className={`toggle-button ${isManualMode ? "active" : ""}`}
+					onClick={handleManualModeToggle}
+				>
+					<i
+						className={`fa ${
+							isManualMode ? "fa-check-circle" : "fa-cog"
+						}`}
+					></i>
+					{isManualMode ? "Chế độ thủ công" : "Chế độ tự động"}
+				</button>
+			</div>
+			{showFunctionDropdown && (
+				<div className="choices">
+					<select
+						className="options"
+						value={selectedOption}
+						onChange={handleOptionChange}
+					>
+						<option value="0">Auto Analyze</option>
+						<option value="1">Text to Speech</option>
+						<option value="2">Text to Image</option>
+						<option value="3">Text to Video</option>
+						<option value="4">Text to Text</option>
+						<option value="5">Improve Image Quality</option>
+						<option value="6">AI Chatbot</option>
+						<option value="7">Answer Question</option>
+						<option value="8">Generate Code</option>
+						<option value="9">Speech to Text</option>
+						<option value="10">Video to Text</option>
+						<option value="11">File to Text</option>
+					</select>
+				</div>
+			)}
 			<div className="new-chat_btn">
-				<button className="generate_btn" onClick={handleNewChat}>
+				<button className="generate_btn" onClick={createConversation}>
 					+ Cuộc trò chuyện mới
 				</button>
 			</div>
-
 			<div className="history">
-				<ul
-					className="chat-list"
-					style={{ listStyle: "none", padding: 0 }}
-				>
+				<ul className="chat-list">
 					{conversations.map((conversation) => (
 						<li
 							key={conversation.id}
@@ -82,22 +109,21 @@ const Sidebar = ({
 									? "active"
 									: ""
 							}`}
-							onClick={() => loadConversation(conversation.id)}
-							style={{
-								padding: "10px",
-								margin: "5px 0",
-								cursor: "pointer",
-								backgroundColor:
-									currentConversationId === conversation.id
-										? "#f0f0f0"
-										: "transparent",
-								color:
-									currentConversationId === conversation.id
-										? "black"
-										: "white",
-							}}
 						>
-							{conversation.title}
+							<span
+								onClick={() =>
+									loadConversation(conversation.id)
+								}
+							>
+								{conversation.title}
+							</span>
+							<button
+								onClick={() =>
+									deleteConversation(conversation.id)
+								}
+							>
+								🞬
+							</button>
 						</li>
 					))}
 				</ul>

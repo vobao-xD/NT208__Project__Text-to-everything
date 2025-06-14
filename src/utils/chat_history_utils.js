@@ -1,6 +1,14 @@
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
-import { detectInputFileType } from "./detectInputFileType";
+
+const detectInputFileType = (filename) => {
+	const ext = filename.split(".").pop().toLowerCase();
+	if (["mp3", "wav"].includes(ext)) return "audio";
+	if (["png", "jpg", "jpeg"].includes(ext)) return "image";
+	if (["mp4", "avi", "mov"].includes(ext)) return "video";
+	if (["pdf", "txt", "doc", "docx"].includes(ext)) return "file";
+	return "file";
+};
 
 const mapOptionToType = (option) => {
 	switch (option) {

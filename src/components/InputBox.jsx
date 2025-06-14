@@ -1,112 +1,96 @@
-import React, { useState } from "react";
-import FileUpload from "./FileUpload";
+import { useContext, useState } from "react";
+import { ChatContext } from "@/context/ChatContext";
+import FileUpload from "@/components/FileUpload";
+import { toast } from "react-toastify";
 
-const InputBox = ({ selectedOption, onMessageSend }) => {
+const InputBox = () => {
+	const { selectedOption, sendMessage, isLoading, isRateLimited } =
+		useContext(ChatContext);
 	const [inputText, setInputText] = useState("");
 
 	const handleSubmit = async () => {
-		if (!inputText.trim() && selectedOption !== "4") {
-			alert("Vui lòng nhập nội dung trước khi gửi.");
+		if (isRateLimited || isLoading) {
+			toast.error(
+				"Hết lượt miễn phí hoặc đang xử lý. Vui lòng thử lại sau."
+			);
 			return;
 		}
-
-		try {
-			let apiUrl;
-			let requestBody = {};
-
-			if (selectedOption === "1") {
-				// Text to Speech
-				apiUrl = "http://localhost:8000/text-to-speech";
-				requestBody = {
-					text: inputText,
-					voice: "banmai",
-					speed: "0",
-				};
-			} else if (selectedOption === "2") {
-				// Text to Image
-				apiUrl = "http://localhost:8000/text-to-image/quick";
-				requestBody = {
-					prompt: inputText,
-					steps: 0,
-				};
-			} else if (selectedOption === "3") {
-				// Text to Video
-				apiUrl = "http://localhost:8000/text-to-video";
-				requestBody = {
-					prompt: inputText,
-					duration: 5,
-				};
-			} else if (selectedOption === "4") {
-				// Text
-				onMessageSend(inputText, { text: inputText }, selectedOption);
-				setInputText("");
-				return;
-			} else {
-				alert("Tính năng này chưa được hỗ trợ!");
-				return;
-			}
-
-			const response = await fetch(apiUrl, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(requestBody),
-			});
-
-			if (!response.ok) {
-				throw new Error(
-					`Lỗi API (${response.status}): ${await response.text()}`
-				);
-			}
-
-			const data = await response.json();
-			onMessageSend(
-				inputText,
-				{
-					...data,
-					image_url: selectedOption === "2" ? data.image_url : null, // Đảm bảo trả về image_url
-				},
-				selectedOption
-			);
-			setInputText("");
-
-			if (selectedOption === "1") {
-				const audio = new Audio(data.audio_url);
-				audio.play();
-			} else if (selectedOption === "2") {
-				console.log("Image URL:", data.image_url);
-			} else if (selectedOption === "3") {
-				console.log("Video URL:", data.video_url);
-			}
-		} catch (error) {
-			console.error("Lỗi:", error);
-			alert("Có lỗi xảy ra khi gọi API: " + error.message);
+		if (
+			!inputText.trim() &&
+			!["5", "9", "10", "11"].includes(selectedOption)
+		) {
+			toast.error("Vui lòng nhập nội dung trước khi gửi.");
+			return;
 		}
+		await sendMessage(inputText, null, selectedOption);
+		setInputText("");
 	};
 
-	const handleFileSend = (text, data, option) => {
-		onMessageSend(text, data, option);
+	const handleFileSend = async (text, data, option) => {
+		if (isRateLimited || isLoading) {
+			toast.error(
+				"Hết lượt miễn phí hoặc đang xử lý. Vui lòng thử lại sau."
+			);
+			return;
+		}
+		await sendMessage(null, data.file, option);
 	};
 
 	return (
-		<div className="footer_content">
+		<div className="footer_content content-item">
 			<div id="btn_complex">
-				<textarea
-					value={inputText}
-					onChange={(e) => setInputText(e.target.value)}
-					className="input"
-					rows="4"
-					placeholder="Mô tả những gì bạn muốn tạo"
-					disabled={selectedOption === "4"}
-				/>
-				<div className="input-actions">
-					<FileUpload
-						onFileSend={handleFileSend}
-						selectedOption={selectedOption}
-					/>
-					<button id="submit_btn" onClick={handleSubmit}>
-						Create
-					</button>
-				</div>
+				{["5", "9", "10", "11"].includes(selectedOption) ? (
+					<div className="file-upload-container">
+						<FileUpload
+							onFileSend={handleFileSend}
+							accept={
+								selectedOption === "5"
+									? ".jpg,.png,.jpeg"
+									: selectedOption === "9"
+									? ".mp3,.wav"
+									: selectedOption === "10"
+									? ".mp4,.webm"
+									: ".pdf,.doc,.docx,.txt"
+							}
+							disabled={isLoading || isRateLimited}
+							selectedOption={selectedOption}
+						/>
+						<span>
+							{selectedOption === "5"
+								? "Chọn file ảnh (.jpg, .png, .jpeg)..."
+								: selectedOption === "9"
+								? "Chọn file audio (.mp3, .wav)..."
+								: selectedOption === "10"
+								? "Chọn file video (.mp4, .webm)..."
+								: "Chọn file (.pdf, .doc, .docx, .txt)..."}
+						</span>
+					</div>
+				) : (
+					<>
+						<textarea
+							value={inputText}
+							onChange={(e) => setInputText(e.target.value)}
+							className={`input ${isLoading ? "disabled" : ""}`}
+							rows="4"
+							placeholder="Mô tả những gì bạn muốn tạo..."
+							disabled={isLoading || isRateLimited}
+						/>
+						<div className="input-actions">
+							<FileUpload
+								onFileSend={handleFileSend}
+								selectedOption={selectedOption}
+								disabled={isLoading || isRateLimited}
+							/>
+							<button
+								id="submit_btn"
+								onClick={handleSubmit}
+								disabled={isLoading || isRateLimited}
+							>
+								Create
+							</button>
+						</div>
+					</>
+				)}
 			</div>
 		</div>
 	);

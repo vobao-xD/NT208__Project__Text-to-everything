@@ -1,52 +1,73 @@
-import React from "react";
+import { useContext } from "react";
+import { ChatContext } from "@/context/ChatContext";
+import { toast } from "react-toastify";
 
-const ChatBox = ({ messages }) => {
+const ChatBox = () => {
+	const { messages } = useContext(ChatContext);
+
 	return (
-		<div className="conversation">
-			{messages.map((message, index) => (
+		<div className="conversation content-item">
+			{messages.map((message) => (
 				<div
-					key={index}
-					className={`message ${
-						message.type === "user" ? "user-message" : "bot-message"
-					}`}
+					key={message.id}
+					className={`message ${message.type}-message ${
+						message.isAudio ? "audio-message" : ""
+					} ${message.isImage ? "image-message" : ""} ${
+						message.isVideo ? "video-message" : ""
+					} ${message.isFile ? "file-message" : ""}`}
 				>
 					{message.isText ? (
-						<p>{message.content}</p>
+						<p className="text-message">{message.content}</p>
 					) : message.isAudio ? (
 						<audio
 							controls
-							src={message.content}
-							onError={() => alert("Không thể tải audio.")}
-						></audio>
+							src={
+								message.content?.audio_url || message.audio_url
+							}
+							onError={() => toast.error("Không thể tải audio.")}
+						/>
 					) : message.isImage ? (
 						<img
-							src={message.content} // Thay data:image/png;base64
-							alt="Generated"
+							src={
+								message.content?.image_url || message.image_url
+							}
 							style={{ maxWidth: "100%" }}
-							onError={() => alert("Không thể tải hình ảnh.")}
+							onError={() =>
+								toast.error("Không thể tải hình ảnh.")
+							}
 						/>
 					) : message.isVideo ? (
 						<video
 							controls
 							style={{ maxWidth: "100%" }}
-							onError={() => alert("Không thể tải video.")}
+							onError={() => toast.error("Không thể tải video.")}
 						>
-							<source src={message.content} type="video/mp4" />
+							<source
+								src={
+									message.content?.video_url ||
+									message.video_url
+								}
+								type="video/mp4"
+							/>
 							Your browser does not support the video tag.
 						</video>
 					) : message.isFile ? (
 						<a
-							href={message.content}
-							download={message.fileName || "downloaded_file"}
-							style={{
-								textDecoration: "underline",
-								color: "#007bff",
-							}}
+							href={message.content?.file_url || message.file_url}
+							download={
+								message.content?.fileName ||
+								message.fileName ||
+								"file"
+							}
+							className="file-link"
 						>
-							Download: {message.fileName || "File"}
+							Download:{" "}
+							{message.content?.fileName ||
+								message.fileName ||
+								"File"}
 						</a>
 					) : (
-						<p>{message.content}</p> // Fallback
+						<p>{message.content}</p>
 					)}
 				</div>
 			))}
