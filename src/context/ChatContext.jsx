@@ -30,18 +30,6 @@ export const ChatProvider = ({ children }) => {
 		11: "11111111-1111-1111-1111-111111111111", // File to text
 	};
 
-	// Tạo map ngược lại từ UUID sang option
-	const reverseGeneratorIdMap = Object.entries(generatorIdMap).reduce(
-		(acc, [key, value]) => {
-			if (value) {
-				// Chỉ thêm vào map nếu value không rỗng
-				acc[value] = key;
-			}
-			return acc;
-		},
-		{}
-	);
-
 	useEffect(() => {
 		const init = async () => {
 			try {
@@ -73,6 +61,10 @@ export const ChatProvider = ({ children }) => {
 
 	const handleAutoAnalyze = useCallback(
 		async (text) => {
+			if (!text.trim()) {
+				toast.error("Vui lòng nhập nội dung để phân tích.");
+				return { success: false, error: "Empty input" };
+			}
 			if (isRateLimited)
 				return { success: false, error: "Rate limit exceeded" };
 			try {
@@ -139,6 +131,13 @@ export const ChatProvider = ({ children }) => {
 		[email, role, isRateLimited]
 	);
 
+	useEffect(() => {
+		return () => {
+			const timers = document.querySelectorAll("body").__timers || [];
+			timers.forEach(clearInterval);
+		};
+	}, []);
+
 	const sendMessage = useCallback(
 		async (text, file, option) => {
 			if (isRateLimited) {
@@ -149,6 +148,8 @@ export const ChatProvider = ({ children }) => {
 			try {
 				let finalOption = option;
 				let finalText = text;
+
+				// Auto Analyze nếu option là "0"
 				if (option === "0" && text) {
 					const analyzeResult = await handleAutoAnalyze(text);
 					if (!analyzeResult.success) return;
@@ -166,62 +167,100 @@ export const ChatProvider = ({ children }) => {
 					]);
 				}
 
-				if (text && !file) {
-					setMessages((prev) => [
-						...prev,
-						{
-							id: Date.now(),
-							type: "user",
-							content: text,
-							isText: true,
-						},
-					]);
-					const response = await ApiService.processText(
+				// Validation
+				const textOnlyOptions = ["1", "2", "3", "6", "7", "8"];
+				const fileOnlyOptions = ["5", "9", "10", "11"];
+				const textAndFileOptions = ["0", "4"];
+
+				if (textOnlyOptions.includes(finalOption) && !text) {
+					toast.error("Vui lòng nhập nội dung.");
+					return;
+				}
+				if (fileOnlyOptions.includes(finalOption) && !file) {
+					toast.error("Vui lòng chọn file.");
+					return;
+				}
+				if (
+					textAndFileOptions.includes(finalOption) &&
+					!text &&
+					!file
+				) {
+					toast.error("Vui lòng nhập nội dung hoặc chọn file.");
+					return;
+				}
+
+				// Kiểm tra quyền
+				if (file && role === "free") {
+					toast.error("Tài khoản miễn phí không được phép upload!");
+					return;
+				}
+
+				// Tạo tin nhắn user
+				let userMessage;
+				if (text && file) {
+					userMessage = await ApiService.createUserTextFileMessage(
+						text,
+						file,
+						finalOption
+					);
+				} else if (text) {
+					userMessage = {
+						id: Date.now(),
+						type: "user",
+						content: text,
+						isText: true,
+					};
+				} else if (file) {
+					userMessage = await ApiService.createUserFileMessage(
+						file,
+						finalOption
+					);
+				}
+				setMessages((prev) => [...prev, userMessage]);
+
+				// Gọi API
+				let response;
+				if (text && file) {
+					response = await ApiService.processTextAndFile(
+						finalText,
+						file,
+						finalOption,
+						role
+					);
+				} else if (text) {
+					response = await ApiService.processText(
 						finalText,
 						finalOption,
 						role
 					);
-					const botMessage = await ApiService.normalizeBotMessage(
-						response,
-						finalOption
-					);
-					setMessages((prev) => [
-						...prev,
-						{ id: Date.now(), ...botMessage },
-					]);
 				} else if (file) {
-					if (role === "free") {
-						toast.error(
-							"Tài khoản miễn phí không được phép upload!"
-						);
-						return;
-					}
-					const userMessage = await ApiService.createUserFileMessage(
-						file,
-						finalOption
-					);
-					setMessages((prev) => [
-						...prev,
-						{ id: Date.now(), ...userMessage },
-					]);
-					const response = await ApiService.processFile(
-						file,
-						finalOption
-					);
-					const botMessage = await ApiService.normalizeBotMessage(
-						response,
-						finalOption
-					);
-					setMessages((prev) => [
-						...prev,
-						{ id: Date.now(), ...botMessage },
-					]);
+					response = await ApiService.processFile(file, finalOption);
 				}
 
-				if (!currentConversationId) {
-					await createConversation();
+				if (!response.ok) {
+					throw new Error(`API error: ${response.statusText}`);
 				}
-				// TODO: Lưu chi tiết tin nhắn vào API
+
+				const botMessage = await ApiService.normalizeBotMessage(
+					response,
+					finalOption
+				);
+				setMessages((prev) => [
+					...prev,
+					{ id: Date.now(), ...botMessage },
+				]);
+
+				// Tạo hoặc cập nhật conversation
+				if (!currentConversationId) {
+					const newConversation = await createConversation();
+					setCurrentConversationId(newConversation.id);
+				}
+				// Lưu tin nhắn vào API
+				await ApiService.saveMessage(
+					currentConversationId,
+					userMessage,
+					botMessage
+				);
 			} catch (error) {
 				toast.error("Lỗi: " + error.message);
 			} finally {
@@ -230,7 +269,6 @@ export const ChatProvider = ({ children }) => {
 		},
 		[isRateLimited, role, currentConversationId, handleAutoAnalyze]
 	);
-
 	const loadConversation = useCallback(async (id) => {
 		try {
 			setIsLoading(true);

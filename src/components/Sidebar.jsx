@@ -40,9 +40,9 @@ const Sidebar = () => {
 	const handleOptionChange = (e) => {
 		const newValue = e.target.value;
 		if (newValue === "0") {
-			setIsManualSelection(false);
+			setIsManualMode(false);
 		} else {
-			setIsManualSelection(true);
+			setIsManualMode(true);
 		}
 		setSelectedOption(newValue);
 	};

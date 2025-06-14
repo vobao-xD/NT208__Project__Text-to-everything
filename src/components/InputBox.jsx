@@ -7,7 +7,6 @@ import FileUpload from "@/components/FileUpload";
 const InputBox = () => {
 	const { selectedOption, role, isLoading, sendMessage } =
 		useContext(ChatContext);
-	const navigate = useNavigate();
 	const [inputValue, setInputValue] = useState("");
 	const [selectedFile, setSelectedFile] = useState(null);
 	const [imagePreview, setImagePreview] = useState(null);
@@ -117,6 +116,12 @@ const InputBox = () => {
 		}
 	};
 
+	const handleCancelFile = () => {
+		setSelectedFile(null);
+		setImagePreview(null);
+		if (fileInputRef.current) fileInputRef.current.value = "";
+	};
+
 	return (
 		<div className="footer_content content-item">
 			<div className="input-container">
@@ -169,23 +174,47 @@ const InputBox = () => {
 									ref={fileInputRef}
 									onChange={handleFileSelect}
 									style={{ display: "none" }}
-									accept=".mp4,.wav,.mp3,.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+									accept={
+										selectedOption === "5"
+											? ".jpg,.jpeg,.png"
+											: selectedOption === "9" ||
+											  selectedOption === "4"
+											? ".wav,.mp3"
+											: selectedOption === "10"
+											? ".mp4"
+											: selectedOption === "11"
+											? ".pdf,.doc,.docx,.txt"
+											: ".mp4,.wav,.mp3,.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+									}
 								/>
-								{imagePreview && (
-									<div className="image-preview">
-										<img src={imagePreview} alt="Preview" />
-										<button
-											className="close-button"
-											onClick={() => {
-												setSelectedFile(null);
-												setImagePreview(null);
-												if (fileInputRef.current)
-													fileInputRef.current.value =
-														"";
-											}}
-										>
-											<i className="fas fa-times"></i>
-										</button>
+								{selectedFile && (
+									<div className="file-info">
+										{imagePreview ? (
+											<div className="image-preview">
+												<img
+													src={imagePreview}
+													alt="Preview"
+												/>
+												<button
+													className="close-button"
+													onClick={handleCancelFile}
+												>
+													<i className="fas fa-times"></i>
+												</button>
+											</div>
+										) : (
+											<div className="file-details">
+												<span className="file-name">
+													{selectedFile.name}
+												</span>
+												<button
+													className="close-button"
+													onClick={handleCancelFile}
+												>
+													<i className="fas fa-times"></i>
+												</button>
+											</div>
+										)}
 									</div>
 								)}
 							</div>

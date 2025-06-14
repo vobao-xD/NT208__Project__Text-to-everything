@@ -22,6 +22,14 @@ const ApiService = {
 				return "video";
 			case "4":
 				return "file";
+			case "5":
+				return "image";
+			case "9":
+				return "audio";
+			case "10":
+				return "video";
+			case "11":
+				return "file";
 			default:
 				return "text";
 		}
@@ -30,26 +38,41 @@ const ApiService = {
 	// Hàm tiện ích: Chuẩn bị payload cho chi tiết chat
 	prepareChatDetailPayload(
 		inputText,
-		inputFileName,
 		inputFile,
 		normalizedContent,
 		generatorId,
 		selectedOption
 	) {
+		const inputFileName = inputFile ? inputFile.name : null;
 		return {
 			input_type: inputFileName
 				? this.detectInputFileType(inputFileName)
 				: this.mapOptionToType(selectedOption),
 			input_text: inputFileName ? null : inputText,
-			input_file_name: inputFileName || null,
-			input_file: inputFile || null,
-			output_type: normalizedContent.type,
-			output_text: normalizedContent.text || null,
-			output_image_url: normalizedContent.image_url || null,
-			output_audio_url: normalizedContent.audio_url || null,
-			output_video_url: normalizedContent.video_url || null,
-			output_file_url: normalizedContent.file_url || null,
-			output_file_name: normalizedContent.file_name || null,
+			input_file_path: inputFileName ? `/uploads/${inputFileName}` : null,
+			output_type:
+				normalizedContent.fileType ||
+				this.mapOptionToType(selectedOption),
+			output_text: normalizedContent.isText
+				? normalizedContent.content
+				: null,
+			output_image_url:
+				normalizedContent.fileType === "image"
+					? normalizedContent.content
+					: null,
+			output_audio_url:
+				normalizedContent.fileType === "audio"
+					? normalizedContent.content
+					: null,
+			output_video_url:
+				normalizedContent.fileType === "video"
+					? normalizedContent.content
+					: null,
+			output_file_path:
+				normalizedContent.fileType === "file"
+					? normalizedContent.content
+					: null,
+			output_file_name: normalizedContent.fileName || null,
 			generator_id: generatorId,
 		};
 	},
@@ -65,7 +88,7 @@ const ApiService = {
 		);
 		if (!response.ok)
 			throw new Error(
-				`Lỗi khi lấy thông tin người dùng: ${await response.text()}`
+				`Lỗi khi lấy thông tin người dùng: ${response.statusText}`
 			);
 		return await response.json();
 	},
@@ -81,7 +104,7 @@ const ApiService = {
 		);
 		if (!response.ok)
 			throw new Error(
-				`Lỗi khi lấy thông tin vai trò: ${await response.text()}`
+				`Lỗi khi lấy thông tin vai trò: ${response.statusText}`
 			);
 		return await response.json();
 	},
@@ -90,21 +113,16 @@ const ApiService = {
 	async analyzeText(text, email, role) {
 		const response = await fetch("http://localhost:8000/analyze", {
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
+			headers: { "Content-Type": "application/json" },
 			credentials: "include",
-			body: JSON.stringify({ user_text: text }),
+			body: JSON.stringify({ user_text: text, email, role }),
 		});
-		return response; // Trả về response để xử lý status 429 trong ChatContext
+		return response;
 	},
 
-	// Xử lý văn bản theo tùy chọn
 	async processText(text, option, role) {
 		let apiUrl, requestBody;
-		const headers = {
-			"Content-Type": "application/json",
-		};
+		const headers = { "Content-Type": "application/json" };
 
 		switch (option) {
 			case "1":
@@ -183,10 +201,9 @@ const ApiService = {
 		const response = await fetch(apiUrl, {
 			method: "POST",
 			headers,
-			body: JSON.stringify(requestBody),
 			credentials: "include",
+			body: JSON.stringify(requestBody),
 		});
-		if (!response.ok) throw new Error(`Lỗi API: ${await response.text()}`);
 		return response;
 	},
 
@@ -215,11 +232,27 @@ const ApiService = {
 
 		const response = await fetch(apiUrl, {
 			method: "POST",
-			body: formData,
 			credentials: "include",
-			headers: { Authorization: `Bearer ${Cookies.get("access_token")}` },
+			body: formData,
 		});
-		if (!response.ok) throw new Error(`Lỗi API: ${await response.text()}`);
+		return response;
+	},
+
+	// Xử lý cả text và file
+	async processTextAndFile(text, file, option, role) {
+		const formData = new FormData();
+		formData.append("text", text);
+		formData.append("file", file);
+		const apiUrl =
+			role === "pro" && option === "4"
+				? "http://localhost:8000/advanced/text-file"
+				: "http://localhost:8000/text-file";
+
+		const response = await fetch(apiUrl, {
+			method: "POST",
+			credentials: "include",
+			body: formData,
+		});
 		return response;
 	},
 
@@ -457,25 +490,16 @@ const ApiService = {
 	},
 
 	// Xóa cuộc trò chuyện
-	async deleteConversation(conversationId) {
-		const token = Cookies.get("access_token");
-		if (!token) throw new Error("Không tìm thấy token xác thực");
+	async deleteChatHistory(historyId) {
 		const response = await fetch(
-			`http://localhost:8000/chat-history/${conversationId}`,
+			`http://localhost:8000/chat-history/${historyId}`,
 			{
 				method: "DELETE",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
 				credentials: "include",
 			}
 		);
 		if (!response.ok)
-			throw new Error(
-				`Lỗi xóa cuộc trò chuyện: ${await response.text()}`
-			);
-		return { id: conversationId };
+			throw new Error(`Lỗi xóa cuộc trò chuyện: ${response.statusText}`);
 	},
 
 	// Thêm chi tiết chat
@@ -514,12 +538,9 @@ const ApiService = {
 			`http://localhost:8000/chat-history/${finalConversationId}/add-detail`,
 			{
 				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-				body: JSON.stringify(chatDetailPayload),
+				headers: { "Content-Type": "application/json" },
 				credentials: "include",
+				body: JSON.stringify(chatDetailPayload),
 			}
 		);
 		if (!response.ok)

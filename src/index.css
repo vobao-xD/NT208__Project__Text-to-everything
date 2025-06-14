@@ -1509,22 +1509,18 @@ body.signin-page p {
 	object-fit: cover;
 }
 .close-button {
-	position: absolute;
-	top: 5px;
-	right: 5px;
-	width: 20px;
-	height: 20px;
+	flex-shrink: 0;
+	width: 18px;
+	height: 18px;
 	border-radius: 50%;
-	background: #ff4444;
-	border: none;
-	color: white;
-	font-size: 17px;
+	background: var(--error-color);
+	color: var(--text-color);
+	font-size: 0.75rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-	transition: transform 0.2s ease;
+	transition: transform 0.3s ease;
 }
 .close-button:hover {
 	transform: scale(1.2);
@@ -1550,4 +1546,88 @@ body.signin-page p {
 	background: linear-gradient(135deg, #50e2ff, #3999ff);
 	box-shadow: 0 4px 16px rgba(2, 140, 253, 0.25);
 	transform: scale(1.1);
+}
+.file-info {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem; /* Tăng gap cho thoáng */
+}
+.file-details {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	background: var(--background-dark);
+	padding: 0.5rem 0.75rem;
+	border-radius: 0.25rem;
+	border: 1px solid var(--primary-color);
+	max-width: 250px;
+	min-width: 100px;
+}
+.file-name {
+	color: var(--text-color);
+	font-size: 0.875rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex: 1;
+}
+@media (max-width: 768px) {
+	.input-container {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.upload-buttons {
+		justify-content: flex-start;
+		margin-bottom: 0.5rem;
+	}
+
+	.file-info {
+		margin: 0.5rem 0;
+	}
+
+	.image-preview {
+		position: static; /* Bỏ absolute để tránh lệch */
+		margin: 0.5rem 0;
+	}
+
+	.file-details {
+		max-width: 100%; /* Chiếm hết chiều rộng trên mobile */
+	}
+}
+
+@media (max-width: 480px) {
+	.input {
+		height: 60px;
+		font-size: 0.75rem;
+		margin: 0 10px;
+	}
+
+	.file-upload-btn {
+		width: 32px;
+		height: 32px;
+		font-size: 16px;
+		margin-left: 10px;
+		padding: 10px;
+	}
+
+	.close-button {
+		width: 16px;
+		height: 16px;
+		font-size: 0.625rem;
+	}
+
+	.file-name {
+		font-size: 0.75rem;
+	}
+
+	.file-details {
+		padding: 0.25rem 0.5rem;
+	}
+
+	.upload-btn {
+		width: 15%;
+		height: 40px;
+		font-size: 1.5rem;
+	}
 }
