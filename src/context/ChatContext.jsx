@@ -30,6 +30,18 @@ export const ChatProvider = ({ children }) => {
 		11: "11111111-1111-1111-1111-111111111111", // File to text
 	};
 
+	// Tạo map ngược lại từ UUID sang option
+	const reverseGeneratorIdMap = Object.entries(generatorIdMap).reduce(
+		(acc, [key, value]) => {
+			if (value) {
+				// Chỉ thêm vào map nếu value không rỗng
+				acc[value] = key;
+			}
+			return acc;
+		},
+		{}
+	);
+
 	useEffect(() => {
 		const init = async () => {
 			try {
@@ -58,18 +70,6 @@ export const ChatProvider = ({ children }) => {
 		};
 		init();
 	}, []);
-
-	// Tạo map ngược lại từ UUID sang option
-	const reverseGeneratorIdMap = Object.entries(generatorIdMap).reduce(
-		(acc, [key, value]) => {
-			if (value) {
-				// Chỉ thêm vào map nếu value không rỗng
-				acc[value] = key;
-			}
-			return acc;
-		},
-		{}
-	);
 
 	const handleAutoAnalyze = useCallback(
 		async (text) => {
@@ -243,15 +243,6 @@ export const ChatProvider = ({ children }) => {
 			setIsLoading(false);
 		}
 	}, []);
-
-	// Hàm cũ
-	// const loadConversation = (conversationId) => {
-	// 	const conversation = conversations.find((c) => c.id === conversationId);
-	// 	if (conversation) {
-	// 		setChatHistory(conversation.messages);
-	// 		setCurrentConversationId(conversationId);
-	// 	}
-	// };
 
 	const createConversation = useCallback(async () => {
 		try {

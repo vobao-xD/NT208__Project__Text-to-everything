@@ -32,3 +32,4 @@ venv/
 backend/.env
 app.log
 _outputs/
+_temp/

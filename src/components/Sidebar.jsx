@@ -38,7 +38,13 @@ const Sidebar = () => {
 	};
 
 	const handleOptionChange = (e) => {
-		setSelectedOption(e.target.value);
+		const newValue = e.target.value;
+		if (newValue === "0") {
+			setIsManualSelection(false);
+		} else {
+			setIsManualSelection(true);
+		}
+		setSelectedOption(newValue);
 	};
 
 	return (
