@@ -1738,7 +1738,6 @@ const Generate = () => {
 					</ul>
 				</div>
 			</div>
-
 			<div className="content">
 				<div className="header_content content-item">
 					<div className="fixed-button-container">
