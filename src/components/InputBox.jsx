@@ -4,24 +4,6 @@ import { toast } from "react-toastify";
 import { ChatContext } from "@/context/ChatContext";
 import FileUpload from "@/components/FileUpload";
 
-// Component thông báo tài khoản miễn phí
-const FreeAccountNotice = ({ navigate }) => (
-	<div className="free-account-notice">
-		<span className="notice-text">
-			Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên
-			Plus hoặc Pro để sử dụng tính năng này!
-		</span>
-		<div className="fixed-button-container-2">
-			<button
-				className="rainbow-button"
-				onClick={() => navigate("/advanced")}
-			>
-				Nâng cấp ngay
-			</button>
-		</div>
-	</div>
-);
-
 const InputBox = () => {
 	const { selectedOption, role, isLoading, sendMessage } =
 		useContext(ChatContext);
@@ -48,21 +30,18 @@ const InputBox = () => {
 			? "Mô tả những gì bạn muốn tạo, hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt/ Ảnh: .jpg, .jpeg, .png)"
 			: selectedOption === "4"
 			? "Hãy nhập lời thoại và chọn file tùy chỉnh (nếu có)"
-			: selectedOption === "1"
-			? "Hãy nhập lời thoại của bạn"
 			: "Mô tả những gì bạn muốn tạo ra";
 
 	const handleSubmit = async () => {
 		if (isLoading) return;
 
-		// Kiểm tra input
+		// Validation
 		if (fileOnlyOptions.includes(selectedOption)) {
 			if (!selectedFile) {
 				toast.error("Vui lòng chọn file để xử lý.", {
 					closeButton: true,
 					className:
 						"p-0 w-[400px] border border-red-600/40 backdrop-blur-lg",
-					ariaLabel: "Error",
 				});
 				return;
 			}
@@ -72,7 +51,6 @@ const InputBox = () => {
 					closeButton: true,
 					className:
 						"p-0 w-[400px] border border-red-600/40 backdrop-blur-lg",
-					ariaLabel: "Error",
 				});
 				return;
 			}
@@ -82,19 +60,17 @@ const InputBox = () => {
 					closeButton: true,
 					className:
 						"p-0 w-[400px] border border-red-600/40 backdrop-blur-lg",
-					ariaLabel: "Error",
 				});
 				return;
 			}
 		}
 
-		// Kiểm tra role cho upload
+		// Kiểm tra role
 		if (isFileUploadAllowed && selectedFile && role === "free") {
 			toast.error("Tài khoản miễn phí không được phép upload file.", {
 				closeButton: true,
 				className:
 					"p-0 w-[400px] border border-red-600/40 backdrop-blur-lg",
-				ariaLabel: "Error",
 			});
 			return;
 		}
@@ -143,7 +119,7 @@ const InputBox = () => {
 
 	return (
 		<div className="footer_content content-item">
-			<div className="input-container btn_complex">
+			<div className="input-container">
 				{fileOnlyOptions.includes(selectedOption) ? (
 					<div className="file-upload-wrapper">
 						<FileUpload
