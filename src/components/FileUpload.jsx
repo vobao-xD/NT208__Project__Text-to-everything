@@ -1,4 +1,7 @@
-import React, { useRef } from "react";
+import { useContext, useRef } from "react";
+import { ChatContext } from "@/context/ChatContext";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const FileUpload = ({
 	onFileSend,
@@ -6,19 +9,9 @@ const FileUpload = ({
 	disabled = false,
 	selectedOption,
 }) => {
-	const inputRef = useRef();
-
-	const handleFileChange = async (e) => {
-		const file = e.target.files[0];
-		if (file) {
-			const data = {
-				file,
-				file_name: file.name,
-				option: selectedOption,
-			};
-			onFileSend(null, data, selectedOption);
-		}
-	};
+	const { role } = useContext(ChatContext);
+	const inputRef = useRef(null);
+	const navigate = useNavigate();
 
 	const getAcceptFormats = () => {
 		switch (selectedOption) {
@@ -31,7 +24,23 @@ const FileUpload = ({
 			case "4":
 				return ".pdf,.doc,.docx,.txt";
 			default:
-				return accept;
+				return (
+					accept ||
+					".mp3,.wav,.png,.jpg,.jpeg,.mp4,.webm,.pdf,.doc,.docx,.txt"
+				);
+		}
+	};
+
+	const handleFileChange = async (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			const data = {
+				file,
+				file_name: file.name,
+				option: selectedOption,
+			};
+			onFileSend(null, data, selectedOption);
+			if (inputRef.current) inputRef.current.value = "";
 		}
 	};
 
@@ -39,11 +48,11 @@ const FileUpload = ({
 		<>
 			<button
 				onClick={() => {
-					const role = localStorage.getItem("role");
 					if (role === "free") {
-						alert(
-							"Tài khoản miễn phí không được phép upload. Vui lòng nâng cấp lên Plus hoặc Pro để sử dụng tính năng này!"
+						toast.error(
+							"Tài khoản miễn phí không được phép upload!"
 						);
+						navigate("/advanced");
 						return;
 					}
 					inputRef.current.click();

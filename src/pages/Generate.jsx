@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import FileUpload from "../components/FileUpload";
-import { toast, ToastContainer, Slide } from "react-toastify";
-import { BadgeCheck, CircleAlert, Info, TriangleAlert } from "lucide-react";
+import ToastProvider from "@/components/ToastProvider";
+import MainLayout from "@/layouts/MainLayout";
+import { ChatProvider } from "@/context/ChatContext";
 
 const Generate = () => {
 	const navigate = useNavigate();
@@ -29,32 +30,6 @@ const Generate = () => {
 	const [selectedMode, setSelectedMode] = useState("1");
 	const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
 	const [isManualMode, setIsManualMode] = useState(false);
-	const generatorIdMap = {
-		0: "00000000-0000-0000-0000-000000000000", // Auto analyze
-		1: "01010101-0101-0101-0101-010101010101", // Text to speech (default)
-		2: "22222222-2222-2222-2222-222222222222", // Text to image
-		3: "33333333-3333-3333-3333-333333333333", // Text to video
-		4: "44444444-4444-4444-4444-444444444444", // Text to speech (custom)
-		5: "55555555-5555-5555-5555-555555555555", // Enhance image
-		6: "66666666-6666-6666-6666-666666666666", // AI - chatbot
-		7: "77777777-7777-7777-7777-777777777777", // Answer question
-		8: "88888888-8888-8888-8888-888888888888", // Generate code
-		9: "99999999-9999-9999-9999-999999999999", // Speech to text
-		10: "10101010-1010-1010-1010-101010101010", // Video to text
-		11: "11111111-1111-1111-1111-111111111111", // File to text
-	};
-
-	// Tạo map ngược lại từ UUID sang option
-	const reverseGeneratorIdMap = Object.entries(generatorIdMap).reduce(
-		(acc, [key, value]) => {
-			if (value) {
-				// Chỉ thêm vào map nếu value không rỗng
-				acc[value] = key;
-			}
-			return acc;
-		},
-		{}
-	);
 
 	// Hàm chuyển đổi từ UUID sang option
 	const getOptionFromGeneratorId = (generatorId) => {
@@ -1298,12 +1273,12 @@ const Generate = () => {
 
 			// Lưu chat detail
 			await addChatDetail(
-			payload,
-			currentConversationId,
-			setCurrentConversationId,
-			setConversations,
-			conversations,
-			generatorIdMap
+				payload,
+				currentConversationId,
+				setCurrentConversationId,
+				setConversations,
+				conversations,
+				generatorIdMap
 			);
 
 			if (!isManualSelection) setSelectedOption("0");
@@ -1545,35 +1520,15 @@ const Generate = () => {
 	};
 
 	return (
+		<ChatProvider>
+			<ToastProvider>
+				<MainLayout />
+			</ToastProvider>
+		</ChatProvider>
+	);
+
+	return (
 		<div className="full-container">
-			<ToastContainer
-				position="top-right"
-				autoClose={3000}
-				hideProgressBar={true}
-				closeOnClick
-				pauseOnHover
-				draggable
-				theme="dark"
-				transition={Slide}
-				stacked
-				icon={({ type, theme }) => {
-					// theme is not used in this example but you could
-					switch (type) {
-						case "info":
-							return <Info className="stroke-indigo-400" />;
-						case "error":
-							return <CircleAlert className="stroke-red-500" />;
-						case "success":
-							return <BadgeCheck className="stroke-green-500" />;
-						case "warning":
-							return (
-								<TriangleAlert className="stroke-yellow-500" />
-							);
-						default:
-							return null;
-					}
-				}}
-			/>
 			<div className="sidebar">
 				<button className="back-button" onClick={() => navigate("/")}>
 					<i className="fa fa-home" aria-hidden="true"></i>
@@ -1581,7 +1536,6 @@ const Generate = () => {
 				<div className="sidebar_title">
 					<h2>Sidebar</h2>
 				</div>
-
 				<div className="mode-selection">
 					<select
 						className={`options ${
@@ -1597,7 +1551,6 @@ const Generate = () => {
 						</option>
 					</select>
 				</div>
-
 				<div
 					className="manual-mode-toggle"
 					style={{ margin: "10px 0" }}
@@ -1839,7 +1792,9 @@ const Generate = () => {
 											borderRadius: "10px",
 										}}
 										onError={() =>
-											toast.error("Không thể tải hình ảnh.")
+											toast.error(
+												"Không thể tải hình ảnh."
+											)
 										}
 									/>
 								) : message.isVideo ? (
@@ -2117,19 +2072,6 @@ const Generate = () => {
 										</button>
 									</div>
 								)}
-								<div className="glow-wrapper">
-									<button
-										id="submit_btn"
-										className={isLoading ? "disabled" : ""}
-										onClick={() => {
-											handleSubmit(inputValue);
-											setInputValue("");
-										}}
-										disabled={isLoading}
-									>
-										Create
-									</button>
-								</div>
 								<input
 									type="file"
 									ref={fileInputRef}
