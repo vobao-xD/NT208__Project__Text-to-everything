@@ -3,6 +3,9 @@
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css");
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css");
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 /* Reset CSS */
 :root {
 	--primary-color: #3999ff;
@@ -120,8 +123,60 @@
 	}
 }
 
+@keyframes pulsate {
+    
+  100% {
+
+      box-shadow:
+      0 0 2px #fff,
+      0 0 5.5px #fff,
+      0 0 9.5px #fff,
+      0 0 20px rgba(0, 255, 255, 0.4),
+      0 0 40px rgba(0, 255, 255, 0.4),
+      0 0 95px rgba(0, 255, 255, 0.4),
+      0 0 50px rgba(0, 255, 255, 0.4),
+      0 0 75px rgba(0, 255, 255, 0.4);
+  
+  }
+  
+  0% {
+
+    box-shadow:
+    0 0 1px #fff,
+    0 0 2px #fff,
+    0 0 3px #fff,
+    0 0 5px rgba(0, 255, 255, 0.4),
+    0 0 22.5px rgba(0, 255, 255, 0.4),
+    0 0 27.5px rgba(0, 255, 255, 0.4),
+    0 0 35px rgba(0, 255, 255, 0.4),
+    0 0 40px rgba(0, 255, 255, 0.4);
+
+}
+}
+
 /* CSS Sidebar */
 .sidebar {
+  z-index: 1;
+  left: 0;
+  box-sizing: border-box;
+  text-align: center;
+  flex: 0 0 250px;
+  color: var(--text-color);
+  padding: 1.5rem;
+  box-shadow: 1px 0px 4px rgba(0,255,255,0.5), 
+              2px 0px 8px rgba(0,255,255,0.5), 
+              4px 0px 16px rgba(0,255,255,0.5), 
+              8px 0px 32px rgba(0,255,255,0.5);
+  overflow-y: auto;
+    flex: 0 0 280px;
+  background: url('https://img.freepik.com/free-vector/dark-background-geometric-style_23-2147519820.jpg?ga=GA1.1.326086185.1748537268&semt=ais_hybrid&w=740') no-repeat center/cover;
+  color: var(--text-color);
+  padding: 2rem;
+  animation: slideIn 0.7s ease-in-out, pulsate 1.5s infinite alternate;
+  position: relative;
+  background-position: top;
+  background-size: 1500px;
+  background-repeat: no-repeat;
 	z-index: 1;
 	left: 0;
 	box-sizing: border-box;
@@ -228,6 +283,16 @@
 }
 
 .navbar {
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  height: 60px;
+  box-shadow: 0px 1px 2px rgba(0,255,255,0.5), 
+              0px 2px 4px rgba(0,255,255,0.5), 
+              0px 4px 8px rgba(0,255,255,0.5), 
+              0px 8px 16px rgba(0,255,255,0.5);
+  border-radius: 0 0 1rem 1rem;
+  animation: pulsate 1.5s infinite alternate;
 	display: flex;
 	align-items: center;
 	padding: 0 2rem;
@@ -257,6 +322,8 @@
 
 .btn_login:hover,
 .start_btn:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
 	opacity: 0.8;
 	background: linear-gradient(135deg, #50e2ff, #3999ff);
 	transform: scale(1.05);
@@ -307,17 +374,33 @@
 	}
 }
 
+.body_title>h1 {
+	background: var(--rainbow-gradient) -100%/ 200%;
+  padding: 10px;
+  -webkit-background-clip: text;
+	background-clip: text;
+  color: transparent;
+	animation: shimmer 2s linear infinite;
+  margin-bottom: 0.5rem;
+  transition: all 250ms;
 .body_title > h1 {
 	font-size: 2rem;
 	font-weight: 300;
 	margin-bottom: 0.5rem;
 }
 
+@keyframes shimmer { to { background-position: 100%;} }
+
+.body_title>h3 {
+  margin: 0 auto;
+
 .body_title > h3 {
 	margin: 0 auto;
 	font-size: 1.2rem;
 	font-weight: 200;
 }
+
+
 
 .body_description {
 	font-size: 1.1rem;
@@ -332,6 +415,10 @@
 }
 
 .start_btn {
+  padding: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 50px auto 0;
 	padding: 20px;
 	font-size: 1.1em;
 	font-weight: bold;
@@ -1497,4 +1584,18 @@ body.signin-page p {
 		transform: scale(1, 1) translatex(300px) translatez(0);
 		opacity: 0;
 	}
+}
+
+.slogan {
+  margin-top: 20px;
+}
+
+
+.emphasize {
+  background: linear-gradient(to right, var(--primary-color) 10%, #25abe8 50%, var(--secondary-color) 60%) -100%/ 200%;
+  -webkit-background-clip: text;
+	background-clip: text;
+  color: transparent;
+	animation: shimmer 2s linear infinite;
+  transition: all 500ms;
 }
