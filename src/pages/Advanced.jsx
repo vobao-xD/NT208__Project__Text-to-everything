@@ -228,45 +228,34 @@ const Advanced = () => {
         }
         }}
           />
-      <h1>Nâng cấp gói của bạn</h1>
+      <section class="py-16 px-4 text-center place-items-center">
+      <h1 className='text-xl font-bold mb-8'>Nâng cấp gói của bạn</h1>
       
       {/* Tab Navigation */}
-      <div className="billing-tabs" style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        marginBottom: '30px',
-        borderBottom: '1px solid #e0e0e0'
-      }}>
+      <div className="flex justify-center mb-10">
         <button 
-          className={`tab-button ${activeTab === 'monthly' ? 'active' : ''}`}
+          className={`px-6 py-2 font-medium border text-blue-600 rounded-full active:bg-blue-600 active:text-white`}
           onClick={() => setActiveTab('monthly')}
           style={{
             padding: '12px 24px',
-            border: 'none',
             background: activeTab === 'monthly' ? '#007bff' : 'transparent',
             color: activeTab === 'monthly' ? 'white' : '#666',
             cursor: 'pointer',
-            borderRadius: '8px 8px 0 0',
-            fontSize: '16px',
-            fontWeight: '500',
-            marginRight: '4px'
+            margin: '5px'
           }}
         >
           Thanh toán theo tháng
         </button>
         <button 
-          className={`tab-button ${activeTab === 'yearly' ? 'active' : ''}`}
+          className={`px-6 py-2 font-medium border text-blue-600 rounded-full active:bg-blue-600 active:text-white`}
           onClick={() => setActiveTab('yearly')}
           style={{
             padding: '12px 24px',
-            border: 'none',
             background: activeTab === 'yearly' ? '#007bff' : 'transparent',
             color: activeTab === 'yearly' ? 'white' : '#666',
             cursor: 'pointer',
-            borderRadius: '8px 8px 0 0',
-            fontSize: '16px',
-            fontWeight: '500',
-            position: 'relative'
+            position: 'relative',
+            margin: '5px'
           }}
         >
           Thanh toán theo năm
@@ -284,13 +273,15 @@ const Advanced = () => {
           </span>
         </button>
       </div>
-
-      <div className="container">
-        <div className="plan free">
-          <h2>Miễn Phí</h2>
-          <p className="price">0 VND</p>
-          <p>Hỗ trợ người dùng mới, giới hạn 1 tháng</p>
-          <ul>
+          
+      <div className="max-w-7xl mx-auto grid gap-10 sm:grid-cols-1 lg:grid-cols-3">
+        <div className="plan free bg-white rounded-2xl shadow-lg p-8 flex flex-col h-full">
+          <h2 className='text-2xl font-semibold mb-4'>Miễn Phí</h2>
+          <div className='font-bold mb-4'>
+            <p className="price">0 VND</p>
+            <p>Hỗ trợ người dùng mới, giới hạn 1 tháng</p>
+          </div>
+          <ul className="text-left space-y-2 mb-6">
             <li>✅ Text-to-Image cơ bản (giới hạn số lần/ngày)</li>
             <li>✅ Text-to-Speech (giọng cơ bản, giới hạn thời gian/ngày)</li>
             <li>✅ Speech-to-Text cơ bản (hỗ trợ tiếng Việt và tiếng Anh)</li>
@@ -299,9 +290,8 @@ const Advanced = () => {
           </ul>
           <button 
             id="free-button"
-            className={`btn ${getButtonStatus('free').disabled ? 'disabled-btn' : ''}`}
+            className="mt-auto py-2 px-4 rounded-xl hover:bg-blue-700"
             style={{ 
-              marginTop: '100px',
               cursor: getButtonStatus('free').disabled ? 'not-allowed' : 'pointer',
               backgroundColor: getButtonStatus('free').disabled ? 'white' : '',
               color: getButtonStatus('free').disabled ? 'black' : ''
@@ -313,9 +303,9 @@ const Advanced = () => {
           </button>
         </div>
         
-        <div className="plan plus">
-          <h2>Plus</h2>
-          <div className="price-container">
+        <div className="plan plus bg-white rounded-2xl shadow-lg p-8 flex flex-col h-full">
+          <h2 className='text-2xl font-semibold mb-4'>Plus</h2>
+          <div className="font-bold mb-4">
             <p className="price">{pricing.plus.display}</p>
             {activeTab === 'yearly' && pricing.plus.original && (
               <>
@@ -349,9 +339,8 @@ const Advanced = () => {
           </ul>
           <button
             id="plus-button"
-            className={`btn upgrade ${getButtonStatus('plus').disabled ? 'disabled-btn' : ''}`}
+            className={`btn mt-auto py-2 px-4 rounded-xl`}
             style={{ 
-              marginTop: activeTab === 'yearly' ? '20px' : '48px',
               cursor: getButtonStatus('plus').disabled ? 'not-allowed' : 'pointer',
               backgroundColor: getButtonStatus('plus').disabled ? 'white' : getButtonStatus('plus').isUpgrade ? '#28a745' : '',
               color: getButtonStatus('plus').disabled ? 'black' : ''
@@ -363,9 +352,9 @@ const Advanced = () => {
           </button>
         </div>
         
-        <div className="plan pro">
-          <h2>Pro</h2>
-          <div className="price-container">
+        <div className="plan pro bg-white rounded-2xl shadow-lg p-8 flex flex-col h-full">
+          <h2 className='text-2xl font-semibold mb-4'>Pro</h2>
+          <div className="font-bold mb-4">
             <p className="price">{pricing.pro.display}</p>
             {activeTab === 'yearly' && pricing.pro.original && (
               <>
@@ -399,7 +388,7 @@ const Advanced = () => {
           </ul>
           <button 
             id="pro-button"
-            className={`btn upgrade ${getButtonStatus('pro').disabled ? 'disabled-btn' : ''}`}
+            className={`btn mt-auto bg-blue-600 text-white py-2 px-4 rounded-xl`}
             style={{ 
               marginTop: activeTab === 'yearly' ? '63px' : '91px',
               cursor: getButtonStatus('pro').disabled ? 'not-allowed' : 'pointer',
@@ -413,6 +402,7 @@ const Advanced = () => {
           </button>
         </div>
       </div>
+      </section>
     </>
   );
 };
