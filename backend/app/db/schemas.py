@@ -214,14 +214,16 @@ class InputType(str, Enum):
 class ChatDetailBase(BaseModel):
     input_type: InputType
     input_text: Optional[str] = None
+    input_file_name: Optional[str] = None
     input_file_path: Optional[str] = None
 
     output_type: Optional[str] = None
     output_text: Optional[str] = None
-    output_file_path: Optional[HttpUrl] = None
+    output_file_name: Optional[str] = None
+    output_file_path: Optional[str] = None
 
 class ChatDetailCreate(ChatDetailBase):
-    generator_id: UUID 
+    generator_id: str
 
 class ChatDetailResponse(ChatDetailBase):
     id: UUID

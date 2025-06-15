@@ -61,10 +61,12 @@ class ChatDetail(Base):
 
     input_type = Column(String(50), nullable=False)
     input_text = Column(Text, nullable=True)
+    input_file_name = Column(String(1024), nullable=True)
     input_file_path = Column(String(1024), nullable=True)
 
     output_type = Column(String(50), nullable=False)
     output_text = Column(Text, nullable=True)
+    output_file_name = Column(String(1024), nullable=True)
     output_file_path = Column(String(1024), nullable=True)
     
     created_at = Column(DateTime, default=func.now(), nullable=False)

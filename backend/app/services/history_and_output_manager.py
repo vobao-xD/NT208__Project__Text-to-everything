@@ -49,7 +49,6 @@ class HistoryAndOutputManager:
         ChatHistory.id == history_id,
         ChatHistory.user_email == user_email
         ).first()
-        logging.info(f"AAAAAAAAAAAAAA:{history_id} ; {user_email}")
 
         if not chat_history:
             raise HTTPException(

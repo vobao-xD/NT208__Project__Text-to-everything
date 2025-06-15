@@ -5,8 +5,6 @@ from db.models import ChatHistory
 from db.schemas import ChatCreate, ChatHistoryResponse, ChatDetailCreate, ChatDetailResponse
 from services.authentication_and_authorization import *
 from services.history_and_output_manager import HistoryAndOutputManager
-import os
-import uuid
 
 router = APIRouter()
 
@@ -19,28 +17,6 @@ def validate_file_type(filename: str, expected_type: str) -> bool:
         "file": ["pdf", "txt", "doc", "docx"]
     }
     return ext in valid_extensions.get(expected_type, [])
-
-# @router.post("/upload-file", response_model=dict)
-# async def upload_file(file: UploadFile = File(...), current_user=Depends(get_current_user)):
-#     file_ext = file.filename.split(".")[-1].lower()
-#     file_type = None
-#     for type_, exts in {"audio": ["mp3", "wav"], "image": ["png", "jpg", "jpeg"], "video": ["mp4", "avi", "mov"], "file": ["pdf", "txt", "doc", "docx"]}.items():
-#         if file_ext in exts:
-#             file_type = type_
-#             break
-    
-#     if not file_type:
-#         raise HTTPException(status_code=400, detail="Định dạng file không được hỗ trợ")
-
-#     file_id = str(uuid.uuid4())
-#     file_path = f"uploads/{file_type}/{file_id}.{file_ext}"
-#     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    
-#     with open(file_path, "wb") as f:
-#         f.write(await file.read())
-    
-#     file_url = f"http://127.0.0.1:8000/{file_path}"
-#     return {"file_url": file_url, "file_name": file.filename}
 
 @router.post("/chat-history", response_model=ChatHistoryResponse)
 def save_chat(
@@ -57,7 +33,7 @@ def add_detail_to_chat(
     db: Session = Depends(get_db), 
     current_user=Depends(get_current_user)
 ):
-    chat = db.query(ChatHistory).filter(ChatHistory.id == history_id, ChatHistory.user_id == current_user.id).first()
+    chat = db.query(ChatHistory).filter(ChatHistory.id == history_id, ChatHistory.user_email == current_user.email).first()
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
     
@@ -67,15 +43,14 @@ def add_detail_to_chat(
         raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.output_type}")
 
     return HistoryAndOutputManager.add_chat_detail(
+        db,
         chat_history_id=history_id,
         input_type=detail.input_type,
         input_text=detail.input_text,
+        input_file_name=detail.input_file_name,
         input_file_path=detail.input_file_path,
         output_type=detail.output_type,
         output_text=detail.output_text,
-        output_image_url=detail.output_image_url,
-        output_audio_url=detail.output_audio_url,
-        output_video_url=detail.output_video_url,
         output_file_path=detail.output_file_path,
         output_file_name=detail.output_file_name,
         generator_id=detail.generator_id
@@ -104,3 +79,25 @@ def delete_chat_history(
     current_user=Depends(get_current_user)
 ):
     return HistoryAndOutputManager.delete_chat_history(history_id, db, current_user.email)
+
+# @router.post("/upload-file", response_model=dict)
+# async def upload_file(file: UploadFile = File(...), current_user=Depends(get_current_user)):
+#     file_ext = file.filename.split(".")[-1].lower()
+#     file_type = None
+#     for type_, exts in {"audio": ["mp3", "wav"], "image": ["png", "jpg", "jpeg"], "video": ["mp4", "avi", "mov"], "file": ["pdf", "txt", "doc", "docx"]}.items():
+#         if file_ext in exts:
+#             file_type = type_
+#             break
+    
+#     if not file_type:
+#         raise HTTPException(status_code=400, detail="Định dạng file không được hỗ trợ")
+
+#     file_id = str(uuid.uuid4())
+#     file_path = f"uploads/{file_type}/{file_id}.{file_ext}"
+#     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    
+#     with open(file_path, "wb") as f:
+#         f.write(await file.read())
+    
+#     file_url = f"http://127.0.0.1:8000/{file_path}"
+#     return {"file_url": file_url, "file_name": file.filename}
