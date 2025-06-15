@@ -15,7 +15,7 @@ const Sidebar = () => {
 		currentConversationId,
 		loadConversation,
 		createConversation,
-		deleteConversation,
+		deleteChatHistory,
 	} = useContext(ChatContext);
 	const [isManualMode, setIsManualMode] = useState(false);
 	const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
@@ -195,7 +195,7 @@ const Sidebar = () => {
 							<button
 								onClick={(e) => {
 									e.stopPropagation();
-									deleteConversation(conversation.id);
+									deleteChatHistory(conversation.id);
 								}}
 								style={{
 									background: "transparent",

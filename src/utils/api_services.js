@@ -35,48 +35,6 @@ const ApiService = {
 		}
 	},
 
-	// Hàm tiện ích: Chuẩn bị payload cho chi tiết chat
-	prepareChatDetailPayload(
-		inputText,
-		inputFile,
-		normalizedContent,
-		generatorId,
-		selectedOption
-	) {
-		const inputFileName = inputFile ? inputFile.name : null;
-		return {
-			input_type: inputFileName
-				? this.detectInputFileType(inputFileName)
-				: this.mapOptionToType(selectedOption),
-			input_text: inputFileName ? null : inputText,
-			input_file_path: inputFileName ? `/uploads/${inputFileName}` : null,
-			output_type:
-				normalizedContent.fileType ||
-				this.mapOptionToType(selectedOption),
-			output_text: normalizedContent.isText
-				? normalizedContent.content
-				: null,
-			output_image_url:
-				normalizedContent.fileType === "image"
-					? normalizedContent.content
-					: null,
-			output_audio_url:
-				normalizedContent.fileType === "audio"
-					? normalizedContent.content
-					: null,
-			output_video_url:
-				normalizedContent.fileType === "video"
-					? normalizedContent.content
-					: null,
-			output_file_path:
-				normalizedContent.fileType === "file"
-					? normalizedContent.content
-					: null,
-			output_file_name: normalizedContent.fileName || null,
-			generator_id: generatorId,
-		};
-	},
-
 	// Lấy thông tin người dùng
 	async getUserInfo() {
 		const response = await fetch(
@@ -109,7 +67,7 @@ const ApiService = {
 		return await response.json();
 	},
 
-	// Phân tích văn bản
+	// Phân tích văn bản (cho mode 0 với text only)
 	async analyzeText(text, email, role) {
 		const response = await fetch("http://localhost:8000/analyze", {
 			method: "POST",
@@ -117,9 +75,46 @@ const ApiService = {
 			credentials: "include",
 			body: JSON.stringify({ user_text: text, email, role }),
 		});
+		if (!response.ok)
+			throw new Error(`Lỗi phân tích: ${response.statusText}`);
 		return response;
 	},
 
+	// Phân tích file (cho mode 0 với file only)
+	async analyzeFile(file, email, role) {
+		const formData = new FormData();
+		formData.append("file", file);
+		const response = await fetch("http://localhost:8000/analyze/file", {
+			method: "POST",
+			credentials: "include",
+			body: formData,
+		});
+		if (!response.ok)
+			throw new Error(`Lỗi phân tích file: ${response.statusText}`);
+		return response;
+	},
+
+	// Phân tích cả text và file (cho mode 0 với cả hai)
+	async analyzeTextAndFile(text, file, email, role) {
+		const formData = new FormData();
+		formData.append("text", text);
+		formData.append("file", file);
+		const response = await fetch(
+			"http://localhost:8000/analyze/text-file",
+			{
+				method: "POST",
+				credentials: "include",
+				body: formData,
+			}
+		);
+		if (!response.ok)
+			throw new Error(
+				`Lỗi phân tích text và file: ${response.statusText}`
+			);
+		return response;
+	},
+
+	// Xử lý text only (cho mode 1, 2, 3, 6, 7, 8)
 	async processText(text, option, role) {
 		let apiUrl, requestBody;
 		const headers = { "Content-Type": "application/json" };
@@ -204,10 +199,12 @@ const ApiService = {
 			credentials: "include",
 			body: JSON.stringify(requestBody),
 		});
+		if (!response.ok)
+			throw new Error(`Lỗi xử lý text: ${response.statusText}`);
 		return response;
 	},
 
-	// Xử lý file
+	// Xử lý file only (cho mode 5, 9, 10, 11)
 	async processFile(file, option) {
 		const formData = new FormData();
 		formData.append("file", file);
@@ -235,15 +232,23 @@ const ApiService = {
 			credentials: "include",
 			body: formData,
 		});
+		if (!response.ok)
+			throw new Error(`Lỗi xử lý file: ${response.statusText}`);
 		return response;
 	},
 
-	// Xử lý cả text và file
+	// Xử lý cả text và file (cho mode 4, và mode 0 khi có cả hai)
 	async processTextAndFile(text, file, option, role) {
+		if (!text || !file) throw new Error("Yêu cầu cả text và file!");
+		if (option === "4" && !file.name.toLowerCase().endsWith(".wav"))
+			throw new Error(
+				"File phải có định dạng .wav cho Custom Text to Speech!"
+			);
+
 		const formData = new FormData();
 		formData.append("text", text);
 		formData.append("file", file);
-		const apiUrl =
+		let apiUrl =
 			role === "pro" && option === "4"
 				? "http://localhost:8000/advanced/text-file"
 				: "http://localhost:8000/text-file";
@@ -253,91 +258,128 @@ const ApiService = {
 			credentials: "include",
 			body: formData,
 		});
+		if (!response.ok)
+			throw new Error(`Lỗi xử lý text và file: ${response.statusText}`);
 		return response;
 	},
 
 	// Chuẩn hóa phản hồi bot
 	async normalizeBotMessage(response, option) {
 		let botMessage = { type: "bot" };
-		if (option === "3" || option === "5") {
-			const blob = await response.blob();
-			botMessage.content =
-				option === "3"
-					? { video_url: URL.createObjectURL(blob) }
-					: { image_url: URL.createObjectURL(blob) };
-			botMessage[`is${option === "3" ? "Video" : "Image"}`] = true;
-			botMessage.type = option === "3" ? "video" : "image";
-		} else if (option === "1" || option === "2") {
-			const data = await response.json();
-			const fileResponse = await fetch(
-				`http://localhost:8000/get-output/${data.file_path}`,
-				{
-					method: "GET",
-					headers: {
-						Authorization: `Bearer ${Cookies.get("access_token")}`,
-					},
-					credentials: "include",
+
+		try {
+			let data;
+			if (option === "1" || option === "2" || option === "3") {
+				// Lấy dữ liệu JSON từ response
+				data = await response.json();
+				const filePath = data.file_path; // Đường dẫn từ backend, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
+				const fileResponse = await fetch(
+					`http://localhost:8000/get-output/${filePath}`,
+					{
+						method: "GET",
+						credentials: "include",
+					}
+				);
+				if (!fileResponse.ok)
+					throw new Error(
+						`Lỗi tải file: ${await fileResponse.text()}`
+					);
+				const blob = await fileResponse.blob();
+				if (option === "1") {
+					botMessage.content = {
+						audio_url: URL.createObjectURL(blob),
+					};
+					botMessage.isAudio = true;
+					botMessage.type = "audio";
+				} else if (option === "2") {
+					botMessage.content = {
+						image_url: URL.createObjectURL(blob),
+					};
+					botMessage.isImage = true;
+					botMessage.type = "image";
+				} else if (option === "3") {
+					botMessage.content = {
+						video_url: URL.createObjectURL(blob),
+					};
+					botMessage.isVideo = true;
+					botMessage.type = "video";
 				}
-			);
-			if (!fileResponse.ok)
-				throw new Error(`Lỗi tải file: ${await fileResponse.text()}`);
-			const blob = await fileResponse.blob();
-			botMessage.content =
-				option === "1"
-					? { audio_url: URL.createObjectURL(blob) }
-					: { image_url: URL.createObjectURL(blob) };
-			botMessage[`is${option === "1" ? "Audio" : "Image"}`] = true;
-			botMessage.type = option === "1" ? "audio" : "image";
-		} else {
-			const data = await response.json();
-			botMessage.content = {
-				text:
-					option === "8"
-						? typeof data.code === "object"
-							? JSON.stringify(data.code)
-							: data.code
-						: data.text || data.response || data.answer,
-			};
-			botMessage.isText = true;
-			botMessage.type = "text";
+			} else {
+				// Xử lý text trực tiếp từ response
+				data = await response.json();
+				botMessage.content = {
+					text:
+						(option === "8" &&
+							(typeof data.code === "object"
+								? JSON.stringify(data.code)
+								: data.code)) ||
+						data.text ||
+						data.response ||
+						data.answer ||
+						data.content ||
+						"",
+				};
+				botMessage.isText = true;
+				botMessage.type = "text";
+			}
+			botMessage.option = option; // Thêm option để theo dõi
+			return botMessage;
+		} catch (error) {
+			throw new Error(`Lỗi chuẩn hóa bot message: ${error.message}`);
 		}
-		return botMessage;
 	},
 
-	// Tạo tin nhắn người dùng cho file
-	async createUserFileMessage(file, option) {
-		const fileExtension = file.name.split(".").pop().toLowerCase();
-		const url = URL.createObjectURL(file);
-		let message = {
-			type: "user",
-			content: `Đã gửi ${
-				option === "9"
+	// Tạo tin nhắn người dùng cho file hoặc text
+	async createUserMessage(input, option) {
+		let message = { type: "user" };
+
+		if (typeof input === "string") {
+			// Trường hợp text only
+			message.content = input;
+			message.input_type = "text";
+			message.isText = true;
+		} else if (input instanceof File) {
+			// Trường hợp file
+			const fileExtension = input.name.split(".").pop().toLowerCase();
+			const url = URL.createObjectURL(input);
+			message.content = `Đã gửi ${
+				["mp3", "wav"].includes(fileExtension)
 					? "file audio"
-					: option === "10"
+					: fileExtension === "mp4"
 					? "video"
-					: option === "11"
+					: ["pdf", "doc", "docx", "txt"].includes(fileExtension)
 					? "file"
 					: "ảnh"
-			}: ${file.name}`,
-		};
-		if (option === "5") {
-			message.isImage = true;
-			message.image_url = url;
-			message.input_type = "image";
-		} else if (option === "9") {
-			message.isAudio = true;
-			message.audio_url = url;
-			message.input_type = "audio";
-		} else if (option === "10") {
-			message.isVideo = true;
-			message.video_url = url;
-			message.input_type = "video";
-		} else if (option === "11") {
-			message.isFile = true;
-			message.file_url = url;
-			message.fileName = file.name;
-			message.input_type = "file";
+			}: ${input.name}`;
+			if (input.type.startsWith("image/") || option === "5") {
+				message.isImage = true;
+				message.image_url = url;
+				message.input_type = "image";
+			} else if (
+				["mp3", "wav"].includes(fileExtension) ||
+				option === "9"
+			) {
+				message.isAudio = true;
+				message.audio_url = url;
+				message.input_type = "audio";
+			} else if (fileExtension === "mp4" || option === "10") {
+				message.isVideo = true;
+				message.video_url = url;
+				message.input_type = "video";
+			} else if (
+				["pdf", "doc", "docx", "txt"].includes(fileExtension) ||
+				option === "11"
+			) {
+				message.isFile = true;
+				message.file_url = url;
+				message.fileName = input.name;
+				message.input_type = "file";
+			}
+		} else {
+			throw new Error("Đầu vào không hợp lệ: Phải là text hoặc file!");
 		}
+
+		message.option = option; // Thêm option để theo dõi
 		return message;
 	},
 
@@ -360,19 +402,16 @@ const ApiService = {
 			throw new Error(`Lỗi tải lịch sử chat: ${await response.text()}`);
 		const data = await response.json();
 
-		return data.map((c) => {
-			const details = c.details || []; // Gán mảng rỗng nếu details undefined
-			const firstPrompt = details[0]?.input_text || "Cuộc trò chuyện mới";
-			const title =
-				firstPrompt.length > 30
-					? firstPrompt.substring(0, 30) + "..."
-					: firstPrompt;
-			return {
-				id: c.id,
-				title,
-				messages: details,
-			};
-		});
+		return data.map((c) => ({
+			id: c.id,
+			title:
+				(c.details[0]?.input_text ?? "Cuộc trò chuyện mới").substring(
+					0,
+					30
+				) + (c.details[0]?.input_text?.length > 30 ? "..." : ""),
+			created_at: c.created_at, // Thêm created_at để đồng bộ
+			messages: c.details || [],
+		}));
 	},
 
 	// Tạo cuộc trò chuyện mới
@@ -396,13 +435,18 @@ const ApiService = {
 		const conversationId = data.id;
 		let title = "Cuộc trò chuyện mới";
 		if (messages.length > 0) {
-			const firstPrompt = messages[0].content;
+			const firstPrompt = messages[0]?.content ?? "Cuộc trò chuyện mới";
 			title =
 				firstPrompt.length > 30
-					? firstPrompt.substring(0, 30) + "..."
+					? `${firstPrompt.substring(0, 30)}...`
 					: firstPrompt;
 		}
-		return { id: conversationId, title, messages: [] };
+		return {
+			id: conversationId,
+			title,
+			created_at: data.created_at,
+			messages: [],
+		};
 	},
 
 	// Tải cuộc trò chuyện
@@ -427,13 +471,16 @@ const ApiService = {
 		const data = await response.json();
 		const messages = [];
 
-		for (let detail of data.details) {
+		const details = data.details || [];
+		for (let detail of details) {
 			const userMsg = {
 				type: "user",
 				content:
 					detail.input_text ||
-					`[Đã gửi tệp: ${detail.input_file_name || "File"}]`,
-				isText: !detail.input_file_path,
+					(detail.input_file_name
+						? `[Đã gửi tệp: ${detail.input_file_name}]`
+						: "[Tin nhắn rỗng]"),
+				isText: detail.input_type === "text",
 				isAudio: detail.input_type === "audio",
 				isImage: detail.input_type === "image",
 				isVideo: detail.input_type === "video",
@@ -455,6 +502,7 @@ const ApiService = {
 						? detail.input_file_path
 						: null,
 				file_name: detail.input_file_name || null,
+				created_at: detail.created_at, // Thêm created_at
 			};
 			messages.push(userMsg);
 
@@ -462,9 +510,9 @@ const ApiService = {
 				type: "bot",
 				content: {
 					text: detail.output_text || null,
-					image_url: detail.output_image_url || null,
-					audio_url: detail.output_audio_url || null,
-					video_url: detail.output_video_url || null,
+					image_url: detail.output_file_path || null, // Sửa để khớp với output_file_path
+					audio_url: detail.output_file_path || null, // Sửa để khớp với output_file_path
+					video_url: detail.output_file_path || null, // Sửa để khớp với output_file_path
 					file_url: detail.output_file_path || null,
 					file_name: detail.output_file_name || null,
 				},
@@ -473,18 +521,26 @@ const ApiService = {
 				isImage: detail.output_type === "image",
 				isVideo: detail.output_type === "video",
 				isFile: detail.output_type === "file",
-				option: Object.keys(generatorIdMap).find(
-					(key) => generatorIdMap[key] === detail.generator_id
-				),
+				option:
+					Object.keys(generatorIdMap).find(
+						(key) => generatorIdMap[key] === detail.generator_id
+					) || null,
+				created_at: detail.created_at, // Thêm created_at
 			};
 			messages.push(botMsg);
 		}
 
+		const firstDetail = details[0] || {};
+		const title = firstDetail.input_text
+			? firstDetail.input_text.length > 30
+				? `${firstDetail.input_text.substring(0, 30)}...`
+				: firstDetail.input_text
+			: "Cuộc trò chuyện mới";
+
 		return {
 			id: conversationId,
-			title:
-				data.details[0]?.input_text?.substring(0, 30) + "..." ||
-				"Cuộc trò chuyện mới",
+			title,
+			created_at: data.created_at, // Thêm created_at
 			messages,
 		};
 	},
@@ -520,17 +576,14 @@ const ApiService = {
 			);
 
 		const chatDetailPayload = {
-			input_type: payload.input_type,
-			input_text: payload.input_text,
-			input_file_name: payload.input_file_name,
-			input_file_path: null,
-			output_type: payload.output_type,
-			output_text: payload.output_text,
-			output_image_url: payload.output_image_url,
-			output_audio_url: payload.output_audio_url,
-			output_video_url: payload.output_video_url,
-			output_file_path: payload.output_file_url,
-			output_file_name: payload.output_file_name,
+			input_type: payload.input_type || "text",
+			input_text: payload.input_text || "",
+			input_file_name: payload.input_file_name || null,
+			input_file_path: payload.input_file_path || null,
+			output_type: payload.output_type || null,
+			output_text: payload.output_text || null,
+			output_file_name: payload.output_file_name || null,
+			output_file_path: payload.output_file_url || null,
 			generator_id: generatorId,
 		};
 

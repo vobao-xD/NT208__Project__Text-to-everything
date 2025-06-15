@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import Cookies from "js-cookie";
 import ApiService from "@/utils/api_services";
 
 export const ChatContext = createContext();
@@ -29,10 +28,48 @@ export const ChatProvider = ({ children }) => {
 		10: "10101010-1010-1010-1010-101010101010", // Video to text
 		11: "11111111-1111-1111-1111-111111111111", // File to text
 	};
+	const actionMap = {
+		generate_text: "6",
+		generate_image: "2",
+		generate_video: "3",
+		generate_code: "8",
+		generate_speech: "1",
+		generate_answer: "7",
+	};
 
+	// Load lịch sử chat khi component mount
+	useEffect(() => {
+		const initializeChat = async () => {
+			try {
+				setIsLoading(true);
+				const histories = await ApiService.fetchChatHistories();
+				const reversedHistories = histories.reverse();
+				setConversations(reversedHistories);
+
+				if (reversedHistories.length > 0) {
+					const latestConversation = reversedHistories[0];
+					setCurrentConversationId(latestConversation.id);
+					await loadConversation(latestConversation.id);
+				} else {
+					const newConversation = await createConversation();
+					setCurrentConversationId(newConversation.id);
+				}
+			} catch (error) {
+				toast.error("Lỗi khi khởi tạo chat: " + error.message);
+				const newConversation = await createConversation();
+				setCurrentConversationId(newConversation.id);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		initializeChat();
+	}, []);
+
+	// Load thông tin cần thiết cho user
 	useEffect(() => {
 		const init = async () => {
 			try {
+				setIsLoading(true);
 				const userInfo = await ApiService.getUserInfo();
 				if (!userInfo.email) {
 					throw new Error("Không tìm thấy email!");
@@ -49,14 +86,21 @@ export const ChatProvider = ({ children }) => {
 					"billingCycle",
 					subscription.billingCycle || "monthly"
 				);
-
-				const chatHistories = await ApiService.fetchChatHistories();
-				setConversations(chatHistories);
 			} catch (error) {
-				toast.error(error.message);
+				toast.error("Lỗi khi khởi tạo chat: " + error.message);
+			} finally {
+				setIsLoading(false);
 			}
 		};
 		init();
+	}, []);
+
+	// Xóa bộ đếm giờ
+	useEffect(() => {
+		return () => {
+			const timers = document.querySelectorAll("body").__timers || [];
+			timers.forEach(clearInterval);
+		};
 	}, []);
 
 	const handleAutoAnalyze = useCallback(
@@ -94,14 +138,7 @@ export const ChatProvider = ({ children }) => {
 					return { success: false, error: "Rate limit exceeded" };
 				}
 				const data = await response.json();
-				const actionMap = {
-					generate_text: "6",
-					generate_image: "2",
-					generate_video: "3",
-					generate_code: "8",
-					generate_speech: "1",
-					generate_answer: "7",
-				};
+
 				if (data.intent_analysis && actionMap[data.intent_analysis]) {
 					const action = actionMap[data.intent_analysis];
 					if (action === "3" && role !== "pro") {
@@ -131,12 +168,79 @@ export const ChatProvider = ({ children }) => {
 		[email, role, isRateLimited]
 	);
 
-	useEffect(() => {
-		return () => {
-			const timers = document.querySelectorAll("body").__timers || [];
-			timers.forEach(clearInterval);
-		};
+	const loadConversation = useCallback(async (id) => {
+		try {
+			setIsLoading(true);
+			const conversation = await ApiService.getConversation(
+				id,
+				generatorIdMap
+			);
+			setMessages(conversation.messages || []);
+			setCurrentConversationId(id);
+		} catch (error) {
+			toast.error("Lỗi khi tải cuộc trò chuyện: " + error.message);
+		} finally {
+			setIsLoading(false);
+		}
 	}, []);
+
+	const createConversation = useCallback(
+		async (initialMessages = []) => {
+			try {
+				setIsLoading(true);
+				const newConversation = await ApiService.createConversation(
+					initialMessages
+				);
+				setConversations((prev) => [newConversation, ...prev]);
+				setCurrentConversationId(newConversation.id);
+				setMessages([]);
+				return newConversation;
+			} catch (error) {
+				toast.error("Lỗi khi tạo cuộc trò chuyện: " + error.message);
+				throw error;
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[setConversations, setMessages]
+	);
+
+	const deleteChatHistory = useCallback(
+		async (id) => {
+			try {
+				setIsLoading(true);
+				await ApiService.deleteChatHistory(id);
+				setConversations((prev) =>
+					prev.filter((conv) => conv.id !== id)
+				);
+				if (currentConversationId === id) {
+					setCurrentConversationId(null);
+					setMessages([]);
+					if (conversations.length === 1) {
+						const newConversation = await createConversation();
+						setCurrentConversationId(newConversation.id);
+					} else if (conversations.length > 1) {
+						const latest = conversations.filter(
+							(conv) => conv.id !== id
+						)[0];
+						setCurrentConversationId(latest.id);
+						await loadConversation(latest.id);
+					}
+				}
+			} catch (error) {
+				toast.error("Lỗi khi xóa cuộc trò chuyện: " + error.message);
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[
+			currentConversationId,
+			setConversations,
+			setMessages,
+			conversations,
+			loadConversation,
+		]
+	);
 
 	const sendMessage = useCallback(
 		async (text, file, option) => {
@@ -155,24 +259,75 @@ export const ChatProvider = ({ children }) => {
 			setIsLoading(true);
 			try {
 				let finalOption = option;
-				let finalText = text;
+				let finalText = text || "";
+				let userMessage;
 
-				// Auto Analyze nếu option là "0"
-				if (option === "0" && text) {
-					const analyzeResult = await handleAutoAnalyze(text);
-					if (!analyzeResult.success) return;
-					finalOption = analyzeResult.action;
-					finalText = analyzeResult.prompt;
-					setMessages((prev) => [
-						...prev,
-						{
-							id: Date.now(),
-							type: "bot",
-							content:
-								"[AutoAnalyze đã xác định chức năng phù hợp]",
-							isText: true,
-						},
-					]);
+				// Xử lý mode 0 (Auto Analyze)
+				if (option === "0") {
+					if (text && file) {
+						const analyzeResult =
+							await ApiService.analyzeTextAndFile(
+								finalText,
+								file,
+								email,
+								role
+							);
+						if (!analyzeResult.ok)
+							throw new Error("Phân tích text và file thất bại");
+						const data = await analyzeResult.json();
+						if (data.intent_analysis) {
+							finalOption =
+								actionMap[data.intent_analysis] || finalOption;
+							setMessages((prev) => [
+								...prev,
+								{
+									id: Date.now(),
+									type: "bot",
+									content:
+										"[AutoAnalyze đã xác định chức năng phù hợp]",
+									isText: true,
+								},
+							]);
+						}
+					} else if (text) {
+						const analyzeResult = await handleAutoAnalyze(text);
+						if (!analyzeResult.success) return;
+						finalOption = analyzeResult.action;
+						finalText = analyzeResult.prompt;
+						setMessages((prev) => [
+							...prev,
+							{
+								id: Date.now(),
+								type: "bot",
+								content:
+									"[AutoAnalyze đã xác định chức năng phù hợp]",
+								isText: true,
+							},
+						]);
+					} else if (file) {
+						const analyzeResult = await ApiService.analyzeFile(
+							file,
+							email,
+							role
+						);
+						if (!analyzeResult.ok)
+							throw new Error("Phân tích file thất bại");
+						const data = await analyzeResult.json();
+						if (data.intent_analysis) {
+							finalOption =
+								actionMap[data.intent_analysis] || finalOption;
+							setMessages((prev) => [
+								...prev,
+								{
+									id: Date.now(),
+									type: "bot",
+									content:
+										"[AutoAnalyze đã xác định chức năng phù hợp]",
+									isText: true,
+								},
+							]);
+						}
+					}
 				}
 
 				// Validation
@@ -180,7 +335,10 @@ export const ChatProvider = ({ children }) => {
 				const fileOnlyOptions = ["5", "9", "10", "11"];
 				const textAndFileOptions = ["0", "4"];
 
-				if (textOnlyOptions.includes(finalOption) && !text) {
+				if (
+					textOnlyOptions.includes(finalOption) &&
+					!finalText.trim()
+				) {
 					toast.error("Vui lòng nhập nội dung.");
 					return;
 				}
@@ -190,52 +348,55 @@ export const ChatProvider = ({ children }) => {
 				}
 				if (
 					textAndFileOptions.includes(finalOption) &&
-					!text &&
+					!finalText.trim() &&
 					!file
 				) {
 					toast.error("Vui lòng nhập nội dung hoặc chọn file.");
 					return;
 				}
-
-				// Kiểm tra quyền
-				if (file && role === "free") {
-					toast.error("Tài khoản miễn phí không được phép upload!");
+				if (
+					finalOption === "4" &&
+					(!finalText.trim() ||
+						!file ||
+						!file.name.toLowerCase().endsWith(".wav"))
+				) {
+					toast.error("Mode 4 yêu cầu cả text và file .wav!");
 					return;
 				}
 
-				// Tạo tin nhắn user
-				let userMessage;
-				if (text && file) {
-					userMessage = await ApiService.createUserTextFileMessage(
-						text,
+				// Tạo user message
+				if (finalText && file) {
+					userMessage = await ApiService.createUserMessage(
+						finalText,
 						file,
 						finalOption
 					);
-				} else if (text) {
-					userMessage = {
-						id: Date.now(),
-						type: "user",
-						content: text,
-						isText: true,
-					};
+				} else if (finalText) {
+					userMessage = await ApiService.createUserMessage(
+						finalText,
+						null,
+						finalOption
+					);
 				} else if (file) {
-					userMessage = await ApiService.createUserFileMessage(
+					userMessage = await ApiService.createUserMessage(
+						"",
 						file,
 						finalOption
 					);
 				}
+				userMessage.id = Date.now();
 				setMessages((prev) => [...prev, userMessage]);
 
 				// Gọi API
 				let response;
-				if (text && file) {
+				if (finalText && file) {
 					response = await ApiService.processTextAndFile(
 						finalText,
 						file,
 						finalOption,
 						role
 					);
-				} else if (text) {
+				} else if (finalText) {
 					response = await ApiService.processText(
 						finalText,
 						finalOption,
@@ -245,84 +406,71 @@ export const ChatProvider = ({ children }) => {
 					response = await ApiService.processFile(file, finalOption);
 				}
 
-				if (!response.ok) {
-					throw new Error(`API error: ${response.statusText}`);
-				}
+				if (!response.ok)
+					throw new Error(`API error: ${await response.text()}`);
 
 				const botMessage = await ApiService.normalizeBotMessage(
 					response,
 					finalOption
 				);
-				setMessages((prev) => [
-					...prev,
-					{ id: Date.now(), ...botMessage },
-				]);
+				botMessage.id = Date.now();
+				setMessages((prev) => [...prev, botMessage]);
 
 				// Tạo hoặc cập nhật conversation
 				if (!currentConversationId) {
 					const newConversation = await createConversation();
 					setCurrentConversationId(newConversation.id);
 				}
-				// Lưu tin nhắn vào API
-				await ApiService.saveMessage(
+				// Gọi addChatDetail với generatorIdMap
+				await ApiService.addChatDetail(
+					{
+						input_type: userMessage.input_type || "text",
+						input_text:
+							typeof userMessage.content === "string"
+								? userMessage.content
+								: userMessage.content.text || "",
+						input_file_name: userMessage.file_name,
+						input_file_path:
+							userMessage.audio_url ||
+							userMessage.image_url ||
+							userMessage.video_url ||
+							userMessage.file_url,
+						output_type: botMessage.isText
+							? "text"
+							: botMessage.isAudio
+							? "audio"
+							: botMessage.isImage
+							? "image"
+							: botMessage.isVideo
+							? "video"
+							: "file",
+						output_text: botMessage.content.text || null,
+						output_file_name: botMessage.content.file_name,
+						output_file_path:
+							botMessage.content.audio_url ||
+							botMessage.content.image_url ||
+							botMessage.content.video_url ||
+							botMessage.content.file_url,
+						generator_id: finalOption,
+					},
 					currentConversationId,
-					userMessage,
-					botMessage
+					generatorIdMap
 				);
 			} catch (error) {
 				toast.error("Lỗi: " + error.message);
+				console.error("Error in sendMessage:", error);
 			} finally {
 				setIsLoading(false);
 			}
 		},
-		[isRateLimited, role, currentConversationId, handleAutoAnalyze]
-	);
-	const loadConversation = useCallback(async (id) => {
-		try {
-			setIsLoading(true);
-			const conversation = await ApiService.getConversation(id);
-			setMessages(conversation.messages || []);
-			setCurrentConversationId(id);
-		} catch (error) {
-			toast.error("Lỗi khi tải cuộc trò chuyện: " + error.message);
-		} finally {
-			setIsLoading(false);
-		}
-	}, []);
-
-	const createConversation = useCallback(async () => {
-		try {
-			setIsLoading(true);
-			const newConversation = await ApiService.createConversation(email);
-			setConversations((prev) => [...prev, newConversation]);
-			setCurrentConversationId(newConversation.id);
-			setMessages([]);
-		} catch (error) {
-			toast.error("Lỗi khi tạo cuộc trò chuyện: " + error.message);
-		} finally {
-			setIsLoading(false);
-		}
-	}, [email]);
-
-	const deleteConversation = useCallback(
-		async (id) => {
-			try {
-				setIsLoading(true);
-				await ApiService.deleteConversation(id);
-				setConversations((prev) =>
-					prev.filter((conv) => conv.id !== id)
-				);
-				if (currentConversationId === id) {
-					setCurrentConversationId(null);
-					setMessages([]);
-				}
-			} catch (error) {
-				toast.error("Lỗi khi xóa cuộc trò chuyện: " + error.message);
-			} finally {
-				setIsLoading(false);
-			}
-		},
-		[currentConversationId]
+		[
+			isRateLimited,
+			role,
+			currentConversationId,
+			handleAutoAnalyze,
+			email,
+			createConversation,
+		]
 	);
 
 	return (
@@ -342,7 +490,7 @@ export const ChatProvider = ({ children }) => {
 				handleAutoAnalyze,
 				loadConversation,
 				createConversation,
-				deleteConversation,
+				deleteChatHistory,
 			}}
 		>
 			{children}

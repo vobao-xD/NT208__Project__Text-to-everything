@@ -1,5 +1,4 @@
 import { useContext, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ChatContext } from "@/context/ChatContext";
 import FileUpload from "@/components/FileUpload";
@@ -9,7 +8,6 @@ const InputBox = () => {
 		useContext(ChatContext);
 	const [inputValue, setInputValue] = useState("");
 	const [selectedFile, setSelectedFile] = useState(null);
-	const [imagePreview, setImagePreview] = useState(null);
 	const [isRecording, setIsRecording] = useState(false);
 	const fileInputRef = useRef(null);
 	const mediaRecorderRef = useRef(null);
@@ -31,13 +29,17 @@ const InputBox = () => {
 		selectedOption === "0"
 			? "Mô tả những gì bạn muốn tạo, hoặc chọn file để phân tích (Video: .mp4/ Audio: .wav, .mp3/ File: .pdf, .doc, .docx, .txt/ Ảnh: .jpg, .jpeg, .png)"
 			: selectedOption === "4"
-			? "Hãy nhập lời thoại và chọn file tùy chỉnh (nếu có)"
+			? "Hãy nhập lời thoại và chọn file giọng (upload file hoặc thu âm)"
 			: "Mô tả những gì bạn muốn tạo ra";
 
 	const handleSubmit = async () => {
 		if (isLoading) return;
 
 		// Validation
+		const textOnlyOptions = ["1", "2", "3", "6", "7", "8"];
+		const fileOnlyOptions = ["5", "9", "10", "11"];
+		const textAndFileOptions = ["0", "4"];
+
 		if (fileOnlyOptions.includes(selectedOption)) {
 			if (!selectedFile) {
 				toast.error("Vui lòng chọn file để xử lý.", {
@@ -65,10 +67,21 @@ const InputBox = () => {
 				});
 				return;
 			}
+			if (
+				selectedOption === "4" &&
+				selectedFile &&
+				!selectedFile.name.toLowerCase().endsWith(".wav")
+			) {
+				toast.error("Mode 4 yêu cầu file .wav!", {
+					closeButton: true,
+					className:
+						"p-0 w-[400px] border border-red-600/40 backdrop-blur-lg",
+				});
+				return;
+			}
 		}
 
-		// Kiểm tra role
-		if (isFileUploadAllowed && selectedFile && role === "free") {
+		if (selectedFile && role === "free") {
 			toast.error("Tài khoản miễn phí không được phép upload file.", {
 				closeButton: true,
 				className:
@@ -80,7 +93,6 @@ const InputBox = () => {
 		await sendMessage(inputValue, selectedFile, selectedOption);
 		setInputValue("");
 		setSelectedFile(null);
-		setImagePreview(null);
 		if (fileInputRef.current) fileInputRef.current.value = "";
 	};
 
@@ -103,15 +115,6 @@ const InputBox = () => {
 			validExtensions.some((ext) => file.name.toLowerCase().endsWith(ext))
 		) {
 			setSelectedFile(file);
-			if (
-				[".jpg", ".jpeg", ".png"].some((ext) =>
-					file.name.toLowerCase().endsWith(ext)
-				)
-			) {
-				setImagePreview(URL.createObjectURL(file));
-			} else {
-				setImagePreview(null);
-			}
 		} else {
 			toast.error(
 				"File không hỗ trợ. Chọn .mp4, .wav, .mp3, .pdf, .doc, .docx, .txt, .jpg, .jpeg, .png."
@@ -121,7 +124,6 @@ const InputBox = () => {
 
 	const handleCancelFile = () => {
 		setSelectedFile(null);
-		setImagePreview(null);
 		if (fileInputRef.current) fileInputRef.current.value = "";
 	};
 
