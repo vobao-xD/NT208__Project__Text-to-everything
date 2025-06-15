@@ -140,6 +140,14 @@ export const ChatProvider = ({ children }) => {
 
 	const sendMessage = useCallback(
 		async (text, file, option) => {
+			if (file && role === "free") {
+				toast.error("Tài khoản miễn phí không được phép upload file.", {
+					closeButton: true,
+					className:
+						"p-0 w-[400px] border border-red-600/40 backdrop-blur-lg",
+				});
+				return;
+			}
 			if (isRateLimited) {
 				toast.error("Hết lượt miễn phí. Vui lòng thử lại sau.");
 				return;

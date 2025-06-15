@@ -52,7 +52,6 @@ const FileUpload = ({
 						toast.error(
 							"Tài khoản miễn phí không được phép upload!"
 						);
-						navigate("/advanced");
 						return;
 					}
 					inputRef.current.click();
