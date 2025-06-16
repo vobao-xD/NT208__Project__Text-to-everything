@@ -37,10 +37,10 @@ def add_detail_to_chat(
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
     
-    if detail.input_file_name and not validate_file_type(detail.input_file_name, detail.input_type):
-        raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.input_type}")
-    if detail.output_file_name and not validate_file_type(detail.output_file_name, detail.output_type):
-        raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.output_type}")
+    # if detail.input_file_name and not validate_file_type(detail.input_file_name, detail.input_type):
+    #     raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.input_type}")
+    # if detail.output_file_name and not validate_file_type(detail.output_file_name, detail.output_type):
+    #     raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.output_type}")
 
     return HistoryAndOutputManager.add_chat_detail(
         db,
