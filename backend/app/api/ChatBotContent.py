@@ -15,7 +15,7 @@ def chatbot_content(data: ChatRequest):
         "Content-Type": "application/json"
     }
     body = {
-        "model": "openai/gpt-3.5-turbo",  # Hoặc dùng model khác như "mistralai/mixtral-8x7b"
+        "model": "openai/gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": "Bạn là một chatbot sáng tạo nội dung."},
             {"role": "user", "content": data.prompt}

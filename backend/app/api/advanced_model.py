@@ -19,13 +19,13 @@ from openai_client_instance import openai_client_instance
 from db.schemas import AnalyzeRequest, ChatbotContentRequest, EnhanceTextRequest, FileTextToAnswerResponse, GenerateAnswerRequest, RunwayTextToVideoRequest, TextToAudioRequest, TextToCodeRequest, TextToImageRequest, TextToVideoRequest
 
 router = APIRouter()
+
 IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 DOCUMENT_MIME_TYPES_FOR_ASSISTANT = [
     "application/pdf", "text/plain",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document", # .docx
     "application/msword", # .doc
     "text/markdown", "text/csv",
-    # Add more from https://platform.openai.com/docs/assistants/tools/file-search/supported-files
 ]
 ASSISTANT_ID_WITH_FILE_SEARCH = os.environ.get("OPENAI_FILE_SEARCH_ASSISTANT_ID")
 
@@ -76,7 +76,6 @@ async def _handle_image_input(
     model = vision_model_override or "gpt-4o"
     
     try:
-        # Prepare the message with image
         messages = [
             {
                 "role": "user",
@@ -128,13 +127,11 @@ async def _handle_document_input(
     try:
         filename, file_bytes = file_data
         
-        # Upload file to OpenAI
         file_obj = await client.files.create(
             file=(filename, file_bytes),
             purpose="assistants"
         )
         
-        # Create thread with the file
         thread = await client.beta.threads.create(
             messages=[
                 {
@@ -352,8 +349,6 @@ async def text_to_video(payload: RunwayTextToVideoRequest):
         raise HTTPException(status_code=503, detail=f"Failed to connect to RunwayML API: {str(e)}")
     except Exception as e:
         print(f"An unexpected error occurred in /text-to-video: {str(e)}")
-        # It's good practice to close the client if initialized here, though lifespan manager is better
-        # await runway_client.close() # Requires client to be defined outside try if used in finally
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
     finally:
         # Ensure client is closed if initialized within the function
@@ -629,6 +624,7 @@ async def smart_file_text_to_answer(
         usage=result_data.get("usage"),
         error=error_message
     )
+
 TASK_LIST_DESCRIPTION = """
 
 Here are the available task types and their keys:

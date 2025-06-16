@@ -73,14 +73,12 @@ async def speech_to_text(file: UploadFile = File(...)):
 # 3. Chuyển image sang text
 @router.post("/input/image")
 async def input_image(file: UploadFile = File(...)):
-    # Kiểm tra định dạng file
+
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File phải là hình ảnh")
     
     try:
-        # Đọc nội dung file hình ảnh
         contents = await file.read()
-        # Sử dụng Image.open từ PIL để mở hình ảnh
         image = Image.open(io.BytesIO(contents))
         
         # Trích xuất văn bản từ hình ảnh
@@ -179,7 +177,7 @@ async def analyze_text(
         if used_calls == 1: 
             await redis_client.expireat(analyze_count_key, end_of_today_timestamp)
         
-        if used_calls > 10: # Dùng "> 10" vì đã incr trước đó
+        if used_calls > 10:
             await redis_client.decr(analyze_count_key)
             
             retry_after_seconds = max(0, end_of_today_timestamp - int(current_time.timestamp()))
@@ -187,7 +185,7 @@ async def analyze_text(
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Bạn đã sử dụng hết lượt gọi miễn phí. Vui lòng nâng cấp tài khoản để sử dụng thêm.",
-                headers={"Retry-After": str(int(retry_after_seconds))} # Thêm header Retry-After
+                headers={"Retry-After": str(int(retry_after_seconds))}
             )
     
     # Logic xử lý chính

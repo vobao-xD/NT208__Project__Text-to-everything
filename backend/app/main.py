@@ -4,7 +4,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from flask_limiter import RateLimitExceeded
 from grpc import Status
-from openai import AsyncOpenAI
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +17,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from openai_client_instance import lifespan
 from redis import asyncio as aioredis
 from fastapi_limiter import FastAPILimiter
+
 load_dotenv()
 
 REDIS_URL=os.getenv("REDIS_URL")
@@ -43,7 +43,6 @@ origins = [
 ]
 
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "super-secret-key"))
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  
@@ -64,6 +63,7 @@ if not os.path.exists("static"):
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(router)
+
 @app.on_event("startup")
 async def startup_event():
     redis = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
@@ -77,7 +77,6 @@ async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded)
         status_code=Status.HTTP_429_TOO_MANY_REQUESTS,
         content={"detail": f"Bạn đã gửi quá nhiều tin nhắn. Hãy thử lại sau {round(exc.retry_after)} giây."}
     )
-
 @app.on_event("shutdown")
 async def shutdown_event():
     scheduler.shutdown()
