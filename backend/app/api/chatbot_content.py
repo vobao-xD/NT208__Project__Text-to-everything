@@ -12,7 +12,6 @@ async def chatbot_content(
 ):
     try:
         user_data = verify_user_access_token(source="cookie", request=request)
-
         async with httpx.AsyncClient(base_url="http://localhost:8000", timeout=600.0) as internal_client:
             response = await internal_client.post(
                 "/advanced/chatbot-content",

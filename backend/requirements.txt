@@ -124,7 +124,7 @@ pexpect==4.9.0
 pickleshare==0.7.5
 pillow==11.2.1
 pip-autoremove==0.10.0
-pipreqs==0.5.0
+pipreqs==0.4.13
 platformdirs==4.3.8
 proglog==0.1.12
 prompt_toolkit==3.0.51
@@ -220,3 +220,5 @@ wrapt==1.17.2
 yarg==0.1.9
 yarl==1.20.0
 zipp==3.21.0
+frontend
+tools

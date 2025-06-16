@@ -42,6 +42,7 @@ def add_detail_to_chat(
     # if detail.output_file_name and not validate_file_type(detail.output_file_name, detail.output_type):
     #     raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.output_type}")
 
+    # Hu hu ông nào code phần này mà bug tùm lum vậy trời ...
     return HistoryAndOutputManager.add_chat_detail(
         db,
         chat_history_id=history_id,
@@ -52,7 +53,7 @@ def add_detail_to_chat(
         output_type=detail.output_type,
         output_text=detail.output_text,
         output_file_path=detail.output_file_path,
-        output_file_name=detail.output_file_name,
+        # output_file_name=detail.output_file_name,
         generator_id=detail.generator_id
     )
 
