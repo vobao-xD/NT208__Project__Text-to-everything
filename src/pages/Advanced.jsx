@@ -249,7 +249,6 @@ const Advanced = () => {
 				transition={Slide}
 				stacked
 				icon={({ type, theme }) => {
-					// theme is not used in this example but you could
 					switch (type) {
 						case "info":
 							return <Info className="stroke-indigo-400" />;
