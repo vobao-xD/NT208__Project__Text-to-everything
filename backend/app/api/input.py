@@ -10,6 +10,8 @@ import io
 from moviepy import VideoFileClip
 import PyPDF2
 import docx
+from services.authentication_and_authorization import verify_user_access_token
+from services.history_and_output_manager import HistoryAndOutputManager
 from db.schemas import *
 from services.input_analyzer import guess_ai_intent
 import speech_recognition as sr
@@ -24,7 +26,8 @@ load_dotenv()
 
 router = APIRouter()
 REDIS_URL=os.getenv("REDIS_URL")
-pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+TESSERACT_PATH=os.getenv("TESSERACT_PATH")
+pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 
 def extract_text_from_pdf(file: UploadFile):
     file.file.seek(0)
@@ -43,15 +46,25 @@ async def input_text(text: str):
 
 # 2. Chuyển speech qua text
 @router.post("/input/speech")
-async def speech_to_text(file: UploadFile = File(...)):
-    
+async def speech_to_text(
+    request: Request,
+    file: UploadFile = File(...)
+    ):
+    user_data = verify_user_access_token(source="cookie", request=request)
+
     ext = file.filename.split(".")[-1].lower()
     input_path = f"temp_{uuid.uuid4()}.{ext}"
     output_path = input_path.replace(ext, "wav")
 
+    save_path = HistoryAndOutputManager.save_output_file(
+                    user_email=user_data["email"],
+                    generator_name="video_to_text",
+                    file_content=file.read(),
+                    file_extension="wav"
+                )
     
-    with open(input_path, "wb") as f:
-        f.write(await file.read())
+    # with open(input_path, "wb") as f:
+    #     f.write(await file.read())
 
     try:
         
@@ -71,11 +84,11 @@ async def speech_to_text(file: UploadFile = File(...)):
 
     except Exception as e:
         return {"error": f"Lỗi xử lý: {str(e)}"}
-    finally:
-        # Xoá file tạm
-        for path in [input_path, output_path]:
-            if os.path.exists(path):
-                os.remove(path)
+    # finally:
+    #     # Xoá file tạm
+    #     for path in [input_path, output_path]:
+    #         if os.path.exists(path):
+    #             os.remove(path)
 
     return {"text": text}
 
@@ -106,13 +119,25 @@ async def input_image(file: UploadFile = File(...)):
 
 # 4. Chuyển âm thanh của video sang text
 @router.post("/input/video")
-async def input_video(file: UploadFile = File(...)):
-    video_path_name = f"temp_{uuid.uuid4()}"
-    with open(f"{video_path_name}.mp4", "wb") as f:
-        f.write(await file.read())
+async def input_video(
+    request: Request,
+    file: UploadFile = File(...)   
+    ):
+    user_data = verify_user_access_token(source="cookie", request=request)
 
-    video = VideoFileClip(f"{video_path_name}.mp4")
-    audio_path = f"{video_path_name}.wav"
+    # video_path_name = f"temp_{uuid.uuid4()}"
+    # with open(f"{video_path_name}.mp4", "wb") as f:
+    #     f.write(await file.read())
+
+    save_path = HistoryAndOutputManager.save_output_file(
+                    user_email=user_data["email"],
+                    generator_name="video_to_text",
+                    file_content=file.read(),
+                    file_extension="wav"
+                )
+
+    video = VideoFileClip(f"{save_path}.mp4")
+    audio_path = f"{save_path}.wav"
     video.audio.write_audiofile(audio_path)
     recognizer = sr.Recognizer()
     with sr.AudioFile(audio_path) as source:
@@ -121,10 +146,10 @@ async def input_video(file: UploadFile = File(...)):
         text = recognizer.recognize_google(audio, language="vi-VN")
     except:
         text = "[Không nhận diện được giọng nói từ video]"
-    finally:
-        for ext in [".mp4",".wav"]:
-            if os.path.exists(video_path_name + ext):
-                os.remove(video_path_name + ext)
+    # finally:
+    #     for ext in [".mp4",".wav"]:
+    #         if os.path.exists(save_path + ext):
+    #             os.remove(save_path + ext)
     return {"text": text}
 
 # 5. Chuyển text trong file ra text
@@ -155,22 +180,21 @@ async def input_file(file: UploadFile = File(...)):
 @router.post("/analyze")
 async def analyze_text(
     input: TextInput,
-    request: Request,
-    user_email: str=Header(...,alias="X-User-email"),
-    user_role: str=Header(...,alias="X-User-role")
+    request: Request
 ):
     """
     Phân tích intent của người dùng. Giới hạn 10 lượt/ngày cho role 'free'.
     """
     redis_client = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
+    user_data = verify_user_access_token(source="cookie", request=request)
 
-    if user_role == "free":
+    if user_data["role"] == "free":
         current_time = datetime.now()
         today = current_time.date()
         tomorrow = today + timedelta(days=1)
         end_of_today_timestamp = int(datetime.combine(tomorrow, time.min).timestamp())
 
-        analyze_count_key = f"analyze_count:{today.isoformat()}:{user_email}"
+        analyze_count_key = f"analyze_count:{today.isoformat()}:{user_data["email"]}"
 
         used_calls = await redis_client.incr(analyze_count_key)
 

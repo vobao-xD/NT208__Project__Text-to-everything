@@ -42,7 +42,7 @@ class TextToVideoService:
                 
                 save_path = HistoryAndOutputManager.save_output_file(
                     user_email=user_data["email"],
-                    generator_name="text-to-video",
+                    generator_name="text_to_video",
                     file_content=response.content,
                     file_extension="mp4"
                 )

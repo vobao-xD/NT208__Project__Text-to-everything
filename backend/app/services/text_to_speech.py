@@ -51,13 +51,19 @@ class TextToSpeechService:
                     headers={"Authorization": f"Bearer {tts_token}"}
                 )
                 wav_response.raise_for_status()
-                
+
+                # Hàm này dùng để lưu file vô thư mục _outputs
+                # Định dạng file lưu là _outputs/{email}/{generator_name}/{yyyy-mm-dd}/<randomname>.{file_extention}
+                # randomname do hàm tự tạo, các cái còn lại truyền vào như bên dưới.
+                # Sau khi lưu, trả về frontend toàn bộ chuỗi "_outputs/{email}/{generator_name}/{yyyy-mm-dd}/<randomname>.{file_extention}"
+                # Frontend muốn lấy file sẽ gọi tới api /get-output/{cả đường dẫn vừa tạo ra}, muốn hiểu thêm thì xem file general.py
                 save_path = HistoryAndOutputManager.save_output_file(
                     user_email=user_data["email"],
-                    generator_name="text-to-speech-default",
+                    generator_name="text_to_speech_default",
                     file_content=wav_response.content,
                     file_extension="wav"
                 )
+
 
                 return TTSResponse(
                     success=True,
@@ -122,7 +128,7 @@ class TextToSpeechService:
                 
                 save_path = HistoryAndOutputManager.save_output_file(
                     user_email=user_data["email"],
-                    generator_name="text-to-speech-custom",
+                    generator_name="text_to_speech_custom",
                     file_content=wav_response.content,
                     file_extension="wav"
                 )

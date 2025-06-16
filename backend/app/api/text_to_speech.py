@@ -15,6 +15,10 @@ async def text_to_speech_default(
     Gọi API viXTTS (tự tạo) để tạo âm thanh từ văn bản với giọng mặc định.
     """
     try:
+        # Hàm verify_user_access_token sẽ trả về dict chứa email, role, exp.
+        # Truy cập các thuộc tính bằng cách user_data["{tên thuộc tính}"]
+        # Ví dụ: email = user_data["email"]
+        # Đọc code để hiểu hàm hoạt động thế nào
         user_data = verify_user_access_token(source="cookie", request=request)
         return await service.text_to_speech_with_default_voice(user_data, TTS_request)
     except HTTPException as e:

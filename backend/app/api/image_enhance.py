@@ -40,7 +40,7 @@ async def enhance_image(request: Request, file: UploadFile=File(...)):
 
         save_path = HistoryAndOutputManager.save_output_file(
                     user_email=user_data["email"],
-                    generator_name="image-quality-enhancing",
+                    generator_name="improve_image_quality",
                     file_content=output_buffer.getvalue(),
                     file_extension="jpeg"
                 )

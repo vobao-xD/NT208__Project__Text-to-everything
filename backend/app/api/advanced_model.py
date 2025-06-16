@@ -14,6 +14,8 @@ from openai import AsyncOpenAI
 import openai
 from runwayml import AsyncRunwayML
 import runwayml
+from services.history_and_output_manager import HistoryAndOutputManager
+from services.authentication_and_authorization import verify_user_access_token
 from services.openai_client_instance import openai_client_instance
 
 from db.schemas import AnalyzeRequest, ChatbotContentRequest, EnhanceTextRequest, FileTextToAnswerResponse, GenerateAnswerRequest, RunwayTextToVideoRequest, TextToAudioRequest, TextToCodeRequest, TextToImageRequest, TextToVideoRequest
@@ -100,7 +102,6 @@ VALID_TASK_KEYS = [
     "chatbot-content", "enhance-text", "file-text-to-answer",
     "image-url-to-answer", "unknown_task"
 ]
-
 
 async def _handle_text_only_input(
     client: AsyncOpenAI, 
@@ -287,7 +288,7 @@ async def get_openai_client(request: Request):
     return client
 
 @router.post("/advanced/text-to-code")
-async def text_to_code(payload: TextToCodeRequest,client=Depends(get_openai_client)):
+async def text_to_code(payload: TextToCodeRequest, client=Depends(get_openai_client)):
     system_prompt = (
         f"You are an expert coding assistant. "
         f"Generate a complete and functional code snippet in the {payload.language} programming language "
@@ -322,7 +323,13 @@ async def text_to_code(payload: TextToCodeRequest,client=Depends(get_openai_clie
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
         
 @router.post("/advanced/text-to-image")
-async def text_to_image(payload: TextToImageRequest,client=Depends(get_openai_client)):
+async def text_to_image(
+    request: Request,
+    payload: TextToImageRequest, 
+    client = Depends(get_openai_client)
+):
+    user_data = verify_user_access_token(source="cookie", request=request)
+
     if payload.model == "dall-e-3" and payload.n > 1:
          raise HTTPException(status_code=400, detail="DALL-E 3 currently supports generating only one image at a time (n=1).")
 
@@ -344,6 +351,13 @@ async def text_to_image(payload: TextToImageRequest,client=Depends(get_openai_cl
         elif payload.response_format == "b64_json":
             for img in response.data:
                 image_data.append({"b64_json": img.b64_json, "revised_prompt": img.revised_prompt})
+
+        save_path = HistoryAndOutputManager.save_output_file(
+                    user_email=user_data["email"],
+                    generator_name="text_to_image",
+                    file_content=image_data,
+                    file_extension="jpg"
+                )
 
         return {"images": image_data}
     except openai.RateLimitError as e:
@@ -778,9 +792,4 @@ async def analyze(
     except Exception as e:
         print(f"An unexpected error occurred in /analyze: {type(e).__name__} - {str(e)}")
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
-
-    
-    
-
-
 

@@ -68,7 +68,7 @@ class TextToImageService:
 
             save_path = HistoryAndOutputManager.save_output_file(
                 user_email=user_data["email"],
-                generator_name="text-to-image",
+                generator_name="text_to_image",
                 file_content=image_bytes,
                 file_extension="png"
             )
