@@ -295,7 +295,6 @@ const InputBox = () => {
 									onClick={() =>
 										fileInputRef.current?.click()
 									}
-									disabled={isLoading}
 									data-tooltip="Tải lên file (video, âm thanh, tài liệu, ảnh)"
 								>
 									<i className="fas fa-file-upload"></i>
@@ -321,7 +320,8 @@ const InputBox = () => {
 								<button
 									className={`file-upload-btn ${
 										isRecording ? "recording" : ""
-									}`}
+									} 
+										${isLoading ? "disabled" : ""}`}
 									onClick={
 										isRecording
 											? stopRecording

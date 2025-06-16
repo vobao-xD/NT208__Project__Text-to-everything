@@ -273,6 +273,10 @@ const ApiService = {
 				// Lấy dữ liệu JSON từ response
 				data = await response.json();
 				const filePath = data.file_path; // Đường dẫn từ backend, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
+				botMessage.output_file_path = filePath;
+				console.log(
+					`normalize: bot content ${botMessage.output_file_path}`
+				);
 				const fileResponse = await fetch(
 					`http://localhost:8000/get-output/${filePath}`,
 					{

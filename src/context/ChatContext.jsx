@@ -421,6 +421,10 @@ export const ChatProvider = ({ children }) => {
 					const newConversation = await createConversation();
 					setCurrentConversationId(newConversation.id);
 				}
+
+				console.log(
+					`chatcontext: bot content ${botMessage.output_file_path}`
+				);
 				// Gọi addChatDetail với generatorIdMap
 				await ApiService.addChatDetail(
 					{
@@ -445,12 +449,8 @@ export const ChatProvider = ({ children }) => {
 							? "video"
 							: "file",
 						output_text: botMessage.content.text || null,
-						output_file_name: botMessage.content.file_name,
-						output_file_path:
-							botMessage.content.audio_url ||
-							botMessage.content.image_url ||
-							botMessage.content.video_url ||
-							botMessage.content.file_url,
+						output_file_name: null,
+						output_file_path: botMessage.output_file_path || null,
 						generator_id: finalOption,
 					},
 					currentConversationId,
