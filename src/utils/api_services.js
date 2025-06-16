@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-
+const BASE_URL=import.meta.env.VITE_API_BASE_URL;
 const ApiService = {
 	// Hàm tiện ích: Xác định loại file đầu vào
 	detectInputFileType(filename) {
@@ -57,7 +57,7 @@ const ApiService = {
 	// Lấy thông tin người dùng
 	async getUserInfo() {
 		const response = await fetch(
-			"http://localhost:8000/auth/get-user-info",
+			BASE_URL+"auth/get-user-info",
 			{
 				method: "GET",
 				credentials: "include",
@@ -73,7 +73,7 @@ const ApiService = {
 	// Lấy vai trò người dùng
 	async getUserSubscription(email) {
 		const response = await fetch(
-			`http://localhost:8000/user-subscription?email=${email}`,
+			BASE_URL+`user-subscription?email=${email}`,
 			{
 				method: "GET",
 				credentials: "include",
@@ -88,7 +88,7 @@ const ApiService = {
 
 	// Phân tích văn bản
 	async analyzeText(text, email, role) {
-		const response = await fetch("http://localhost:8000/analyze", {
+		const response = await fetch(BASE_URL+"analyze", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -110,8 +110,8 @@ const ApiService = {
 			case "1":
 				apiUrl =
 					role === "pro"
-						? "http://localhost:8000/advanced/text-to-speech"
-						: "http://localhost:8000/text-to-speech/default";
+						? BASE_URL+"advanced/text-to-speech"
+						: BASE_URL+"text-to-speech/default";
 				requestBody = {
 					text,
 					language: "Tiếng Việt",
@@ -122,8 +122,8 @@ const ApiService = {
 			case "2":
 				apiUrl =
 					role === "pro"
-						? "http://localhost:8000/advanced/text-to-image"
-						: "http://localhost:8000/text-to-image";
+						? BASE_URL+"advanced/text-to-image"
+						: BASE_URL+"text-to-image";
 				requestBody = {
 					prompt: text,
 					n: 1,
@@ -137,7 +137,7 @@ const ApiService = {
 					throw new Error(
 						"Chỉ tài khoản Pro được phép sử dụng Text to Video!"
 					);
-				apiUrl = "http://localhost:8000/text-to-video";
+				apiUrl = BASE_URL+"text-to-video";
 				requestBody = {
 					prompt: text,
 					guidance_scale: 5.0,
@@ -149,8 +149,8 @@ const ApiService = {
 			case "6":
 				apiUrl =
 					role === "pro"
-						? "http://localhost:8000/advanced/chatbot-content"
-						: "http://localhost:8000/chatbot/content";
+						? BASE_URL+"advanced/chatbot-content"
+						: BASE_URL+"chatbot/content";
 				requestBody = {
 					user_input: text,
 					history: [],
@@ -161,15 +161,15 @@ const ApiService = {
 			case "7":
 				apiUrl =
 					role === "pro"
-						? "http://localhost:8000/advanced/generate-answer"
-						: "http://localhost:8000/generate_answer";
+						? BASE_URL+"advanced/generate-answer"
+						: BASE_URL+"generate_answer";
 				requestBody = { question: text, max_tokens: 500 };
 				break;
 			case "8":
 				apiUrl =
 					role === "pro"
-						? "http://localhost:8000/advanced/text-to-code"
-						: "http://localhost:8000/text-to-code";
+						? BASE_URL+"advanced/text-to-code"
+						: BASE_URL+"text-to-code";
 				requestBody = {
 					prompt: text,
 					language: "python",
@@ -198,16 +198,16 @@ const ApiService = {
 
 		switch (option) {
 			case "5":
-				apiUrl = "http://localhost:8000/enhance";
+				apiUrl = BASE_URL+"enhance";
 				break;
 			case "9":
-				apiUrl = "http://localhost:8000/input/speech";
+				apiUrl = BASE_URL+"input/speech";
 				break;
 			case "10":
-				apiUrl = "http://localhost:8000/input/video";
+				apiUrl = BASE_URL+"input/video";
 				break;
 			case "11":
-				apiUrl = "http://localhost:8000/input/document";
+				apiUrl = BASE_URL+"input/document";
 				break;
 			default:
 				throw new Error("Tính năng không được hỗ trợ!");
@@ -237,7 +237,7 @@ const ApiService = {
 		} else if (option === "1" || option === "2") {
 			const data = await response.json();
 			const fileResponse = await fetch(
-				`http://localhost:8000/get-output/${data.file_path}`,
+				BASE_URL+`get-output/${data.file_path}`,
 				{
 					method: "GET",
 					headers: {
@@ -313,7 +313,7 @@ const ApiService = {
 		const token = Cookies.get("access_token");
 		if (!token) throw new Error("Không tìm thấy token xác thực");
 		const response = await fetch(
-			"http://localhost:8000/chat-history?limit=50",
+			BASE_URL+"chat-history?limit=50",
 			{
 				method: "GET",
 				headers: {
@@ -346,7 +346,7 @@ const ApiService = {
 	async createConversation(messages = []) {
 		const token = Cookies.get("access_token");
 		if (!token) throw new Error("Không tìm thấy token xác thực");
-		const response = await fetch("http://localhost:8000/chat-history", {
+		const response = await fetch(BASE_URL+"chat-history", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -377,7 +377,7 @@ const ApiService = {
 		const token = Cookies.get("access_token");
 		if (!token) throw new Error("Không tìm thấy token xác thực");
 		const response = await fetch(
-			`http://localhost:8000/chat-history/${conversationId}`,
+			BASE_URL+`chat-history/${conversationId}`,
 			{
 				method: "GET",
 				headers: {
@@ -461,7 +461,7 @@ const ApiService = {
 		const token = Cookies.get("access_token");
 		if (!token) throw new Error("Không tìm thấy token xác thực");
 		const response = await fetch(
-			`http://localhost:8000/chat-history/${conversationId}`,
+			BASE_URL+`chat-history/${conversationId}`,
 			{
 				method: "DELETE",
 				headers: {
@@ -511,7 +511,7 @@ const ApiService = {
 		};
 
 		const response = await fetch(
-			`http://localhost:8000/chat-history/${finalConversationId}/add-detail`,
+			BASE_URL+`chat-history/${finalConversationId}/add-detail`,
 			{
 				method: "POST",
 				headers: {

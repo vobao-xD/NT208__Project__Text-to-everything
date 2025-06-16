@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+const BASE_URL=import.meta.env.VITE_API_BASE_URL;
 // Nút điều hướng đơn giản
 const NavButton = ({ onClick, label }) => (
 	<button

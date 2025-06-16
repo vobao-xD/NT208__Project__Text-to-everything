@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { toast, ToastContainer, Slide } from "react-toastify";
 import { BadgeCheck, CircleAlert, Info, TriangleAlert } from "lucide-react";
-
+const BASE_URL=import.meta.env.VITE_API_BASE_URL;
 const Advanced = () => {
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState("monthly"); // 'monthly' hoặc 'yearly'
@@ -24,7 +24,7 @@ const Advanced = () => {
 			}
 
 			const response = await fetch(
-				`http://localhost:8000/user-subscription?email=${email}`,
+				BASE_URL+`user-subscription?email=${email}`,
 				{
 					method: "GET",
 					headers: {
@@ -185,7 +185,7 @@ const Advanced = () => {
 		try {
 			const email = localStorage.getItem("email");
 			const response = await fetch(
-				`http://localhost:8000/momo/create-payment`,
+				BASE_URL+`momo/create-payment`,
 				{
 					method: "POST",
 					headers: {

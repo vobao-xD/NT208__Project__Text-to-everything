@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
-
+const BASE_URL=import.meta.env.VITE_API_BASE_URL
 const detectInputFileType = (filename) => {
 	const ext = filename.split(".").pop().toLowerCase();
 	if (["mp3", "wav"].includes(ext)) return "audio";
@@ -77,7 +77,7 @@ const addChatDetail = async (
 		let conversationId = currentConversationId;
 		if (!conversationId) {
 			const newChatResponse = await fetch(
-				"http://localhost:8000/chat-history",
+				BASE_URL+"chat-history",
 				{
 					method: "POST",
 					headers: {
@@ -122,7 +122,7 @@ const addChatDetail = async (
 		};
 
 		const response = await fetch(
-			`http://localhost:8000/chat-history/${conversationId}/add-detail`,
+			BASE_URL+`chat-history/${conversationId}/add-detail`,
 			{
 				method: "POST",
 				headers: {
@@ -141,7 +141,7 @@ const addChatDetail = async (
 		console.log("Saved chat detail:", savedDetail);
 
 		const updatedConversations = await fetch(
-			"http://localhost:8000/chat-history?limit=50",
+			BASE_URL+"chat-history?limit=50",
 			{
 				method: "GET",
 				headers: {
@@ -202,7 +202,7 @@ const handleNewChat = async (
 			return;
 		}
 
-		const response = await fetch("http://localhost:8000/chat-history", {
+		const response = await fetch(BASE_URL+"chat-history", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ chat_details: [] }),
@@ -248,7 +248,7 @@ const fetchChatHistories = async (setConversations) => {
 		}
 
 		const response = await fetch(
-			"http://localhost:8000/chat-history?limit=50",
+			BASE_URL+"chat-history?limit=50",
 			{
 				method: "GET",
 				headers: { "Content-Type": "application/json" },
@@ -294,7 +294,7 @@ const loadConversation = async (
 		}
 
 		const response = await fetch(
-			`http://localhost:8000/chat-history/${conversationId}`,
+			BASE_URL+`chat-history/${conversationId}`,
 			{
 				method: "GET",
 				headers: { "Content-Type": "application/json" },
@@ -395,7 +395,7 @@ const handleDeleteConversation = async (
 		}
 
 		const response = await fetch(
-			`http://localhost:8000/chat-history/${conversationId}`,
+			BASE_URL+`chat-history/${conversationId}`,
 			{
 				method: "DELETE",
 				headers: { "Content-Type": "application/json" },

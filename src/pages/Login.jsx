@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaGithub, FaUser, FaLock } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import axios from "axios";
+const BASE_URL=import.meta.env.VITE_API_BASE_URL;
 
 const Login = () => {
     const navigate = useNavigate();
@@ -27,7 +28,7 @@ const Login = () => {
         setError("");
 
         try {
-            const response = await axios.post("http://localhost:8000/api/auth/login", formData, {
+            const response = await axios.post(BASE_URL+"api/auth/login", formData, {
                 timeout: 10000,
                 headers: {
                     'Content-Type': 'application/json'
@@ -69,11 +70,11 @@ const Login = () => {
     };
 
     const handleGoogleLogin = () => {
-        window.location.href = "http://localhost:8000/auth/google";
+        window.location.href = BASE_URL+"auth/google";
     };
 
     const handleGithubLogin = () => {
-        window.location.href = "http://localhost:8000/auth/github";
+        window.location.href = BASE_URL+"auth/github";
     };
 
     return (

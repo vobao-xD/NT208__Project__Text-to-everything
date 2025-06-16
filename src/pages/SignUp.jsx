@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import axios from "axios";
-
+const BASE_URL=import.meta.env.VITE_API_BASE_URL;
 const SignUp = () => {
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
@@ -41,7 +41,7 @@ const SignUp = () => {
 
 		try {
 			const response = await axios.post(
-				"http://localhost:8000/auth/register",
+				BASE_URL+"auth/register",
 				formData
 			);
 			if (response.data.access_token) {
@@ -58,11 +58,11 @@ const SignUp = () => {
 	};
 
 	const handleGoogleLogin = () => {
-		window.location.href = "http://localhost:8000/auth/google";
+		window.location.href = BASE_URL+"auth/google";
 	};
 
 	const handleGithubLogin = () => {
-		window.location.href = "http://localhost:8000/auth/github";
+		window.location.href = BASE_URL+"/auth/github";
 	};
 
 	return (
