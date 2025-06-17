@@ -217,7 +217,7 @@ class ChatDetailBase(BaseModel):
     input_file_name: Optional[str] = None
     input_file_path: Optional[str] = None
 
-    output_type: Optional[str] = None
+    output_type: InputType
     output_text: Optional[str] = None
     output_file_name: Optional[str] = None
     output_file_path: Optional[str] = None

@@ -185,7 +185,7 @@ async def analyze_text(
     """
     Phân tích intent của người dùng. Giới hạn 10 lượt/ngày cho role 'free'.
     """
-    redis_client = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
+    # redis_client = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
     user_data = verify_user_access_token(source="cookie", request=request)
 
     if user_data["role"] == "free":
@@ -196,21 +196,21 @@ async def analyze_text(
 
         analyze_count_key = f"analyze_count:{today.isoformat()}:{user_data["email"]}"
 
-        used_calls = await redis_client.incr(analyze_count_key)
+        # used_calls = await redis_client.incr(analyze_count_key)
 
-        if used_calls == 1: 
-            await redis_client.expireat(analyze_count_key, end_of_today_timestamp)
+        # if used_calls == 1: 
+        #     await redis_client.expireat(analyze_count_key, end_of_today_timestamp)
         
-        if used_calls > 10: # Dùng "> 10" vì đã incr trước đó
-            await redis_client.decr(analyze_count_key)
+        # if used_calls > 10: # Dùng "> 10" vì đã incr trước đó
+        #     await redis_client.decr(analyze_count_key)
             
-            retry_after_seconds = max(0, end_of_today_timestamp - int(current_time.timestamp()))
+        #     retry_after_seconds = max(0, end_of_today_timestamp - int(current_time.timestamp()))
             
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Bạn đã sử dụng hết lượt gọi miễn phí. Vui lòng nâng cấp tài khoản để sử dụng thêm.",
-                headers={"Retry-After": str(int(retry_after_seconds))} # Thêm header Retry-After
-            )
+        #     raise HTTPException(
+        #         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        #         detail="Bạn đã sử dụng hết lượt gọi miễn phí. Vui lòng nâng cấp tài khoản để sử dụng thêm.",
+        #         headers={"Retry-After": str(int(retry_after_seconds))} # Thêm header Retry-After
+        #     )
     
     # Logic xử lý chính
     result = guess_ai_intent(input.user_text)

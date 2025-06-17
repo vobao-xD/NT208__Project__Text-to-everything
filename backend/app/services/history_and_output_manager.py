@@ -27,7 +27,7 @@ class HistoryAndOutputManager:
         return detail
     
     @staticmethod
-    def get_user_chat_histories(db: Session, user_email: str, limit: int = 50) -> list[ChatHistoryResponse]:
+    def get_user_chat_histories(db: Session, user_email: str, limit: int = 10) -> list[ChatHistoryResponse]:
         return db.query(ChatHistory).filter(ChatHistory.user_email == user_email)\
             .order_by(ChatHistory.created_at.desc()).limit(limit).all()
 
@@ -73,14 +73,16 @@ class HistoryAndOutputManager:
                 raise HTTPException(status_code=400, detail=f"Invalid generator_id: {detail.generator_id}")
             
             HistoryAndOutputManager.add_chat_detail(
-                db=db,
+                db,
                 chat_history_id=new_chat.id,
                 input_type=detail.input_type,
                 input_text=detail.input_text,
+                input_file_name=detail.input_file_name,
                 input_file_path=detail.input_file_path,
                 output_type=detail.output_type,
                 output_text=detail.output_text,
                 output_file_path=detail.output_file_path,
+                output_file_name=detail.output_file_name,
                 generator_id=detail.generator_id
             )
         return new_chat

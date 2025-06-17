@@ -41,8 +41,6 @@ def add_detail_to_chat(
     #     raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.input_type}")
     # if detail.output_file_name and not validate_file_type(detail.output_file_name, detail.output_type):
     #     raise HTTPException(status_code=400, detail=f"Định dạng file không phù hợp với {detail.output_type}")
-
-    # Hu hu ông nào code phần này mà bug tùm lum vậy trời ...
     return HistoryAndOutputManager.add_chat_detail(
         db,
         chat_history_id=history_id,
@@ -53,7 +51,7 @@ def add_detail_to_chat(
         output_type=detail.output_type,
         output_text=detail.output_text,
         output_file_path=detail.output_file_path,
-        # output_file_name=detail.output_file_name,
+        output_file_name=detail.output_file_name,
         generator_id=detail.generator_id
     )
 
@@ -61,7 +59,7 @@ def add_detail_to_chat(
 def get_chat_history(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    limit: int = 50
+    limit: int = 10
 ):
     return HistoryAndOutputManager.get_user_chat_histories(db, current_user.email, limit=limit)
 
@@ -80,25 +78,3 @@ def delete_chat_history(
     current_user=Depends(get_current_user)
 ):
     return HistoryAndOutputManager.delete_chat_history(history_id, db, current_user.email)
-
-# @router.post("/upload-file", response_model=dict)
-# async def upload_file(file: UploadFile = File(...), current_user=Depends(get_current_user)):
-#     file_ext = file.filename.split(".")[-1].lower()
-#     file_type = None
-#     for type_, exts in {"audio": ["mp3", "wav"], "image": ["png", "jpg", "jpeg"], "video": ["mp4", "avi", "mov"], "file": ["pdf", "txt", "doc", "docx"]}.items():
-#         if file_ext in exts:
-#             file_type = type_
-#             break
-    
-#     if not file_type:
-#         raise HTTPException(status_code=400, detail="Định dạng file không được hỗ trợ")
-
-#     file_id = str(uuid.uuid4())
-#     file_path = f"uploads/{file_type}/{file_id}.{file_ext}"
-#     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    
-#     with open(file_path, "wb") as f:
-#         f.write(await file.read())
-    
-#     file_url = f"http://127.0.0.1:8000/{file_path}"
-#     return {"file_url": file_url, "file_name": file.filename}

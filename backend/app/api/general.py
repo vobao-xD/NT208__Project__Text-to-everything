@@ -1,9 +1,11 @@
 import mimetypes
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Request
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
-from services.authentication_and_authorization import verify_user_access_token
+from services.history_and_output_manager import HistoryAndOutputManager
+from services.authentication_and_authorization import get_current_user
 router = APIRouter()
 
 # API trả về trang chủ của web
@@ -62,3 +64,18 @@ async def serve_output_file(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to serve file: {str(e)}")
+    
+@router.post("/save-output-file")
+async def save_output_file_endpoint(
+    user_email: str,
+    generator_name: str,
+    file_content: List[int],  # Nhận mảng bytes từ frontend
+    file_extension: str,
+    current_user=Depends(get_current_user)
+):
+    if current_user.email != user_email:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+    
+    file_bytes = bytes(file_content)  # Chuyển mảng bytes thành bytes
+    save_path = HistoryAndOutputManager.save_output_file(user_email, generator_name, file_bytes, file_extension)
+    return {"file_path": str(save_path)}
