@@ -566,10 +566,10 @@ const ApiService = {
 		};
 	},
 
-	// Tải cuộc trò chuyện
 	async getConversation(conversationId, generatorIdMap) {
 		const token = Cookies.get("access_token");
 		if (!token) throw new Error("Không tìm thấy token xác thực");
+
 		const response = await fetch(
 			`http://localhost:8000/chat-history/${conversationId}`,
 			{
@@ -582,12 +582,16 @@ const ApiService = {
 			throw new Error(
 				`Lỗi tải cuộc trò chuyện: ${await response.text()}`
 			);
+
 		const data = await response.json();
+		console.log("Raw response from /chat-history:", data);
 		const messages = [];
 
 		const details = data.details || [];
 		for (let detail of details) {
+			// Xử lý user message
 			const userMsg = {
+				id: detail.id, // Sử dụng UUID từ backend
 				type: "user",
 				content:
 					detail.input_text ||
@@ -601,33 +605,48 @@ const ApiService = {
 				isFile: detail.input_type === "file",
 				audio_url:
 					detail.input_type === "audio"
-						? detail.input_file_path
+						? `http://localhost:8000/get-output/${detail.input_file_path}`
 						: null,
 				image_url:
 					detail.input_type === "image"
-						? detail.input_file_path
+						? `http://localhost:8000/get-output/${detail.input_file_path}`
 						: null,
 				video_url:
 					detail.input_type === "video"
-						? detail.input_file_path
+						? `http://localhost:8000/get-output/${detail.input_file_path}`
 						: null,
 				file_url:
 					detail.input_type === "file"
-						? detail.input_file_path
+						? `http://localhost:8000/get-output/${detail.input_file_path}`
 						: null,
-				file_name: detail.input_file_name || null,
-				created_at: detail.created_at, // Thêm created_at
+				input_file_name: detail.input_file_name || null,
+				input_file_path: detail.input_file_path || null,
+				created_at: detail.created_at,
 			};
 			messages.push(userMsg);
 
+			// Xử lý bot message
 			const botMsg = {
+				id: detail.id, // Sử dụng UUID từ backend
 				type: "bot",
 				content: {
 					text: detail.output_text || null,
-					image_url: detail.output_file_path || null, // Sửa để khớp với output_file_path
-					audio_url: detail.output_file_path || null, // Sửa để khớp với output_file_path
-					video_url: detail.output_file_path || null, // Sửa để khớp với output_file_path
-					file_url: detail.output_file_path || null,
+					audio_url:
+						detail.output_type === "audio"
+							? `http://localhost:8000/get-output/${detail.output_file_path}`
+							: null,
+					image_url:
+						detail.output_type === "image"
+							? `http://localhost:8000/get-output/${detail.output_file_path}`
+							: null,
+					video_url:
+						detail.output_type === "video"
+							? `http://localhost:8000/get-output/${detail.output_file_path}`
+							: null,
+					file_url:
+						detail.output_type === "file"
+							? `http://localhost:8000/get-output/${detail.output_file_path}`
+							: null,
 					file_name: detail.output_file_name || null,
 				},
 				isText: detail.output_type === "text",
@@ -639,17 +658,18 @@ const ApiService = {
 					Object.keys(generatorIdMap).find(
 						(key) => generatorIdMap[key] === detail.generator_id
 					) || null,
-				created_at: detail.created_at, // Thêm created_at
+				output_file_path: detail.output_file_path || null,
+				created_at: detail.created_at,
 			};
 			messages.push(botMsg);
 		}
 
+		console.log("Prepared messages:", messages);
 		const firstDetail = details[0] || {};
-		const title = firstDetail.input_text
-			? firstDetail.input_text.length > 30
+		const title =
+			firstDetail.input_text && firstDetail.input_text.length > 30
 				? `${firstDetail.input_text.substring(0, 30)}...`
-				: firstDetail.input_text
-			: "Cuộc trò chuyện mới";
+				: firstDetail.input_text || "Cuộc trò chuyện mới";
 
 		return {
 			id: conversationId,
@@ -697,7 +717,7 @@ const ApiService = {
 			output_type: payload.output_type || null,
 			output_text: payload.output_text || null,
 			output_file_name: payload.output_file_name || null,
-			output_file_path: payload.output_file_url || null,
+			output_file_path: payload.output_file_path || null,
 			generator_id: generatorId,
 		};
 
