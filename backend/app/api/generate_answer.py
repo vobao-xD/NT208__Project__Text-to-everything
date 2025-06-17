@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from services.authentication_and_authorization import verify_user_access_token
 
 load_dotenv()
 router = APIRouter()
@@ -16,6 +17,7 @@ async def generate_answer(
     request: Request, 
     generate_request: dict
 ):
+    user_data = verify_user_access_token(source="cookie", request=request)
     user_question = generate_request.get("question")
     if not user_question:
         return {"error": "Missing 'question' in request body"}

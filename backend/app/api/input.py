@@ -41,7 +41,8 @@ def extract_text_from_docx(file: UploadFile):
 
 # 1. Chuẩn hóa đầu vào sang văn bản
 @router.post("/input/text")
-async def input_text(text: str):
+async def input_text(request: Request, text: str):
+    user_data = verify_user_access_token(source="cookie", request=request)
     return {"text": text}
 
 # 2. Chuyển speech qua text
@@ -53,67 +54,77 @@ async def speech_to_text(
     user_data = verify_user_access_token(source="cookie", request=request)
 
     ext = file.filename.split(".")[-1].lower()
+    input_bytes = await file.read()
     input_path = f"temp_{uuid.uuid4()}.{ext}"
     output_path = input_path.replace(ext, "wav")
 
-    save_path = HistoryAndOutputManager.save_output_file(
-                    user_email=user_data["email"],
-                    generator_name="video_to_text",
-                    file_content=file.read(),
-                    file_extension="wav"
-                )
-    
-    # with open(input_path, "wb") as f:
-    #     f.write(await file.read())
+    # Lưu file upload tạm thời để xử lý
+    with open(input_path, "wb") as f:
+        f.write(input_bytes)
 
     try:
-        
         if ext == "mp3" and file.content_type == "audio/mpeg":
             audio = AudioSegment.from_file(input_path, format="mp3")
             audio.export(output_path, format="wav")
         elif ext == "wav" and file.content_type == "audio/wav":
             output_path = input_path
         else:
+            os.remove(input_path)
             return {"error": "Chỉ hỗ trợ file .mp3 hoặc .wav"}
 
-        
         recognizer = sr.Recognizer()
         with sr.AudioFile(output_path) as source:
             audio_data = recognizer.record(source)
         text = recognizer.recognize_google(audio_data, language="vi-VN")
 
+        # Lưu file wav output vào _outputs
+        with open(output_path, "rb") as f:
+            wav_bytes = f.read()
+        save_path = HistoryAndOutputManager.save_output_file(
+            user_email=user_data["email"],
+            generator_name="speech_to_text",
+            file_content=wav_bytes,
+            file_extension="wav"
+        )
     except Exception as e:
+        if os.path.exists(input_path):
+            os.remove(input_path)
+        if os.path.exists(output_path) and output_path != input_path:
+            os.remove(output_path)
         return {"error": f"Lỗi xử lý: {str(e)}"}
-    # finally:
-    #     # Xoá file tạm
-    #     for path in [input_path, output_path]:
-    #         if os.path.exists(path):
-    #             os.remove(path)
+    # Xoá file tạm
+    if os.path.exists(input_path):
+        os.remove(input_path)
+    if os.path.exists(output_path) and output_path != input_path:
+        os.remove(output_path)
 
-    return {"text": text}
+    return {"text": text, "file_path": str(save_path)}
 
 # 3. Chuyển image sang text
 @router.post("/input/image")
-async def input_image(file: UploadFile = File(...)):
+async def input_image(request: Request, file: UploadFile = File(...)):
+    user_data = verify_user_access_token(source="cookie", request=request)
     # Kiểm tra định dạng file
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File phải là hình ảnh")
-    
     try:
         # Đọc nội dung file hình ảnh
         contents = await file.read()
+        # Lưu file ảnh gốc vào _outputs
+        save_path = HistoryAndOutputManager.save_output_file(
+            user_email=user_data["email"],
+            generator_name="image_to_text",
+            file_content=contents,
+            file_extension=file.filename.split(".")[-1].lower()
+        )
         # Sử dụng Image.open từ PIL để mở hình ảnh
         image = Image.open(io.BytesIO(contents))
-        
         # Trích xuất văn bản từ hình ảnh
         extracted_text = pytesseract.image_to_string(image, lang="eng+vie")  # Hỗ trợ tiếng Anh và tiếng Việt
-        
         # Kiểm tra nếu không trích xuất được văn bản
         if not extracted_text.strip():
-            return {"text": "Không thể trích xuất văn bản từ hình ảnh"}
-        
-        return {"text": extracted_text.strip()}
-    
+            return {"text": "Không thể trích xuất văn bản từ hình ảnh", "file_path": str(save_path)}
+        return {"text": extracted_text.strip(), "file_path": str(save_path)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi xử lý hình ảnh: {str(e)}")
 
@@ -125,56 +136,85 @@ async def input_video(
     ):
     user_data = verify_user_access_token(source="cookie", request=request)
 
-    # video_path_name = f"temp_{uuid.uuid4()}"
-    # with open(f"{video_path_name}.mp4", "wb") as f:
-    #     f.write(await file.read())
+    ext = file.filename.split(".")[-1].lower()
+    video_bytes = await file.read()
+    video_temp_path = f"temp_{uuid.uuid4()}.{ext}"
+    audio_temp_path = video_temp_path.replace(ext, "wav")
 
-    save_path = HistoryAndOutputManager.save_output_file(
-                    user_email=user_data["email"],
-                    generator_name="video_to_text",
-                    file_content=file.read(),
-                    file_extension="wav"
-                )
+    # Lưu file video gốc vào _outputs
+    video_save_path = HistoryAndOutputManager.save_output_file(
+        user_email=user_data["email"],
+        generator_name="video_to_text",
+        file_content=video_bytes,
+        file_extension=ext
+    )
 
-    video = VideoFileClip(f"{save_path}.mp4")
-    audio_path = f"{save_path}.wav"
-    video.audio.write_audiofile(audio_path)
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_path) as source:
-        audio = recognizer.record(source)
+    # Lưu file video tạm để xử lý
+    with open(video_temp_path, "wb") as f:
+        f.write(video_bytes)
+
     try:
+        video = VideoFileClip(video_temp_path)
+        video.audio.write_audiofile(audio_temp_path)
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(audio_temp_path) as source:
+            audio = recognizer.record(source)
         text = recognizer.recognize_google(audio, language="vi-VN")
-    except:
-        text = "[Không nhận diện được giọng nói từ video]"
-    # finally:
-    #     for ext in [".mp4",".wav"]:
-    #         if os.path.exists(save_path + ext):
-    #             os.remove(save_path + ext)
-    return {"text": text}
+        # Lưu file audio vào _outputs
+        with open(audio_temp_path, "rb") as f:
+            audio_bytes = f.read()
+        audio_save_path = HistoryAndOutputManager.save_output_file(
+            user_email=user_data["email"],
+            generator_name="video_to_text_audio",
+            file_content=audio_bytes,
+            file_extension="wav"
+        )
+    except Exception as e:
+        if os.path.exists(video_temp_path):
+            os.remove(video_temp_path)
+        if os.path.exists(audio_temp_path):
+            os.remove(audio_temp_path)
+        return {"error": f"Lỗi xử lý: {str(e)}"}
+    # Xoá file tạm
+    if os.path.exists(video_temp_path):
+        os.remove(video_temp_path)
+    if os.path.exists(audio_temp_path):
+        os.remove(audio_temp_path)
+
+    return {"text": text, "video_file_path": str(video_save_path), "audio_file_path": str(audio_save_path)}
 
 # 5. Chuyển text trong file ra text
 @router.post("/input/document")
-async def input_file(file: UploadFile = File(...)):
+async def input_file(request: Request, file: UploadFile = File(...)):
+    user_data = verify_user_access_token(source="cookie", request=request)
     filename = file.filename
     extension = filename.split(".")[-1].lower()
-
+    file_bytes = await file.read()
+    # Lưu file document gốc vào _outputs
+    save_path = HistoryAndOutputManager.save_output_file(
+        user_email=user_data["email"],
+        generator_name="document_to_text",
+        file_content=file_bytes,
+        file_extension=extension
+    )
     try:
         if extension == "txt":
-            content = await file.read()
             try:
-                text = content.decode("utf-8")
+                text = file_bytes.decode("utf-8")
             except UnicodeDecodeError:
-                text = content.decode("latin-1")
+                text = file_bytes.decode("latin-1")
         elif extension == "pdf":
+            # Tạo lại file-like object cho extract_text_from_pdf
+            file.file = io.BytesIO(file_bytes)
             text = extract_text_from_pdf(file)
         elif extension == "docx":
+            file.file = io.BytesIO(file_bytes)
             text = extract_text_from_docx(file)
         else:
-            return JSONResponse(status_code=400, content={"error": "File type not supported."})
+            return JSONResponse(status_code=400, content={"error": "File type not supported.", "file_path": str(save_path)})
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-    return {"text": text}
+        return JSONResponse(status_code=500, content={"error": str(e), "file_path": str(save_path)})
+    return {"text": text, "file_path": str(save_path)}
 
 # 6. Phân tích yêu cầu của người dùng
 @router.post("/analyze")
@@ -194,7 +234,7 @@ async def analyze_text(
         tomorrow = today + timedelta(days=1)
         end_of_today_timestamp = int(datetime.combine(tomorrow, time.min).timestamp())
 
-        analyze_count_key = f"analyze_count:{today.isoformat()}:{user_data["email"]}"
+        analyze_count_key = f"analyze_count:{today.isoformat()}:{user_data.get('email')}"
 
         used_calls = await redis_client.incr(analyze_count_key)
 

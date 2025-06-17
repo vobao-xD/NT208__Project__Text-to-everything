@@ -57,6 +57,9 @@ app.add_middleware(
     allow_headers=["*"],                      # Cho phép tất cả header
 )
 
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.include_router(router)
 
 # @app.on_event("startup")
