@@ -34,13 +34,14 @@ class HistoryAndOutputManager:
     @staticmethod
     def get_chat_history_by_id(db: Session, history_id: str, user_email: str) -> ChatHistoryResponse:
         chat = db.query(ChatHistory)\
-            .options(joinedload(ChatHistory.chat_details).joinedload(ChatDetail.generator))\
+            .options(joinedload(ChatHistory.chat_details))\
             .filter(ChatHistory.id == history_id, ChatHistory.user_email == user_email)\
             .first()
-
+        logging.info(f"Current user email: {user_email}")
+        logging.info(f"Chat user email: {chat.user_email if chat else 'None'}")
+        logging.info(f"Chat details count: {len(chat.chat_details) if chat else 0}")
         if not chat:
             raise HTTPException(status_code=404, detail="Chat not found or unauthorized")
-
         return chat
 
     @staticmethod

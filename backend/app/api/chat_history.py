@@ -56,7 +56,7 @@ def add_detail_to_chat(
     )
 
 @router.get("/chat-history", response_model=list[ChatHistoryResponse])
-def get_chat_history(
+def get_all_chat_history(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     limit: int = 10
