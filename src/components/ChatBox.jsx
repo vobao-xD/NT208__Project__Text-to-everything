@@ -86,7 +86,10 @@ const ChatBox = () => {
 		<div className="conversation content-item">
 			{messages.map((message) => (
 				<div
-					key={message.id || message.content?.text || Date.now()}
+					key={
+						message.id ||
+						`${message.created_at}-${index}-${message.type}`
+					}
 					className={`message ${message.type}-message ${
 						message.isAudio ? "audio-message" : ""
 					} ${message.isImage ? "image-message" : ""} ${

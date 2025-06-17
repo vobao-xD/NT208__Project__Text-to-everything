@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import ApiService from "@/utils/api_services";
+import { v4 as uuidv4 } from "uuid";
 
 export const ChatContext = createContext();
 
@@ -29,12 +30,12 @@ export const ChatProvider = ({ children }) => {
 		11: "11111111-1111-1111-1111-111111111111", // File to text
 	};
 	const actionMap = {
-		generate_text: "6",
+		generate_speech: "1",
 		generate_image: "2",
 		generate_video: "3",
-		generate_code: "8",
-		generate_speech: "1",
+		generate_text: "6",
 		generate_answer: "7",
+		generate_code: "8",
 	};
 
 	// Load lịch sử chat khi component mount
@@ -104,20 +105,27 @@ export const ChatProvider = ({ children }) => {
 	}, []);
 
 	const handleAutoAnalyze = useCallback(
-		async (text) => {
-			if (!text.trim()) {
-				toast.error("Vui lòng nhập nội dung để phân tích.");
+		async (text, file = null) => {
+			if (!text?.trim() && !file) {
+				toast.error(
+					"Vui lòng nhập nội dung hoặc chọn file để phân tích."
+				);
 				return { success: false, error: "Empty input" };
 			}
-			if (isRateLimited)
+			if (isRateLimited) {
 				return { success: false, error: "Rate limit exceeded" };
+			}
 			try {
 				setIsLoading(true);
-				const response = await ApiService.analyzeText(
-					text,
-					email,
-					role
-				);
+				let response;
+				if (text && file) {
+					response = await ApiService.analyzeTextAndFile(text, file);
+				} else if (text) {
+					response = await ApiService.analyzeText(text);
+				} else if (file) {
+					response = await ApiService.analyzeFile(file);
+				}
+
 				if (response.status === 429) {
 					const timeToWait =
 						parseInt(response.headers.get("Retry-After"), 10) *
@@ -125,20 +133,10 @@ export const ChatProvider = ({ children }) => {
 					setRetryAfter(timeToWait);
 					setIsRateLimited(true);
 					toast.error("Hết lượt miễn phí. Vui lòng thử lại sau.");
-					const timer = setInterval(() => {
-						setRetryAfter((prev) => {
-							if (prev <= 1) {
-								clearInterval(timer);
-								setIsRateLimited(false);
-								return 0;
-							}
-							return prev - 1;
-						});
-					}, 1000);
 					return { success: false, error: "Rate limit exceeded" };
 				}
-				const data = await response.json();
 
+				const data = await response.json();
 				if (data.intent_analysis && actionMap[data.intent_analysis]) {
 					const action = actionMap[data.intent_analysis];
 					if (action === "3" && role !== "pro") {
@@ -150,7 +148,7 @@ export const ChatProvider = ({ children }) => {
 					return {
 						success: true,
 						intent_analysis: data.intent_analysis,
-						prompt: text,
+						prompt: text || "",
 						action,
 					};
 				}
@@ -165,7 +163,14 @@ export const ChatProvider = ({ children }) => {
 				setIsLoading(false);
 			}
 		},
-		[email, role, isRateLimited]
+		[
+			role,
+			isRateLimited,
+			setIsLoading,
+			setRetryAfter,
+			setIsRateLimited,
+			actionMap,
+		]
 	);
 
 	const loadConversation = useCallback(async (id) => {
@@ -264,54 +269,33 @@ export const ChatProvider = ({ children }) => {
 
 				// Xử lý mode 0 (Auto Analyze)
 				if (option === "0") {
+					let analyzeResult;
 					if (text && file) {
-						const analyzeResult =
-							await ApiService.analyzeTextAndFile(
-								finalText,
-								file,
-								email,
-								role
-							);
+						analyzeResult = await ApiService.analyzeTextAndFile(
+							finalText,
+							file,
+							finalOption,
+							role,
+							email
+						);
 						if (!analyzeResult.ok)
 							throw new Error("Phân tích text và file thất bại");
-						const data = await analyzeResult.json();
-						if (data.intent_analysis) {
-							finalOption =
-								actionMap[data.intent_analysis] || finalOption;
-							setMessages((prev) => [
-								...prev,
-								{
-									id: Date.now(),
-									type: "bot",
-									content:
-										"[AutoAnalyze đã xác định chức năng phù hợp]",
-									isText: true,
-								},
-							]);
-						}
 					} else if (text) {
-						const analyzeResult = await handleAutoAnalyze(text);
+						analyzeResult = await handleAutoAnalyze(text);
 						if (!analyzeResult.success) return;
 						finalOption = analyzeResult.action;
 						finalText = analyzeResult.prompt;
-						setMessages((prev) => [
-							...prev,
-							{
-								id: Date.now(),
-								type: "bot",
-								content:
-									"[AutoAnalyze đã xác định chức năng phù hợp]",
-								isText: true,
-							},
-						]);
 					} else if (file) {
-						const analyzeResult = await ApiService.analyzeFile(
+						analyzeResult = await ApiService.analyzeFile(
 							file,
-							email,
-							role
+							finalOption,
+							role,
+							email
 						);
 						if (!analyzeResult.ok)
 							throw new Error("Phân tích file thất bại");
+					}
+					if (analyzeResult && analyzeResult.ok) {
 						const data = await analyzeResult.json();
 						if (data.intent_analysis) {
 							finalOption =
@@ -319,7 +303,7 @@ export const ChatProvider = ({ children }) => {
 							setMessages((prev) => [
 								...prev,
 								{
-									id: Date.now(),
+									id: uuidv4(),
 									type: "bot",
 									content:
 										"[AutoAnalyze đã xác định chức năng phù hợp]",
@@ -369,22 +353,25 @@ export const ChatProvider = ({ children }) => {
 					userMessage = await ApiService.createUserMessage(
 						finalText,
 						file,
-						finalOption
+						finalOption,
+						email
 					);
 				} else if (finalText) {
 					userMessage = await ApiService.createUserMessage(
 						finalText,
 						null,
-						finalOption
+						finalOption,
+						email
 					);
 				} else if (file) {
 					userMessage = await ApiService.createUserMessage(
 						"",
 						file,
-						finalOption
+						finalOption,
+						email
 					);
 				}
-				userMessage.id = Date.now();
+				userMessage.id = userMessage.id || uuidv4(); // Đảm bảo ID duy nhất
 				setMessages((prev) => [...prev, userMessage]);
 
 				// Gọi API
@@ -413,7 +400,7 @@ export const ChatProvider = ({ children }) => {
 					response,
 					finalOption
 				);
-				botMessage.id = Date.now();
+				botMessage.id = botMessage.id || uuidv4(); // Đảm bảo ID duy nhất
 				setMessages((prev) => [...prev, botMessage]);
 
 				// Tạo hoặc cập nhật conversation
@@ -423,33 +410,22 @@ export const ChatProvider = ({ children }) => {
 				}
 
 				console.log(
-					`chatcontext: bot content ${botMessage.output_file_path}`
+					`chatcontext: bot content ${
+						botMessage.content?.text ||
+						botMessage.output_file_path ||
+						"undefined"
+					}`
 				);
 				// Gọi addChatDetail với generatorIdMap
 				await ApiService.addChatDetail(
 					{
 						input_type: userMessage.input_type || "text",
-						input_text:
-							typeof userMessage.content === "string"
-								? userMessage.content
-								: userMessage.content.text || "",
-						input_file_name: userMessage.file_name,
-						input_file_path:
-							userMessage.audio_url ||
-							userMessage.image_url ||
-							userMessage.video_url ||
-							userMessage.file_url,
-						output_type: botMessage.isText
-							? "text"
-							: botMessage.isAudio
-							? "audio"
-							: botMessage.isImage
-							? "image"
-							: botMessage.isVideo
-							? "video"
-							: "file",
-						output_text: botMessage.content.text || null,
-						output_file_name: null,
+						input_text: userMessage.input_text || "",
+						input_file_name: userMessage.input_file_name,
+						input_file_path: userMessage.input_file_path || null,
+						output_type: botMessage.output_type || "text",
+						output_text: botMessage.content?.text || null,
+						output_file_name: botMessage.output_file_name,
 						output_file_path: botMessage.output_file_path || null,
 						generator_id: finalOption,
 					},
@@ -470,6 +446,11 @@ export const ChatProvider = ({ children }) => {
 			handleAutoAnalyze,
 			email,
 			createConversation,
+			actionMap,
+			setMessages,
+			setIsLoading,
+			setCurrentConversationId,
+			generatorIdMap,
 		]
 	);
 

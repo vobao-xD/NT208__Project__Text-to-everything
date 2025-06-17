@@ -109,12 +109,12 @@ const handleAutoAnalyze = async (text) => {
 
 		// Map action sang selectedOption
 		const actionMap = {
-			generate_text: "6",
+			generate_speech: "1",
 			generate_image: "2",
 			generate_video: "3",
-			generate_code: "8",
-			generate_speech: "1",
+			generate_text: "6",
 			generate_answer: "7",
+			generate_code: "8",
 		};
 
 		if (data.intent_analysis && actionMap[data.intent_analysis]) {

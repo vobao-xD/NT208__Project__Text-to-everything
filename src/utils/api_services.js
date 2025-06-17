@@ -21,7 +21,7 @@ const ApiService = {
 			case "3":
 				return "video";
 			case "4":
-				return "file";
+				return "audio";
 			case "5":
 				return "image";
 			case "9":
@@ -68,12 +68,12 @@ const ApiService = {
 	},
 
 	// Phân tích văn bản (cho mode 0 với text only)
-	async analyzeText(text, email, role) {
+	async analyzeText(text) {
 		const response = await fetch("http://localhost:8000/analyze", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			credentials: "include",
-			body: JSON.stringify({ user_text: text, email, role }),
+			body: JSON.stringify({ user_text: text }),
 		});
 		if (!response.ok)
 			throw new Error(`Lỗi phân tích: ${response.statusText}`);
@@ -81,10 +81,10 @@ const ApiService = {
 	},
 
 	// Phân tích file (cho mode 0 với file only)
-	async analyzeFile(file, email, role) {
+	async analyzeFile(file) {
 		const formData = new FormData();
 		formData.append("file", file);
-		const response = await fetch("http://localhost:8000/analyze/file", {
+		const response = await fetch("http://localhost:8000/advance/analyze", {
 			method: "POST",
 			credentials: "include",
 			body: formData,
@@ -95,18 +95,15 @@ const ApiService = {
 	},
 
 	// Phân tích cả text và file (cho mode 0 với cả hai)
-	async analyzeTextAndFile(text, file, email, role) {
+	async analyzeTextAndFile(text, file) {
 		const formData = new FormData();
 		formData.append("text", text);
 		formData.append("file", file);
-		const response = await fetch(
-			"http://localhost:8000/analyze/text-file",
-			{
-				method: "POST",
-				credentials: "include",
-				body: formData,
-			}
-		);
+		const response = await fetch("http://localhost:8000/advance/analyze", {
+			method: "POST",
+			credentials: "include",
+			body: formData,
+		});
 		if (!response.ok)
 			throw new Error(
 				`Lỗi phân tích text và file: ${response.statusText}`
@@ -116,40 +113,65 @@ const ApiService = {
 
 	// Xử lý text only (cho mode 1, 2, 3, 6, 7, 8)
 	async processText(text, option, role) {
-		let apiUrl, requestBody;
 		const headers = { "Content-Type": "application/json" };
 
+		let apiUrl, requestBody;
+
 		switch (option) {
-			case "1":
+			case "1": // Text to Speech
 				apiUrl =
 					role === "pro"
-						? "http://localhost:8000/advanced/text-to-speech"
+						? "http://localhost:8000/advanced/text-to-audio"
 						: "http://localhost:8000/text-to-speech/default";
-				requestBody = {
-					text,
-					language: "Tiếng Việt",
-					gender: "male",
-					style: "default",
-				};
+				requestBody =
+					role === "pro"
+						? {
+								text: text,
+								voice: "alloy",
+								model: "gpt-4o-mini-tts",
+								response_format: "mp3",
+								speed: 1,
+								instructions:
+									"sound like human, speak Vietnamese",
+						  }
+						: {
+								text: text,
+								language: "Tiếng Việt",
+								gender: "male",
+								style: "default",
+						  };
 				break;
-			case "2":
+
+			case "2": // Text to Image
 				apiUrl =
 					role === "pro"
 						? "http://localhost:8000/advanced/text-to-image"
 						: "http://localhost:8000/text-to-image";
-				requestBody = {
-					prompt: text,
-					n: 1,
-					size: "1024x1024",
-					quality: "standard",
-					style: "vivid",
-				};
+				requestBody =
+					role === "pro"
+						? {
+								model: "dall-e-3",
+								prompt: text,
+								n: 1,
+								size: "1024x1024",
+								quality: "standard",
+								style: "vivid",
+								response_format: "url",
+						  }
+						: {
+								prompt: text,
+								steps: 4,
+						  };
 				break;
-			case "3":
-				if (role !== "pro")
-					throw new Error(
+
+			case "3": // Text to Video
+				// Chỉ làm text to video API free, vì không đủ credit cho OpenAI :))
+				if (role !== "pro") {
+					toast.error(
 						"Chỉ tài khoản Pro được phép sử dụng Text to Video!"
 					);
+					return;
+				}
 				apiUrl = "http://localhost:8000/text-to-video";
 				requestBody = {
 					prompt: text,
@@ -159,36 +181,64 @@ const ApiService = {
 					frames: 64,
 				};
 				break;
-			case "6":
+
+			case "6": // Chatbot Content
 				apiUrl =
 					role === "pro"
 						? "http://localhost:8000/advanced/chatbot-content"
 						: "http://localhost:8000/chatbot/content";
-				requestBody = {
-					user_input: text,
-					history: [],
-					system_prompt: "You are a helpful chatbot.",
-					max_tokens: 500,
-				};
+				requestBody =
+					role === "pro"
+						? {
+								user_input: text,
+								history: [],
+								system_prompt:
+									"You are a helpful and friendly chatbot. You will give as much detail as possible within a very short sentence.",
+								max_tokens: 500,
+						  }
+						: {
+								user_input: text,
+								history: [],
+								system_prompt:
+									"You are a helpful and friendly chatbot. You will give as much detail as possible within a very short sentence.",
+								max_tokens: 250,
+						  };
 				break;
-			case "7":
+
+			case "7": // Generate Answer
 				apiUrl =
 					role === "pro"
 						? "http://localhost:8000/advanced/generate-answer"
 						: "http://localhost:8000/generate_answer";
-				requestBody = { question: text, max_tokens: 500 };
+				requestBody =
+					role === "pro"
+						? {
+								question: text,
+								context: "none",
+								max_tokens: 500,
+						  }
+						: {
+								question: text,
+						  };
 				break;
-			case "8":
+
+			case "8": // Text to Code
 				apiUrl =
 					role === "pro"
 						? "http://localhost:8000/advanced/text-to-code"
 						: "http://localhost:8000/text-to-code";
-				requestBody = {
-					prompt: text,
-					language: "python",
-					max_tokens: 150,
-				};
+				requestBody =
+					role === "pro"
+						? {
+								prompt: text,
+								language: "python",
+								max_tokens: 250,
+						  }
+						: {
+								prompt: text,
+						  };
 				break;
+
 			default:
 				throw new Error("Tính năng không được hỗ trợ!");
 		}
@@ -199,8 +249,9 @@ const ApiService = {
 			credentials: "include",
 			body: JSON.stringify(requestBody),
 		});
-		if (!response.ok)
+		if (!response.ok) {
 			throw new Error(`Lỗi xử lý text: ${response.statusText}`);
+		}
 		return response;
 	},
 
@@ -237,7 +288,7 @@ const ApiService = {
 		return response;
 	},
 
-	// Xử lý cả text và file (cho mode 4, và mode 0 khi có cả hai)
+	// Xử lý cả text và file (cho mode 0 và mode 4)
 	async processTextAndFile(text, file, option, role) {
 		if (!text || !file) throw new Error("Yêu cầu cả text và file!");
 		if (option === "4" && !file.name.toLowerCase().endsWith(".wav"))
@@ -245,38 +296,93 @@ const ApiService = {
 				"File phải có định dạng .wav cho Custom Text to Speech!"
 			);
 
-		const formData = new FormData();
-		formData.append("text", text);
-		formData.append("file", file);
-		let apiUrl =
-			role === "pro" && option === "4"
-				? "http://localhost:8000/advanced/text-file"
-				: "http://localhost:8000/text-file";
+		let apiUrl, formData;
+
+		switch (option) {
+			case "0": // Smart file and text to answer
+				formData = new FormData();
+				formData.append("text", text);
+				formData.append("file", file);
+				apiUrl =
+					role === "pro"
+						? "http://localhost:8000/advanced/file-text-to-answer"
+						: "http://localhost:8000/advanced/file-text-to-answer"; // Mode 0 chỉ có trên advanced, cần kiểm tra backend
+				// Thêm tham số tùy chọn (có thể điều chỉnh dựa trên nhu cầu)
+				formData.append("vision_model_override", "gpt-4o");
+				formData.append("detail_vision", "auto");
+				formData.append("max_tokens_vision", "300");
+				formData.append("assistant_model_override", "gpt-4o");
+				break;
+
+			case "4": // Custom Text to Speech with voice cloning
+				if (role !== "pro")
+					throw new Error(
+						"Chỉ tài khoản Pro được phép sử dụng Custom Text to Speech!"
+					);
+				formData = new FormData();
+				formData.append("text", text);
+				formData.append("file", file);
+				formData.append("language", "Tiếng Việt"); // Giá trị mặc định
+				formData.append("use_existing_reference", "false"); // Giá trị mặc định
+				apiUrl = "http://localhost:8000/text-to-speech/custom";
+				break;
+
+			default:
+				throw new Error("Tính năng không được hỗ trợ!");
+		}
 
 		const response = await fetch(apiUrl, {
 			method: "POST",
 			credentials: "include",
 			body: formData,
 		});
-		if (!response.ok)
+		if (!response.ok) {
 			throw new Error(`Lỗi xử lý text và file: ${response.statusText}`);
+		}
 		return response;
+	},
+
+	// api_services.js
+	async saveOutputFile(userEmail, generatorName, fileContent, fileExtension) {
+		const token = Cookies.get("access_token");
+		if (!token) throw new Error("Không tìm thấy token xác thực");
+
+		const response = await fetch("http://localhost:8000/save-output-file", {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: "include",
+			body: JSON.stringify({
+				user_email: userEmail,
+				generator_name: generatorName,
+				file_content: Array.from(fileContent), // Chuyển Uint8Array thành array
+				file_extension: fileExtension,
+			}),
+		});
+
+		if (!response.ok)
+			throw new Error(`Lỗi lưu file: ${await response.text()}`);
+		const data = await response.json();
+		return Path(data.file_path); // Giả định backend trả về đường dẫn
 	},
 
 	// Chuẩn hóa phản hồi bot
 	async normalizeBotMessage(response, option) {
-		let botMessage = { type: "bot" };
+		let botMessage = { type: "bot", id: Date.now().toString() };
 
 		try {
-			let data;
-			if (option === "1" || option === "2" || option === "3") {
-				// Lấy dữ liệu JSON từ response
-				data = await response.json();
-				const filePath = data.file_path; // Đường dẫn từ backend, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
+			const data = await response.json();
+			botMessage.option = option;
+
+			if (["0", "1", "2", "3", "4", "5"].includes(option)) {
+				const filePath = data.file_path; // Đường dẫn đầy đủ, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
+				if (!filePath)
+					throw new Error("Không tìm thấy file_path trong response");
+
 				botMessage.output_file_path = filePath;
-				console.log(
-					`normalize: bot content ${botMessage.output_file_path}`
-				);
+				botMessage.output_file_name = filePath.split("/").pop(); // Tên file, optional
+
 				const fileResponse = await fetch(
 					`http://localhost:8000/get-output/${filePath}`,
 					{
@@ -289,44 +395,57 @@ const ApiService = {
 						`Lỗi tải file: ${await fileResponse.text()}`
 					);
 				const blob = await fileResponse.blob();
-				if (option === "1") {
-					botMessage.content = {
-						audio_url: URL.createObjectURL(blob),
-					};
-					botMessage.isAudio = true;
-					botMessage.type = "audio";
-				} else if (option === "2") {
-					botMessage.content = {
-						image_url: URL.createObjectURL(blob),
-					};
-					botMessage.isImage = true;
-					botMessage.type = "image";
-				} else if (option === "3") {
-					botMessage.content = {
-						video_url: URL.createObjectURL(blob),
-					};
-					botMessage.isVideo = true;
-					botMessage.type = "video";
+
+				switch (option) {
+					case "0": // File and text to answer (text output)
+						botMessage.content = {
+							text: data.answer || data.response || "",
+						};
+						botMessage.output_type = "text";
+						botMessage.isText = true;
+						break;
+					case "1": // Text to audio
+					case "4": // Custom text to speech
+						botMessage.content = {
+							audio_url: URL.createObjectURL(blob),
+						};
+						botMessage.output_type = "audio";
+						botMessage.isAudio = true;
+						break;
+					case "2": // Text to image
+					case "5": // Image processing
+						botMessage.content = {
+							image_url: URL.createObjectURL(blob),
+						};
+						botMessage.output_type = "image";
+						botMessage.isImage = true;
+						break;
+					case "3": // Text to video
+						botMessage.content = {
+							video_url: URL.createObjectURL(blob),
+						};
+						botMessage.output_type = "video";
+						botMessage.isVideo = true;
+						break;
 				}
-			} else {
-				// Xử lý text trực tiếp từ response
-				data = await response.json();
+			} else if (["6", "7", "8"].includes(option)) {
 				botMessage.content = {
 					text:
-						(option === "8" &&
-							(typeof data.code === "object"
-								? JSON.stringify(data.code)
-								: data.code)) ||
+						(option === "8" && typeof data.code === "object"
+							? JSON.stringify(data.code)
+							: data.code) ||
 						data.text ||
 						data.response ||
 						data.answer ||
 						data.content ||
 						"",
 				};
+				botMessage.output_type = "text";
 				botMessage.isText = true;
-				botMessage.type = "text";
+			} else {
+				throw new Error("Option không được hỗ trợ!");
 			}
-			botMessage.option = option; // Thêm option để theo dõi
+
 			return botMessage;
 		} catch (error) {
 			throw new Error(`Lỗi chuẩn hóa bot message: ${error.message}`);
@@ -334,51 +453,51 @@ const ApiService = {
 	},
 
 	// Tạo tin nhắn người dùng cho file hoặc text
-	async createUserMessage(input, option) {
+	async createUserMessage(input, option, userEmail) {
 		let message = { type: "user" };
 
 		if (typeof input === "string") {
-			// Trường hợp text only
-			message.content = input;
 			message.input_type = "text";
+			message.input_text = input;
+			message.content = input; // Giữ content cho hiển thị
 			message.isText = true;
 		} else if (input instanceof File) {
-			// Trường hợp file
 			const fileExtension = input.name.split(".").pop().toLowerCase();
-			const url = URL.createObjectURL(input);
-			message.content = `Đã gửi ${
-				["mp3", "wav"].includes(fileExtension)
-					? "file audio"
-					: fileExtension === "mp4"
-					? "video"
-					: ["pdf", "doc", "docx", "txt"].includes(fileExtension)
-					? "file"
-					: "ảnh"
-			}: ${input.name}`;
-			if (input.type.startsWith("image/") || option === "5") {
-				message.isImage = true;
-				message.image_url = url;
-				message.input_type = "image";
-			} else if (
-				["mp3", "wav"].includes(fileExtension) ||
-				option === "9"
-			) {
-				message.isAudio = true;
-				message.audio_url = url;
-				message.input_type = "audio";
-			} else if (fileExtension === "mp4" || option === "10") {
-				message.isVideo = true;
-				message.video_url = url;
-				message.input_type = "video";
-			} else if (
-				["pdf", "doc", "docx", "txt"].includes(fileExtension) ||
-				option === "11"
-			) {
-				message.isFile = true;
-				message.file_url = url;
-				message.fileName = input.name;
-				message.input_type = "file";
+			const fileTypes = {
+				audio: ["mp3", "wav"],
+				image: ["png", "jpg", "jpeg"],
+				video: ["mp4", "avi", "mov"],
+				file: ["pdf", "txt", "doc", "docx"],
+			};
+
+			let inputType = null;
+			for (const [type, extensions] of Object.entries(fileTypes)) {
+				if (extensions.includes(fileExtension)) {
+					inputType = type;
+					break;
+				}
 			}
+			if (!inputType)
+				throw new Error("Định dạng file không được hỗ trợ!");
+
+			// Lưu file lên backend
+			const fileContent = await input.arrayBuffer(); // Chuyển file thành bytes
+			const savePath = await ApiService.saveOutputFile(
+				userEmail,
+				"user_upload", // Tên generator cho file upload
+				new Uint8Array(fileContent),
+				fileExtension
+			);
+			const filePath = savePath.toString().replace("./", "backend/"); // Thay đổi đường dẫn cho phù hợp
+
+			message.input_type = inputType;
+			message.input_file_path = filePath;
+			message.input_file_name = input.name; // Optional, nhưng vẫn gán
+			message.content = `Đã gửi ${inputType}: ${input.name}`;
+			message[
+				`is${inputType.charAt(0).toUpperCase() + inputType.slice(1)}`
+			] = true;
+			message[`${inputType}_url`] = filePath; // Sử dụng filePath cho URL tạm thời (sẽ gọi /get-output sau)
 		} else {
 			throw new Error("Đầu vào không hợp lệ: Phải là text hoặc file!");
 		}
@@ -392,13 +511,10 @@ const ApiService = {
 		const token = Cookies.get("access_token");
 		if (!token) throw new Error("Không tìm thấy token xác thực");
 		const response = await fetch(
-			"http://localhost:8000/chat-history?limit=50",
+			"http://localhost:8000/chat-history?limit=10",
 			{
 				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
+				headers: { "Content-Type": "application/json" },
 				credentials: "include",
 			}
 		);
@@ -424,10 +540,7 @@ const ApiService = {
 		if (!token) throw new Error("Không tìm thấy token xác thực");
 		const response = await fetch("http://localhost:8000/chat-history", {
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
-			},
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ chat_details: [] }),
 			credentials: "include",
 		});
@@ -461,10 +574,7 @@ const ApiService = {
 			`http://localhost:8000/chat-history/${conversationId}`,
 			{
 				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
+				headers: { "Content-Type": "application/json" },
 				credentials: "include",
 			}
 		);
@@ -544,7 +654,7 @@ const ApiService = {
 		return {
 			id: conversationId,
 			title,
-			created_at: data.created_at, // Thêm created_at
+			created_at: data.created_at,
 			messages,
 		};
 	},
