@@ -288,7 +288,8 @@ async def get_openai_client(request: Request):
     return client
 
 @router.post("/advanced/text-to-code")
-async def text_to_code(payload: TextToCodeRequest, client=Depends(get_openai_client)):
+async def text_to_code(request: Request, payload: TextToCodeRequest, client=Depends(get_openai_client)):
+    user_data = verify_user_access_token(source="cookie", request=request)
     system_prompt = (
         f"You are an expert coding assistant. "
         f"Generate a complete and functional code snippet in the {payload.language} programming language "
@@ -345,21 +346,34 @@ async def text_to_image(
         )
 
         image_data = []
+        file_paths = []
         if payload.response_format == "url":
+            import requests
             for img in response.data:
                 image_data.append({"url": img.url, "revised_prompt": img.revised_prompt})
-        elif payload.response_format == "b64_json":
-            for img in response.data:
-                image_data.append({"b64_json": img.b64_json, "revised_prompt": img.revised_prompt})
-
-        save_path = HistoryAndOutputManager.save_output_file(
+                # Tải ảnh về và lưu vào _outputs
+                img_bytes = requests.get(img.url).content
+                save_path = HistoryAndOutputManager.save_output_file(
                     user_email=user_data["email"],
                     generator_name="text_to_image",
-                    file_content=image_data,
+                    file_content=img_bytes,
                     file_extension="jpg"
                 )
+                file_paths.append(str(save_path))
+        elif payload.response_format == "b64_json":
+            import base64
+            for img in response.data:
+                image_data.append({"b64_json": img.b64_json, "revised_prompt": img.revised_prompt})
+                img_bytes = base64.b64decode(img.b64_json)
+                save_path = HistoryAndOutputManager.save_output_file(
+                    user_email=user_data["email"],
+                    generator_name="text_to_image",
+                    file_content=img_bytes,
+                    file_extension="jpg"
+                )
+                file_paths.append(str(save_path))
 
-        return {"images": image_data}
+        return {"images": image_data, "file_paths": file_paths}
     except openai.RateLimitError as e:
         raise HTTPException(status_code=429, detail=f"OpenAI API rate limit exceeded: {e.message} (Request ID: {e.request_id if hasattr(e, 'request_id') else 'N/A'})")
     except openai.AuthenticationError as e:
@@ -378,7 +392,8 @@ async def text_to_image(
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
 
 @router.post("/advanced/text-to-video")
-async def text_to_video(payload: RunwayTextToVideoRequest):
+async def text_to_video(request: Request, payload: RunwayTextToVideoRequest):
+    user_data = verify_user_access_token(source="cookie", request=request)
     runway_api_key = os.getenv("RUNWAYML_API_SECRET")
     if not runway_api_key:
         raise HTTPException(status_code=500, detail="RUNWAYML_API_SECRET environment variable not set.")
@@ -407,11 +422,21 @@ async def text_to_video(payload: RunwayTextToVideoRequest):
 
             if task_details.status == "SUCCEEDED":
                 if hasattr(task_details, 'output') and task_details.output and hasattr(task_details.output, 'video_url'):
-                    video_url = task_details.output.video_url #
+                    video_url = task_details.output.video_url
+                    # Tải video về và lưu vào _outputs
+                    import requests
+                    video_bytes = requests.get(video_url).content
+                    save_path = HistoryAndOutputManager.save_output_file(
+                        user_email=user_data["email"],
+                        generator_name="text_to_video",
+                        file_content=video_bytes,
+                        file_extension="mp4"
+                    )
                     return {
                         "message": "Video generation successful.",
                         "task_id": task_id,
                         "video_url": video_url,
+                        "file_path": str(save_path),
                         "details": task_details.model_dump() # Return full task details
                     }
                 else:
@@ -446,7 +471,8 @@ async def text_to_video(payload: RunwayTextToVideoRequest):
             await runway_client.close()
 
 @router.post("/advanced/text-to-audio")
-async def text_to_audio(payload: TextToAudioRequest,client=Depends(get_openai_client)):
+async def text_to_audio(request: Request, payload: TextToAudioRequest, client=Depends(get_openai_client)):
+    user_data = verify_user_access_token(source="cookie", request=request)
     try:
         api_params = {
             "model": payload.model,
@@ -459,16 +485,16 @@ async def text_to_audio(payload: TextToAudioRequest,client=Depends(get_openai_cl
             api_params["instructions"] = payload.instructions
 
         response = await client.audio.speech.create(**api_params)
-
         audio_bytes = response.read()
 
-
-        media_type = f"audio/{payload.response_format}"
-        if payload.response_format == "pcm":
-            media_type = "audio/L16; rate=24000; channels=1"
-
-        return StreamingResponse(io.BytesIO(audio_bytes), media_type=media_type)
-
+        # Lưu file audio output vào _outputs
+        save_path = HistoryAndOutputManager.save_output_file(
+            user_email=user_data["email"],
+            generator_name="text_to_audio",
+            file_content=audio_bytes,
+            file_extension=payload.response_format or "mp3"
+        )
+        return {"file_path": str(save_path)}
     except openai.RateLimitError as e:
         raise HTTPException(status_code=429, detail=f"OpenAI API rate limit exceeded: {e.message} (Request ID: {e.request_id if hasattr(e, 'request_id') else 'N/A'})")
     except openai.AuthenticationError as e:
@@ -484,18 +510,17 @@ async def text_to_audio(payload: TextToAudioRequest,client=Depends(get_openai_cl
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
 
 @router.post("/advanced/generate-answer")
-async def generate_answer(payload: GenerateAnswerRequest,client=Depends(get_openai_client)):
+async def generate_answer(request: Request, payload: GenerateAnswerRequest, client=Depends(get_openai_client)):
+    user_data = verify_user_access_token(source="cookie", request=request)
     system_prompt = (
         "You are a helpful AI assistant designed to answer questions. "
         "If context is provided, base your answer primarily on that context. "
         "If no context is provided, use your general knowledge. "
         "Strive for accuracy and conciseness."
     )
-
     user_content = payload.question
     if payload.context:
         user_content = f"Context:\n---\n{payload.context}\n---\n\nQuestion: {payload.question}"
-
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_content}
@@ -518,12 +543,12 @@ async def generate_answer(payload: GenerateAnswerRequest,client=Depends(get_open
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
 
 @router.post("/advanced/chatbot-content")
-async def chatbot_content(payload: ChatbotContentRequest,client=Depends(get_openai_client)):
+async def chatbot_content(request: Request, payload: ChatbotContentRequest, client=Depends(get_openai_client)):
+    user_data = verify_user_access_token(source="cookie", request=request)
     messages = [{"role": "system", "content": payload.system_prompt}]
     for msg in payload.history:
         messages.append({"role": msg.role, "content": msg.content})
     messages.append({"role": "user", "content": payload.user_input})
-
     try:
         completion = await client.chat.completions.create(
             model="gpt-4o", 
@@ -532,9 +557,7 @@ async def chatbot_content(payload: ChatbotContentRequest,client=Depends(get_open
             max_tokens=payload.max_tokens
         )
         response_content = completion.choices[0].message.content
-
         new_assistant_message = {"role": "assistant", "content": response_content.strip()}
-
         return {"response": response_content.strip(), "new_history_message": new_assistant_message}
     except openai.RateLimitError as e:
         raise HTTPException(status_code=429, detail=f"OpenAI API rate limit exceeded: {e.message} (Request ID: {e.request_id if hasattr(e, 'request_id') else 'N/A'})")
@@ -545,7 +568,8 @@ async def chatbot_content(payload: ChatbotContentRequest,client=Depends(get_open
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {str(e)}")
 
 @router.post("/advanced/enhance")
-async def enhance(payload: EnhanceTextRequest,client=Depends(get_openai_client)):
+async def enhance(request: Request, payload: EnhanceTextRequest, client=Depends(get_openai_client)):
+    user_data = verify_user_access_token(source="cookie", request=request)
     system_prompt = (
         f"You are a text enhancement AI. Rewrite the following text based on this instruction: "
         f"'{payload.instruction}'. Output only the rewritten text, without any additional commentary or explanation."
@@ -620,10 +644,20 @@ async def smart_file_text_to_answer(
             if not file_bytes:
                 raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
+            # Lưu file upload vào _outputs
+            ext = os.path.splitext(filename)[-1][1:] or "bin"
+            save_path = HistoryAndOutputManager.save_output_file(
+                user_email=verify_user_access_token(source="cookie", request=request)["email"],
+                generator_name="file_to_answer",
+                file_content=file_bytes,
+                file_extension=ext
+            )
+
             file_details = {
                 "filename": filename,
                 "content_type": content_type,
-                "size": len(file_bytes)
+                "size": len(file_bytes),
+                "file_path": str(save_path)
             }
 
             # Guess content type if needed
@@ -718,12 +752,15 @@ async def smart_file_text_to_answer(
 
 @router.post("/advanced/analyze")
 async def analyze(
+    request: Request,
     text: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     client=Depends(get_openai_client),
 ):
+    user_data = verify_user_access_token(source="cookie", request=request)
     prompt_parts = ["Analyze the following user input to determine the most appropriate task type.\n\nUser Input Details:\n"]
     has_input = False
+    file_path = None
 
     if text:
         prompt_parts.append(f"- Text provided: \"{text}\"\n")
@@ -731,6 +768,16 @@ async def analyze(
     if file:
         prompt_parts.append(f"- File uploaded: name='{file.filename}', content_type='{file.content_type}'\n")
         has_input = True
+        # Lưu file upload vào _outputs
+        file_bytes = await file.read()
+        ext = file.filename.split(".")[-1] if file.filename else "bin"
+        save_path = HistoryAndOutputManager.save_output_file(
+            user_email=user_data["email"],
+            generator_name="analyze",
+            file_content=file_bytes,
+            file_extension=ext
+        )
+        file_path = str(save_path)
 
     if not has_input:
         raise HTTPException(status_code=400, detail="No input provided. Please provide text, an image_url, or upload a file.")
@@ -776,7 +823,7 @@ async def analyze(
         if task not in VALID_TASK_KEYS:
             print(f"Warning: AI returned a task ('{task}') not in the predefined VALID_TASK_KEYS. Treating as 'unknown_task'. Original JSON: {result_json}")
 
-        return {"intent_analysis": task}
+        return {"intent_analysis": task, "file_path": file_path}
 
     except httpx.HTTPStatusError as e: # Catch errors from OpenAI client (e.g., auth, rate limits)
         error_detail_msg = str(e)
