@@ -84,7 +84,7 @@ const ApiService = {
 	async analyzeFile(file) {
 		const formData = new FormData();
 		formData.append("file", file);
-		const response = await fetch("http://localhost:8000/advance/analyze", {
+		const response = await fetch("http://localhost:8000/advanced/analyze", {
 			method: "POST",
 			credentials: "include",
 			body: formData,
@@ -99,7 +99,7 @@ const ApiService = {
 		const formData = new FormData();
 		formData.append("text", text);
 		formData.append("file", file);
-		const response = await fetch("http://localhost:8000/advance/analyze", {
+		const response = await fetch("http://localhost:8000/advanced/analyze", {
 			method: "POST",
 			credentials: "include",
 			body: formData,

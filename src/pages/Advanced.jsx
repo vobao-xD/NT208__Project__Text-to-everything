@@ -11,6 +11,10 @@ const Advanced = () => {
   const [activeTab, setActiveTab] = useState('monthly'); // 'monthly' hoặc 'yearly'
 
   useEffect(() => {
+    if(!document.cookie.includes("access_token"))
+    {
+      navigate("/login");
+    }
     async function fetchUserData() {
       const email = localStorage.getItem("email");
       if (!email) {
@@ -228,7 +232,7 @@ const Advanced = () => {
         }
         }}
           />
-      <section class="py-16 px-4 text-center place-items-center">
+      <section className="py-16 px-4 text-center place-items-center">
       <h1 className='text-xl font-bold mb-8'>Nâng cấp gói của bạn</h1>
       
       {/* Tab Navigation */}

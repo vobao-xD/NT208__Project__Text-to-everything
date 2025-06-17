@@ -1017,6 +1017,7 @@ body.signin-page p {
 
 .bot-message {
 	align-self: flex-start;
+	background-color: #C0C0C0;
 }
 
 /*Share*/

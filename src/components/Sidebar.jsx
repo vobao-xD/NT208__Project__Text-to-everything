@@ -19,7 +19,8 @@ const Sidebar = () => {
 	} = useContext(ChatContext);
 	const [isManualMode, setIsManualMode] = useState(false);
 	const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
-
+	const [selectedModel, setSelectedModel] = useState("1");
+	const [selectedFunction, setSelectedFunction] = useState("0");
 	const handleModeChange = (e) => {
 		const newMode = e.target.value;
 		if (newMode === "1.1" && role !== "pro") {
@@ -27,25 +28,22 @@ const Sidebar = () => {
 			navigate("/advanced");
 			return;
 		}
-		setSelectedOption(newMode);
+		setSelectedModel(newMode);
 	};
 
 	const handleManualModeToggle = () => {
-		const newMode = !isManualMode;
-		setIsManualMode(newMode);
-		setShowFunctionDropdown(newMode);
-		if (!newMode) setSelectedOption("0");
-	};
+	const newMode = !isManualMode;
+	setIsManualMode(newMode);
+	setShowFunctionDropdown(newMode);
+	if (!newMode) {
+		setSelectedFunction("0"); // quay lại Auto Analyze
+	}
+};
 
 	const handleOptionChange = (e) => {
-		const newValue = e.target.value;
-		if (newValue === "0") {
-			setIsManualMode(false);
-		} else {
-			setIsManualMode(true);
-		}
-		setSelectedOption(newValue);
-	};
+	const newValue = e.target.value;
+	setSelectedFunction(newValue);
+};
 
 	return (
 		<div className="sidebar">
@@ -57,13 +55,11 @@ const Sidebar = () => {
 			</div>
 			<div className="mode-selection">
 				<select
-					className={`options ${
-						isLoading ? "disabled" : ""
-					} focus:border-blue-600`}
-					value={selectedOption}
+					className={`options ${isLoading ? "disabled" : ""}`}
+					value={selectedModel}
 					onChange={handleModeChange}
 					disabled={isLoading}
-				>
+					>
 					<option value="1">API-Model 1</option>
 					<option value="1.1" disabled={role !== "pro"}>
 						API-Model 1.1
@@ -98,32 +94,28 @@ const Sidebar = () => {
 				</button>
 			</div>
 			{showFunctionDropdown && (
-				<div className="choices">
-					<select
-						className={`options ${
-							isLoading ? "disabled" : ""
-						} focus:border-blue-600`}
-						value={selectedOption}
-						onChange={handleOptionChange}
-						disabled={isLoading}
-					>
-						<option value="0">Auto Analyze</option>
-						<option value="1">
-							Text to Speech (Default Voice)
-						</option>
-						<option value="2">Text to Image</option>
-						<option value="3">Text to Video</option>
-						<option value="4">Text to Speech (Custom Voice)</option>
-						<option value="5">Improve Image Quality</option>
-						<option value="6">AI Chatbox</option>
-						<option value="7">Answer Question</option>
-						<option value="8">Generate code</option>
-						<option value="9">Speech to Text</option>
-						<option value="10">Video to Text</option>
-						<option value="11">File to Text</option>
-					</select>
-				</div>
-			)}
+			<div className="choices">
+				<select
+					className={`options ${isLoading ? "disabled" : ""}`}
+					value={selectedFunction}
+					onChange={handleOptionChange}
+					disabled={isLoading}
+				>
+					<option value="0">Auto Analyze</option>
+					<option value="1">Text to Speech (Default Voice)</option>
+					<option value="2">Text to Image</option>
+					<option value="3">Text to Video</option>
+					<option value="4">Text to Speech (Custom Voice)</option>
+					<option value="5">Improve Image Quality</option>
+					<option value="6">AI Chatbox</option>
+					<option value="7">Answer Question</option>
+					<option value="8">Generate code</option>
+					<option value="9">Speech to Text</option>
+					<option value="10">Video to Text</option>
+					<option value="11">File to Text</option>
+				</select>
+			</div>
+		)}
 			<div className="new-chat_btn">
 				<button
 					className={`generate_btn ${isLoading ? "disabled" : ""}`}

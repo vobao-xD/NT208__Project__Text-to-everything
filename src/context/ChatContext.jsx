@@ -2,10 +2,15 @@ import React, { createContext, useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import ApiService from "@/utils/api_services";
 import { v4 as uuidv4 } from "uuid";
-
+import { useNavigate } from 'react-router-dom';
 export const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
+	const navigate = useNavigate();
+	if(!document.cookie.includes("access_token"))
+		{
+		navigate("/login");
+		}
 	const [role, setRole] = useState(localStorage.getItem("role") || "free");
 	const [email, setEmail] = useState(localStorage.getItem("email") || "");
 	const [selectedOption, setSelectedOption] = useState("0");
@@ -103,7 +108,7 @@ export const ChatProvider = ({ children }) => {
 			timers.forEach(clearInterval);
 		};
 	}, []);
-
+	
 	const handleAutoAnalyze = useCallback(
 		async (text, file = null) => {
 			if (!text?.trim() && !file) {
@@ -172,7 +177,6 @@ export const ChatProvider = ({ children }) => {
 			actionMap,
 		]
 	);
-
 	const loadConversation = useCallback(async (id) => {
 		try {
 			setIsLoading(true);
