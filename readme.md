@@ -48,13 +48,17 @@
 #### 1️⃣ **Clone repository**  
 ```bash
 git clone https://github.com/vobao-xD/NT208_Project.git
-cd NT208_Project/backend
+cd NT208_Project/backend/app
 ```
 #### 2️⃣  **Tạo môi trường ảo & cài đặt dependencies**  
+
+Khuyến nghị nên chạy backend trên Linux.
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # Trên Linux/macOS
-venv\Scripts\activate      # Trên Windows
+venv\Scripts\activate     # Trên Windows (CMD)
+venv\Scripts\Activate.ps1 # Trên Windows (Powershell)
 
 pip install -r requirements.txt
 ```
@@ -83,7 +87,7 @@ Front end sẽ chạy ở http://localhost:5173/
 
 ## 📌 API Endpoints
 
-| Method | Endpoint              | Chức năng                          |
+| Method | Endpoint              | Chức năng                         |
 |--------|-----------------------|-----------------------------------|
 | `POST` | `/api/register`       | Đăng ký tài khoản                 |
 | `POST` | `/api/login`          | Đăng nhập                         |

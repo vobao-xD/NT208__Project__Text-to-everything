@@ -374,11 +374,20 @@ const ApiService = {
 		try {
 			const data = await response.json();
 			botMessage.option = option;
-			console.log(data)
+			console.log(data);
+			var filePath = "";
 			if (["0", "1", "2", "3", "4", "5"].includes(option)) {
-				const filePath = data.file_paths[0]; // Đường dẫn đầy đủ, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
-				if (!filePath)
-					throw new Error("Không tìm thấy file_path trong response");
+			if (option == "0") 
+			{
+				filePath = data.file_details.file_path; 
+			}
+			else
+			{
+				filePath = data.file_paths[0];
+			}
+			// Đường dẫn đầy đủ, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
+			if (!filePath)
+				throw new Error("Không tìm thấy file_path trong response");
 
 				botMessage.output_file_path = filePath;
 				botMessage.output_file_name = filePath.split("/").pop(); // Tên file, optional
