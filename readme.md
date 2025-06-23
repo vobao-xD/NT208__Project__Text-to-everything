@@ -11,31 +11,9 @@
 - **Tạ Ngọc Ân** - 23520030  
 - **Nguyễn Thái Học** - 23520549  
 
----
-
-## 🚀 Giới thiệu  
-**Text to Everything** là một ứng dụng AI giúp người dùng chuyển đổi văn bản thành nhiều định dạng khác nhau như **hình ảnh, video, giọng nói**, v.v.  
-Ứng dụng hỗ trợ **đa ngôn ngữ** và tối ưu hóa cho **tiếng Việt**.
 
 ---
 
-## ✨ Tính năng chính  
-✅ **Text-to-Image:** Chuyển văn bản thành hình ảnh bằng AI.  
-✅ **Text-to-Video:** Tạo video từ văn bản với hiệu ứng động.  
-✅ **Text-to-Speech:** Chuyển văn bản thành giọng nói tự nhiên.  
-✅ **Speech-to-Text:** Chuyển đổi giọng nói thành văn bản.  
-✅ **Lưu trữ & Chia sẻ:** Lưu nội dung và chia sẻ trên mạng xã hội.  
-
----
-
-## 🏗 Công nghệ sử dụng  
-- **Backend:** FastAPI (Python)  
-- **Frontend:** React + Tailwind  
-- **Cơ sở dữ liệu:** PostgreSQL  
-- **AI Models:** OpenAI, Stable Diffusion, ElevenLabs, (coming soon...)  
-- **Triển khai:** *Chưa cập nhật*  
-
----
 
 ## 📦 Cài đặt  
 
@@ -111,14 +89,6 @@ Text to Everything là một nền tảng AI đa năng, được thiết kế đ
 6. Điều kiện tiên quyết
 7. Các bước cài đặt
 8. Cấu hình môi trường
-
-#### Khởi chạy ứng dụng
-
--   api-documentation
--   tài-khoản-và-phân-quyền
--   (emo-hoặc-ảnh-minh-họa
--   todos
-
 9. 💡 Đóng góp
 10. 📄 License
 11. 📞 Liên hệ
@@ -147,11 +117,9 @@ Dưới đây là các tính năng nổi bật của nền tảng "Text to Every
 | 📄 Text-to-Code                    | Chuyển đổi từ văn bản, yêu cầu của người dùng tạo ra các đoạn code hỗ trợ nhiều loại ngôn ngữ khác nhau(python,C++,C,...)                                                                              |
 | 🗣️ Text-to-Speech (TTS)            | Chuyển đổi văn bản thành giọng nói tự nhiên, truyền cảm. Hỗ trợ nhiều giọng đọc, ngôn ngữ, đặc biệt có các giọng đọc tiếng Việt chất lượng cao với ngữ điệu phù hợp.                                   |
 | 🎙️ Speech-to-Text (STT)            | Chuyển đổi file âm thanh hoặc giọng nói trực tiếp thành văn bản chính xác. Có khả năng tự động nhận diện ngôn ngữ đầu vào, hỗ trợ xử lý tiếng Việt.                                                    |
-| 🗣️ Your voice                      | Người dùng có thể chuyển đổi giọng đọc của AI bằng của bản thân bằng mô hình Vi-XTTS                                                                                                                   |
-| 🧑‍🎤 AI Nhân vật kể chuyện           | Kết hợp TTS với công nghệ tạo chuyển động cho nhân vật ảo (avatar animation). Người dùng có thể chọn avatar, giọng đọc và nội dung để tạo video nhân vật kể chuyện.                                    |
+| 🗣️ Custom Text-to-Speech  (Voice Cloning)                     | Người dùng có thể chuyển đổi giọng đọc của AI bằng của bản thân bằng mô hình Vi-XTTS                                                                                                                   |                                   |
 | ✍️ Bot sáng tạo nội dung           | Hỗ trợ người dùng trong việc lên ý tưởng, viết truyện ngắn, kịch bản, slogan, bài đăng mạng xã hội, hoặc các loại nội dung văn bản khác từ yêu cầu đầu vào.                                            |
-| 🌐 Đa ngôn ngữ                     | Giao diện và khả năng xử lý AI hỗ trợ nhiều ngôn ngữ. Ưu tiên và tối ưu hóa cho tiếng Việt trong cả TTS, STT và các mô hình tạo nội dung khác.                                                         |
-| 🗂️ Quản lý nội dung                | Cung cấp không gian lưu trữ cá nhân cho người dùng để quản lý các nội dung đã tạo. Cho phép xem lại, chỉnh sửa (nếu có), tải xuống và chia sẻ dễ dàng.                                                 |
+| 🌐 Đa ngôn ngữ                     | Giao diện và khả năng xử lý AI hỗ trợ nhiều ngôn ngữ. Ưu tiên và tối ưu hóa cho tiếng Việt trong cả TTS, STT và các mô hình tạo nội dung khác.                                                         |                                              |
 | 🧑‍🔧 Quản lý người dùng & Phân quyền | Hệ thống tài khoản người dùng với các vai trò (roles) khác nhau như Admin, User. Có kế hoạch cho các gói tài khoản miễn phí và trả phí với các giới hạn và quyền lợi riêng.                            |
 
 ### 🧑‍💻 Kiến trúc hệ thống
@@ -542,19 +510,18 @@ Nếu bạn có ý tưởng về một tính năng mới hoặc cải tiến cho
 Mô tả rõ ràng về tính năng bạn đề xuất và lợi ích mà nó mang lại.
 Đóng góp mã nguồn (Contributing Code):
 
-    Fork repository: Tạo một bản sao (fork) của dự án về tài khoản GitHub của bạn.
-    Clone repository: Sao chép repository đã fork về máy của bạn: git clone https://github.com/YOUR_USERNAME/text-to-everything.git
 
-    Tạo nhánh mới (Create a new branch): Tạo một nhánh mới cho mỗi tính năng hoặc bản sửa lỗi bạn thực hiện: git checkout -b feature/ten_tinh_nang hoặc git checkout -b bugfix/mo_ta_loi.
 
-    Viết mã và commit: Thực hiện các thay đổi của bạn. Hãy đảm bảo tuân thủ coding style của dự án (nếu có). Viết commit message rõ ràng và súc tích.
+Tạo nhánh mới (Create a new branch): Tạo một nhánh mới cho mỗi tính năng hoặc bản sửa lỗi bạn thực hiện: git checkout -b feature/ten_tinh_nang hoặc git checkout -b bugfix/mo_ta_loi.
 
-    Push lên nhánh của bạn: git push origin feature/ten_tinh_nang.
+Viết mã và commit: Thực hiện các thay đổi của bạn. Hãy đảm bảo tuân thủ coding style của dự án (nếu có). Viết commit message rõ ràng và súc tích.
 
-    Tạo Pull Request (PR): Mở một Pull Request từ nhánh của bạn trên repository đã fork sang nhánh main (hoặc develop) của repository gốc.
+Push lên nhánh của bạn: git push origin feature/ten_tinh_nang.
 
-    Trong mô tả PR, giải thích rõ những thay đổi bạn đã thực hiện và tại sao.
-    Nếu PR của bạn giải quyết một Issue nào đó, hãy liên kết đến Issue đó (ví dụ: "Closes #123").
+Tạo Pull Request (PR): Mở một Pull Request từ nhánh của bạn trên repository đã fork sang nhánh main (hoặc develop) của repository gốc.
+
+Trong mô tả PR, giải thích rõ những thay đổi bạn đã thực hiện và tại sao.
+Nếu PR của bạn giải quyết một Issue nào đó, hãy liên kết đến Issue đó (ví dụ: "Closes #123").
 
 _Vui lòng đảm bảo rằng code của bạn đã được test (nếu có thể) và không làm hỏng các tính năng hiện có._
 
@@ -566,26 +533,15 @@ Góp ý về UX/UI:
 Nếu bạn có kinh nghiệm về thiết kế giao diện người dùng và trải nghiệm người dùng, những góp ý của bạn sẽ rất giá trị.
 Trước khi đóng góp, vui lòng xem xét (nếu có):
 
-File CONTRIBUTING.md (nếu dự án có file này, nó sẽ chứa các hướng dẫn chi tiết hơn về quy trình đóng góp).
 Các coding conventions và style guides của dự án.
 Mọi đóng góp, dù lớn hay nhỏ, đều được trân trọng!
 
-### 📄 License
-
-Dự án này được cấp phép theo Giấy phép MIT.
-Xem chi tiết tại file(LICENSE) (hoặc LICENSE.md) trong thư mục gốc của dự án.
-
-Giấy phép MIT là một giấy phép phần mềm tự do nguồn mở permisive, cho phép người dùng tự do sử dụng, sao chép, sửa đổi, hợp nhất, xuất bản, phân phối, cấp phép lại và/hoặc bán các bản sao của phần mềm, và cho phép những người mà phần mềm được cung cấp làm như vậy, tuân theo các điều kiện nhất định (chủ yếu là phải bao gồm thông báo bản quyền và giấy phép gốc trong tất cả các bản sao hoặc phần quan trọng của phần mềm).
 
 ### 📞 Liên hệ
 
 Nếu bạn có bất kỳ câu hỏi, góp ý, hoặc muốn thảo luận về dự án, vui lòng liên hệ qua các kênh sau:
 
-📧 Email: group1@gmail.com
-
-💼 LinkedIn: https://linkedin.com/in/group1
-
-🌐 Website cá nhân/dự án: https://group1.com
+📧 Email: 23520146@gm.uit.edu.vn
 
 🐙 GitHub Issues: Đối với các vấn đề kỹ thuật hoặc báo lỗi, vui lòng tạo một Issue trực tiếp trên repository của dự án.
 
