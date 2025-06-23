@@ -7,10 +7,9 @@ export const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
 	const navigate = useNavigate();
-	if(!document.cookie.includes("access_token"))
-		{
+	if (!document.cookie.includes("access_token")) {
 		navigate("/login");
-		}
+	}
 	const [role, setRole] = useState(localStorage.getItem("role") || "free");
 	const [email, setEmail] = useState(localStorage.getItem("email") || "");
 	const [selectedOption, setSelectedOption] = useState("0");
@@ -108,7 +107,7 @@ export const ChatProvider = ({ children }) => {
 			timers.forEach(clearInterval);
 		};
 	}, []);
-	
+
 	const handleAutoAnalyze = useCallback(
 		async (text, file = null) => {
 			if (!text?.trim() && !file) {
@@ -134,7 +133,7 @@ export const ChatProvider = ({ children }) => {
 				if (response.status === 429) {
 					const timeToWait =
 						parseInt(response.headers.get("Retry-After"), 10) *
-							1000 || 5000;
+						1000 || 5000;
 					setRetryAfter(timeToWait);
 					setIsRateLimited(true);
 					toast.error("Hết lượt miễn phí. Vui lòng thử lại sau.");
@@ -203,6 +202,7 @@ export const ChatProvider = ({ children }) => {
 				setConversations((prev) => [newConversation, ...prev]);
 				setCurrentConversationId(newConversation.id);
 				setMessages([]);
+				await loadConversation(newConversation.id);
 				return newConversation;
 			} catch (error) {
 				toast.error("Lỗi khi tạo cuộc trò chuyện: " + error.message);
@@ -211,7 +211,7 @@ export const ChatProvider = ({ children }) => {
 				setIsLoading(false);
 			}
 		},
-		[setConversations, setMessages]
+		[setConversations, setMessages, loadConversation]
 	);
 
 	const deleteChatHistory = useCallback(
@@ -414,10 +414,9 @@ export const ChatProvider = ({ children }) => {
 				}
 
 				console.log(
-					`chatcontext: bot content ${
-						botMessage.content?.text ||
-						botMessage.output_file_path ||
-						"undefined"
+					`chatcontext: bot content ${botMessage.content?.text ||
+					botMessage.output_file_path ||
+					"undefined"
 					}`
 				);
 				// Gọi addChatDetail với generatorIdMap

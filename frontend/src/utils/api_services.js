@@ -126,20 +126,20 @@ const ApiService = {
 				requestBody =
 					role === "pro"
 						? {
-								text: text,
-								voice: "alloy",
-								model: "gpt-4o-mini-tts",
-								response_format: "mp3",
-								speed: 1,
-								instructions:
-									"sound like human, speak Vietnamese",
-						  }
+							text: text,
+							voice: "alloy",
+							model: "gpt-4o-mini-tts",
+							response_format: "mp3",
+							speed: 1,
+							instructions:
+								"sound like human, speak Vietnamese",
+						}
 						: {
-								text: text,
-								language: "Tiếng Việt",
-								gender: "male",
-								style: "default",
-						  };
+							text: text,
+							language: "Tiếng Việt",
+							gender: "male",
+							style: "default",
+						};
 				break;
 
 			case "2": // Text to Image
@@ -150,18 +150,18 @@ const ApiService = {
 				requestBody =
 					role === "pro"
 						? {
-								model: "dall-e-3",
-								prompt: text,
-								n: 1,
-								size: "1024x1024",
-								quality: "standard",
-								style: "vivid",
-								response_format: "url",
-						  }
+							model: "dall-e-3",
+							prompt: text,
+							n: 1,
+							size: "1024x1024",
+							quality: "standard",
+							style: "vivid",
+							response_format: "url",
+						}
 						: {
-								prompt: text,
-								steps: 4,
-						  };
+							prompt: text,
+							steps: 4,
+						};
 				break;
 
 			case "3": // Text to Video
@@ -190,19 +190,19 @@ const ApiService = {
 				requestBody =
 					role === "pro"
 						? {
-								user_input: text,
-								history: [],
-								system_prompt:
-									"You are a helpful and friendly chatbot. You will give as much detail as possible within a very short sentence.",
-								max_tokens: 500,
-						  }
+							user_input: text,
+							history: [],
+							system_prompt:
+								"You are a helpful and friendly chatbot. You will give as much detail as possible within a very short sentence.",
+							max_tokens: 500,
+						}
 						: {
-								user_input: text,
-								history: [],
-								system_prompt:
-									"You are a helpful and friendly chatbot. You will give as much detail as possible within a very short sentence.",
-								max_tokens: 250,
-						  };
+							user_input: text,
+							history: [],
+							system_prompt:
+								"You are a helpful and friendly chatbot. You will give as much detail as possible within a very short sentence.",
+							max_tokens: 250,
+						};
 				break;
 
 			case "7": // Generate Answer
@@ -213,13 +213,13 @@ const ApiService = {
 				requestBody =
 					role === "pro"
 						? {
-								question: text,
-								context: "none",
-								max_tokens: 500,
-						  }
+							question: text,
+							context: "none",
+							max_tokens: 500,
+						}
 						: {
-								question: text,
-						  };
+							question: text,
+						};
 				break;
 
 			case "8": // Text to Code
@@ -230,13 +230,13 @@ const ApiService = {
 				requestBody =
 					role === "pro"
 						? {
-								prompt: text,
-								language: "python",
-								max_tokens: 250,
-						  }
+							prompt: text,
+							language: "python",
+							max_tokens: 250,
+						}
 						: {
-								prompt: text,
-						  };
+							prompt: text,
+						};
 				break;
 
 			default:
@@ -374,20 +374,11 @@ const ApiService = {
 		try {
 			const data = await response.json();
 			botMessage.option = option;
-			console.log(data);
-			var filePath = "";
+
 			if (["0", "1", "2", "3", "4", "5"].includes(option)) {
-			if (option == "0") 
-			{
-				filePath = data.file_details.file_path; 
-			}
-			else
-			{
-				filePath = data.file_paths[0];
-			}
-			// Đường dẫn đầy đủ, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
-			if (!filePath)
-				throw new Error("Không tìm thấy file_path trong response");
+				const filePath = data.file_path; // Đường dẫn đầy đủ, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
+				if (!filePath)
+					throw new Error("Không tìm thấy file_path trong response");
 
 				botMessage.output_file_path = filePath;
 				botMessage.output_file_name = filePath.split("/").pop(); // Tên file, optional
@@ -534,12 +525,12 @@ const ApiService = {
 		return data.map((c) => ({
 			id: c.id,
 			title:
-				(c.details[0]?.input_text ?? "Cuộc trò chuyện mới").substring(
-					0,
-					30
-				) + (c.details[0]?.input_text?.length > 30 ? "..." : ""),
+				(Array.isArray(c.chat_details) && c.chat_details[0]?.input_text
+					? c.chat_details[0].input_text.substring(0, 30) +
+					(c.chat_details[0].input_text.length > 30 ? "..." : "")
+					: "Cuộc trò chuyện mới"),
 			created_at: c.created_at, // Thêm created_at để đồng bộ
-			messages: c.details || [],
+			messages: c.chat_details || [],
 		}));
 	},
 
@@ -596,85 +587,54 @@ const ApiService = {
 		console.log("Raw response from /chat-history:", data);
 		const messages = [];
 
-		const details = data.details || [];
-		for (let detail of details) {
-			// Xử lý user message
-			const userMsg = {
-				id: detail.id, // Sử dụng UUID từ backend
+		const chat_details = data.chat_details || [];
+		for (let detail of chat_details) {
+			// Always push user message first
+			messages.push({
+				id: detail.id + "_user",
 				type: "user",
-				content:
-					detail.input_text ||
-					(detail.input_file_name
-						? `[Đã gửi tệp: ${detail.input_file_name}]`
-						: "[Tin nhắn rỗng]"),
+				content: detail.input_text || (detail.input_file_name ? `[Đã gửi tệp: ${detail.input_file_name}]` : "[Tin nhắn rỗng]"),
 				isText: detail.input_type === "text",
 				isAudio: detail.input_type === "audio",
 				isImage: detail.input_type === "image",
 				isVideo: detail.input_type === "video",
 				isFile: detail.input_type === "file",
-				audio_url:
-					detail.input_type === "audio"
-						? `http://localhost:8000/get-output/${detail.input_file_path}`
-						: null,
-				image_url:
-					detail.input_type === "image"
-						? `http://localhost:8000/get-output/${detail.input_file_path}`
-						: null,
-				video_url:
-					detail.input_type === "video"
-						? `http://localhost:8000/get-output/${detail.input_file_path}`
-						: null,
-				file_url:
-					detail.input_type === "file"
-						? `http://localhost:8000/get-output/${detail.input_file_path}`
-						: null,
+				audio_url: detail.input_type === "audio" ? `http://localhost:8000/get-output/${detail.input_file_path}` : null,
+				image_url: detail.input_type === "image" ? `http://localhost:8000/get-output/${detail.input_file_path}` : null,
+				video_url: detail.input_type === "video" ? `http://localhost:8000/get-output/${detail.input_file_path}` : null,
+				file_url: detail.input_type === "file" ? `http://localhost:8000/get-output/${detail.input_file_path}` : null,
 				input_file_name: detail.input_file_name || null,
 				input_file_path: detail.input_file_path || null,
 				created_at: detail.created_at,
-			};
-			messages.push(userMsg);
+			});
 
-			// Xử lý bot message
-			const botMsg = {
-				id: detail.id, // Sử dụng UUID từ backend
-				type: "bot",
-				content: {
-					text: detail.output_text || null,
-					audio_url:
-						detail.output_type === "audio"
-							? `http://localhost:8000/get-output/${detail.output_file_path}`
-							: null,
-					image_url:
-						detail.output_type === "image"
-							? `http://localhost:8000/get-output/${detail.output_file_path}`
-							: null,
-					video_url:
-						detail.output_type === "video"
-							? `http://localhost:8000/get-output/${detail.output_file_path}`
-							: null,
-					file_url:
-						detail.output_type === "file"
-							? `http://localhost:8000/get-output/${detail.output_file_path}`
-							: null,
-					file_name: detail.output_file_name || null,
-				},
-				isText: detail.output_type === "text",
-				isAudio: detail.output_type === "audio",
-				isImage: detail.output_type === "image",
-				isVideo: detail.output_type === "video",
-				isFile: detail.output_type === "file",
-				option:
-					Object.keys(generatorIdMap).find(
-						(key) => generatorIdMap[key] === detail.generator_id
-					) || null,
-				output_file_path: detail.output_file_path || null,
-				created_at: detail.created_at,
-			};
-			messages.push(botMsg);
+			// Then push bot message if output exists
+			if (detail.output_text || detail.output_file_path) {
+				messages.push({
+					id: detail.id + "_bot",
+					type: "bot",
+					content: {
+						text: detail.output_text || null,
+						audio_url: detail.output_type === "audio" ? `http://localhost:8000/get-output/${detail.output_file_path}` : null,
+						image_url: detail.output_type === "image" ? `http://localhost:8000/get-output/${detail.output_file_path}` : null,
+						video_url: detail.output_type === "video" ? `http://localhost:8000/get-output/${detail.output_file_path}` : null,
+						file_url: detail.output_type === "file" ? `http://localhost:8000/get-output/${detail.output_file_path}` : null,
+						file_name: detail.output_file_name || null,
+					},
+					isText: detail.output_type === "text",
+					isAudio: detail.output_type === "audio",
+					isImage: detail.output_type === "image",
+					isVideo: detail.output_type === "video",
+					isFile: detail.output_type === "file",
+					option: Object.keys(generatorIdMap).find((key) => generatorIdMap[key] === detail.generator_id) || null,
+					output_file_path: detail.output_file_path || null,
+					created_at: detail.created_at,
+				});
+			}
 		}
 
 		console.log("Prepared messages:", messages);
-		const firstDetail = details[0] || {};
+		const firstDetail = chat_details[0] || {};
 		const title =
 			firstDetail.input_text && firstDetail.input_text.length > 30
 				? `${firstDetail.input_text.substring(0, 30)}...`
