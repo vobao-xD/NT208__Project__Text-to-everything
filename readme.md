@@ -78,7 +78,9 @@ cd NT208_Project/frontend
 npm install
 npm run dev
 ```
-### thêm hướng dẫn cài đặt frontend
+
+Front end sẽ chạy ở http://localhost:5173/
+
 ## 📌 API Endpoints
 
 | Method | Endpoint              | Chức năng                          |
