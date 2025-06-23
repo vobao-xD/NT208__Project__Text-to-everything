@@ -16,11 +16,11 @@ const Sidebar = () => {
 		loadConversation,
 		createConversation,
 		deleteChatHistory,
-		sendMessage,
 	} = useContext(ChatContext);
 	const [isManualMode, setIsManualMode] = useState(false);
 	const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
 	const [selectedModel, setSelectedModel] = useState("1");
+	const [selectedFunction, setSelectedFunction] = useState("0");
 	const handleModeChange = (e) => {
 		const newMode = e.target.value;
 		if (newMode === "1.1" && role !== "pro") {
@@ -36,14 +36,13 @@ const Sidebar = () => {
 		setIsManualMode(newMode);
 		setShowFunctionDropdown(newMode);
 		if (!newMode) {
-			setSelectedOption("0");
+			setSelectedFunction("0"); // quay lại Auto Analyze
 		}
 	};
 
 	const handleOptionChange = (e) => {
 		const newValue = e.target.value;
-		setSelectedOption(newValue);
-		console.log("Đã chọn chức năng:", newValue);
+		setSelectedFunction(newValue);
 	};
 
 	return (
@@ -60,7 +59,7 @@ const Sidebar = () => {
 					value={selectedModel}
 					onChange={handleModeChange}
 					disabled={isLoading}
-					>
+				>
 					<option value="1">API-Model 1</option>
 					<option value="1.1" disabled={role !== "pro"}>
 						API-Model 1.1
@@ -87,36 +86,35 @@ const Sidebar = () => {
 					}}
 				>
 					<i
-						className={`fa ${
-							isManualMode ? "fa-check-circle" : "fa-cog"
-						}`}
+						className={`fa ${isManualMode ? "fa-check-circle" : "fa-cog"
+							}`}
 					></i>
 					{isManualMode ? "Chế độ thủ công" : "Chế độ tự động"}
 				</button>
 			</div>
 			{showFunctionDropdown && (
-			<div className="choices">
-				<select
-					className={`options ${isLoading ? "disabled" : ""}`}
-					value={selectedOption}
-					onChange={handleOptionChange}
-					disabled={isLoading}
-				>
-					<option value="0">Auto Analyze</option>
-					<option value="1">Text to Speech (Default Voice)</option>
-					<option value="2">Text to Image</option>
-					<option value="3">Text to Video</option>
-					<option value="4">Text to Speech (Custom Voice)</option>
-					<option value="5">Improve Image Quality</option>
-					<option value="6">AI Chatbox</option>
-					<option value="7">Answer Question</option>
-					<option value="8">Generate code</option>
-					<option value="9">Speech to Text</option>
-					<option value="10">Video to Text</option>
-					<option value="11">File to Text</option>
-				</select>
-			</div>
-		)}
+				<div className="choices">
+					<select
+						className={`options ${isLoading ? "disabled" : ""}`}
+						value={selectedFunction}
+						onChange={handleOptionChange}
+						disabled={isLoading}
+					>
+						<option value="0">Auto Analyze</option>
+						<option value="1">Text to Speech (Default Voice)</option>
+						<option value="2">Text to Image</option>
+						<option value="3">Text to Video</option>
+						<option value="4">Text to Speech (Custom Voice)</option>
+						<option value="5">Improve Image Quality</option>
+						<option value="6">AI Chatbox</option>
+						<option value="7">Answer Question</option>
+						<option value="8">Generate code</option>
+						<option value="9">Speech to Text</option>
+						<option value="10">Video to Text</option>
+						<option value="11">File to Text</option>
+					</select>
+				</div>
+			)}
 			<div className="new-chat_btn">
 				<button
 					className={`generate_btn ${isLoading ? "disabled" : ""}`}
@@ -138,11 +136,10 @@ const Sidebar = () => {
 					{conversations.map((conversation) => (
 						<li
 							key={conversation.id}
-							className={`chat-item ${
-								currentConversationId === conversation.id
-									? "active"
-									: ""
-							}`}
+							className={`chat-item ${currentConversationId === conversation.id
+								? "active"
+								: ""
+								}`}
 							style={{
 								padding: "10px 15px",
 								margin: "5px 0",
@@ -159,25 +156,24 @@ const Sidebar = () => {
 								display: "flex",
 								alignItems: "center",
 								justifyContent: "space-between",
-								"&:hover": {
-									backgroundColor: "#2a2a2a",
-									transform: "translateX(5px)",
-								},
+								cursor: "pointer",
+							}}
+							onClick={() => {
+								if (currentConversationId !== conversation.id) {
+									loadConversation(conversation.id);
+								}
 							}}
 						>
 							<span
-								onClick={() =>
-									loadConversation(conversation.id)
-								}
 								style={{
 									color:
 										currentConversationId ===
-										conversation.id
+											conversation.id
 											? "#3999ff"
 											: "#fff",
 									fontWeight:
 										currentConversationId ===
-										conversation.id
+											conversation.id
 											? "bold"
 											: "normal",
 									transition: "all 0.3s ease",
@@ -200,7 +196,7 @@ const Sidebar = () => {
 									marginLeft: "10px",
 									opacity:
 										currentConversationId ===
-										conversation.id
+											conversation.id
 											? 1
 											: 0.5,
 									transition: "all 0.3s ease",
