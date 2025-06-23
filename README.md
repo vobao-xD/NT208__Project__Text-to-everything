@@ -58,17 +58,17 @@ venv\Scripts\activate      # Trên Windows
 
 pip install -r requirements.txt
 ```
-####3️⃣ **Cấu hình cơ sở dữ liệu**
+#### 3️⃣ **Cấu hình cơ sở dữ liệu**
 Tạo file .env và điền thông tin:
 ```ini
 DATABASE_URL=postgresql://user:password@localhost:5432/your_database
 SECRET_KEY=your_secret_key
 ```
-####4️⃣ **Chạy server FastAPI**
+#### 4️⃣ **Chạy server FastAPI**
 ```bash
 uvicorn main:app --reload
 ```
-####5️⃣ **Truy cập API Docs**
+#### 5️⃣ **Truy cập API Docs**
 Mở trình duyệt và truy cập:
 👉 http://localhost:8000/docs
 ### 🖥️ Cài đặt Frontend 
