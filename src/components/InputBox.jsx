@@ -2,6 +2,7 @@ import { useContext, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { ChatContext } from "@/context/ChatContext";
 import FileUpload from "@/components/FileUpload";
+import ApiService from "@/utils/api_services";
 
 const InputBox = () => {
 	const { selectedOption, role, isLoading, sendMessage } =

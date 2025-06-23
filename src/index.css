@@ -1009,6 +1009,14 @@ body.signin-page p {
 	word-wrap: break-word;
 }
 
+pre {
+	background-color: #000;
+	color: white;
+	padding: 10px;
+	border-radius: 10px;
+	font-family: monospace;	
+}
+
 .user-message {
 	background-color: #007aff;
 	align-self: flex-end;
@@ -1026,12 +1034,9 @@ body.signin-page p {
 }
 
 .text-response {
-	background-color: rgb(96, 96, 96);
-	color: #fff;
 	align-self: flex-end;
 	padding: 10px;
 	border-radius: 8px;
-	max-width: 80%;
 	word-break: break-word;
 	white-space: pre-line;
 	text-align: left !important;

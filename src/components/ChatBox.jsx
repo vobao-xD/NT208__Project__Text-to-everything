@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { ChatContext } from "@/context/ChatContext";
+import ReactMarkdown from "react-markdown";
 
 const MessageContent = ({ message, isUser }) => {
 	const mediaStyle = {
@@ -69,10 +70,17 @@ const MessageContent = ({ message, isUser }) => {
 	}
 
 	if (isUser ? message.isText : message.isText) {
-		return (
-			<p className="text-message">
-				{isUser ? message.content : content.text}
-			</p>
+		const textContent = isUser ? message.content : content.text;
+
+		return isUser ? (
+			<p className="text-message">{textContent}</p>
+		) : (
+			<div className="text-response">
+			<ReactMarkdown>
+				{textContent}
+			</ReactMarkdown>
+			</div>
+
 		);
 	}
 
