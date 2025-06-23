@@ -1,0 +1,9 @@
+.vscode/
+__pycache__
+.env
+.venv/
+venv/
+*.code-workspace
+backend/.env
+app.log
+_outputs/
