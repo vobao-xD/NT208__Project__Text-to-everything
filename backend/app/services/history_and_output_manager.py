@@ -28,7 +28,9 @@ class HistoryAndOutputManager:
     
     @staticmethod
     def get_user_chat_histories(db: Session, user_email: str, limit: int = 10) -> list[ChatHistoryResponse]:
-        return db.query(ChatHistory).filter(ChatHistory.user_email == user_email)\
+        return db.query(ChatHistory)\
+            .options(joinedload(ChatHistory.chat_details))\
+            .filter(ChatHistory.user_email == user_email)\
             .order_by(ChatHistory.created_at.desc()).limit(limit).all()
 
     @staticmethod

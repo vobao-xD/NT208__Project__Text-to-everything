@@ -244,7 +244,7 @@ class ChatHistoryResponse(ChatHistoryBase):
     id: UUID
     user_email: str
     created_at: datetime
-    details: List[ChatDetailResponse] = []
+    chat_details: List[ChatDetailResponse] = []
 
     class Config:
         from_attributes = True

@@ -67,7 +67,7 @@ def get_all_chat_history(
 def get_chat_history_by_id(
     history_id: str,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user)  
 ):
     return HistoryAndOutputManager.get_chat_history_by_id(db, history_id, current_user.email)
 
