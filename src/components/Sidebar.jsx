@@ -16,11 +16,11 @@ const Sidebar = () => {
 		loadConversation,
 		createConversation,
 		deleteChatHistory,
+		sendMessage,
 	} = useContext(ChatContext);
 	const [isManualMode, setIsManualMode] = useState(false);
 	const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
 	const [selectedModel, setSelectedModel] = useState("1");
-	const [selectedFunction, setSelectedFunction] = useState("0");
 	const handleModeChange = (e) => {
 		const newMode = e.target.value;
 		if (newMode === "1.1" && role !== "pro") {
@@ -32,18 +32,19 @@ const Sidebar = () => {
 	};
 
 	const handleManualModeToggle = () => {
-	const newMode = !isManualMode;
-	setIsManualMode(newMode);
-	setShowFunctionDropdown(newMode);
-	if (!newMode) {
-		setSelectedFunction("0"); // quay lại Auto Analyze
-	}
-};
+		const newMode = !isManualMode;
+		setIsManualMode(newMode);
+		setShowFunctionDropdown(newMode);
+		if (!newMode) {
+			setSelectedOption("0");
+		}
+	};
 
 	const handleOptionChange = (e) => {
-	const newValue = e.target.value;
-	setSelectedFunction(newValue);
-};
+		const newValue = e.target.value;
+		setSelectedOption(newValue);
+		console.log("Đã chọn chức năng:", newValue);
+	};
 
 	return (
 		<div className="sidebar">
@@ -97,7 +98,7 @@ const Sidebar = () => {
 			<div className="choices">
 				<select
 					className={`options ${isLoading ? "disabled" : ""}`}
-					value={selectedFunction}
+					value={selectedOption}
 					onChange={handleOptionChange}
 					disabled={isLoading}
 				>
