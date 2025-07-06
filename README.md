@@ -70,8 +70,9 @@ Dưới đây là những tính năng nổi bật, mang tính đột phá của 
 | 🌟 Image Enhancement     | Nâng cấp chất lượng hình ảnh đầu vào lên mức vượt trội bằng công nghệ độc quyền, làm nổi bật chi tiết và màu sắc.                                                          |
 | 🎙️ Speech-to-Text (STT)  | Chuyển đổi file âm thanh thành văn bản chính xác, tự động nhận diện ngôn ngữ, nổi bật với hiệu suất cao cho tiếng Việt.                                                    |
 | 📑 Trích xuất thông tin  | Phân tích và trích xuất dữ liệu từ âm thanh, video, hoặc file tài liệu với độ chính xác cao.                                                                               |
-| 🧑‍🔧 Quản lý người dùng    | Cung cấp hệ thống tài khoản linh hoạt với vai trò (Admin, User, Pro), kèm gói miễn phí và trả phí với giới hạn và quyền lợi riêng biệt.                                    |
+| 🧑‍🔧 Quản lý người dùng    | Cung cấp hệ thống tài khoản linh hoạt với vai trò (Free, Plus, Pro), kèm gói miễn phí và trả phí với giới hạn và quyền lợi riêng biệt.                                     |
 | 🌐 Đa ngôn ngữ           | Hỗ trợ xử lý và hiển thị đa ngôn ngữ, với ưu tiên đặc biệt tối ưu hóa tiếng Việt.                                                                                          |
+| 👮 Zero Trust            | Xác thực, phân quyền từng request từ user và kể cả các request nội bộ, request đến API để đảm bảo tính bảo mật                                                             |
 
 ---
 
@@ -252,41 +253,78 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 ## 👤 Tài khoản và phân quyền
 
-| Vai trò   | Quyền lợi                                      | Giới hạn                           |
-| --------- | ---------------------------------------------- | ---------------------------------- |
-| **Free**  | Tạo nội dung cơ bản, lưu trữ cá nhân.          | 10 lượt/ngày, dung lượng giới hạn,
-không upload file,không bao gồm chức năng text to videovideo |
-| **Plus**   | Không giới hạn, ưu tiên xử lý, hỗ trợ cao cấp. | không giới hạn lượt, được upload file, không bao gồm text to videovideo                                                                                     |
-| **Pro** | Quản lý người dùng, hệ thống, mô hình AI.      | Không giới hạn lươtj, toàn quyền chức năng, xử dụng api phiển bản advancedadvanced                                                                        |
+| Vai trò  | Quyền lợi                                      | Giới hạn                                                                                   |
+| -------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Free** | Tạo nội dung cơ bản, lưu trữ cá nhân.          | 10 lượt/ngày, dung lượng giới hạn, không upload file,không bao gồm chức năng text to video |
+| **Plus** | Không giới hạn, ưu tiên xử lý, hỗ trợ cao cấp. | không giới hạn lượt, được upload file, không bao gồm text to videovideo                    |
+| **Pro**  | Quản lý người dùng, hệ thống, mô hình AI.      | Không giới hạn lươtj, toàn quyền chức năng, xử dụng api phiển bản advancedadvanced         |
 
 ---
 
 ## 📊 Demo và minh họa (xem chi tiết hơn qua video demo (link drive))
 
--   **Giao diện Home Page của app trước khi đăng nhập**:
+-   **Giao diện Home Page của app trước khi đăng nhập**: Giới thiệu tổng quan về Web App Text to Everything.
 
     ![Giao diện Home Page](_demo_resources/home_page.png)
 
--   **Giao diện đăng nhập/đăng ký**:
+-   **Giao diện đăng nhập/đăng ký**: Cho phép đăng ký/đăng nhập bằng 3 hình thức (tài khoản ứng dụng, tài khoản Google, tài khoản Github).
 
-    ![Giao diện Đăng nhập/ Đăng ký](_demo_resources/login_sign_up.png)
+    ![Giao diện Đăng nhập/Đăng ký](_demo_resources/login_sign_up.png)
 
--   **Giao diện Home Page của app sau khi đăng nhập**:
+-   **Giao diện Home Page của app sau khi đăng nhập**: Nơi để người dùng nhập input và nhận kết quả, sử dụng dịch vụ của app.
 
-    ![Giao diện Login Home Page](_demo_resources/generate_page.png)
+    ![Giao diện Home Page After Login](_demo_resources/after_login_home_page.png)
 
--   **Giao diện Text-to-Image**:
-    ![Giao diện tạo ảnh](images/demo1.png)
+-   **Giao diện tính năng Auto Analyze**: tự động trích xuất yêu cầu của người dùng từ prompt và thực hiện chức năng tương ứng.
 
-    -   Mô tả: Nhập prompt, chọn phong cách.
+    ![Giao diện Auto Analyze](_demo_resources/)
 
--   **Kết quả Text-to-Image**:
-    ![Hình ảnh AI](images/demo2.png)
+-   **Giao diện tính năng Text to Speech With Default Voice**:
 
-    -   Mô tả: "Con mèo phi hành gia cưỡi kỳ lân trên cầu vồng không gian, phong cách sơn dầu."
+    ![Giao diện Text to Speech Default](_demo_resources/)
+
+-   **Giao diện tính năng Text to Speech With Custom Voice (Voice Cloning)**:
+
+    ![Giao diện Text to Speech Custom](_demo_resources/)
+
+-   **Giao diện tính năng Text to Image**:
+
+    ![Giao diện Text to Image](_demo_resources/)
+
+-   **Giao diện tính năng Text to Video**:
+
+    ![Giao diện Text to Video](_demo_resources/)
+
+-   **Giao diện tính năng Image Quality Enhancing**:
+
+    ![Giao diện Image Enhancer](_demo_resources/)
+
+-   **Giao diện tính năng AI Chatbot sáng tạo nội dung**:
+
+    ![Giao diện AI Chatbot](_demo_resources/)
+
+-   **Giao diện tính năng AI Chatbot Assistant**:
+
+    ![Giao diện AI Assistant](_demo_resources/)
+
+-   **Giao diện tính năng Code Generator**:
+
+    ![Giao diện Code Generator](_demo_resources/)
+
+-   **Giao diện tính năng trích xuất thông tin từ âm thanh**:
+
+    ![Giao diện Speech to Text](_demo_resources/)
+
+-   **Giao diện tính năng trích xuất thông tin từ video**:
+
+    ![Giao diện Video to Text](_demo_resources/)
+
+-   **Giao diện tính năng trích xuất thông tin từ file (pdf, txt,...)**:
+
+    ![Giao diện File to Text](_demo_resources/)
 
 -   **Video Demo**:
-    [Link YouTube](https://www.youtube.com/watch?v=your_video_id)
+    [Link Drive](https://drive.google.com/drive/folders/1Tzi-JuDX_c6AOfSXEGv8iiPp3Syrj9B3?usp=sharing)
 
 ---
 
