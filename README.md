@@ -260,7 +260,19 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 ---
 
-## 📊 Demo và minh họa
+## 📊 Demo và minh họa (xem chi tiết hơn qua video demo (link drive))
+
+-   **Giao diện Home Page của app trước khi đăng nhập**:
+
+    ![Giao diện Home Page](_demo_resources/home_page.png)
+
+-   **Giao diện đăng nhập/đăng ký**:
+
+    ![Giao diện Đăng nhập/ Đăng ký](_demo_resources/login_sign_up.png)
+
+-   **Giao diện Home Page của app sau khi đăng nhập**:
+
+    ![Giao diện Login Home Page](_demo_resources/generate_page.png)
 
 -   **Giao diện Text-to-Image**:
     ![Giao diện tạo ảnh](images/demo1.png)
