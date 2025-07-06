@@ -80,7 +80,7 @@ Dưới đây là những tính năng nổi bật, mang tính đột phá của 
 Hệ thống "Text to Everything" được thiết kế theo kiến trúc mô-đun, bao gồm các thành phần chính:
 
 ```
-Client (React/Vite + HTML/CSS/JS)
+Client (React/Vite + HTML/CSS/Bootstrap/JS)
 │
 │ (HTTP/WebSocket Requests)
 ▼
@@ -100,7 +100,7 @@ PostgreSQL Online Database
 
 ### 📑 Chi tiết thành phần
 
--   **Client**: Giao diện người dùng được phát triển bằng **React/Vite** kết hợp **HTML/CSS/JS**, xây dựng theo mô hình **Single Page Application (SPA)**, cung cấp trải nghiệm tương tác mượt mà và trực quan.
+-   **Client**: Giao diện người dùng được phát triển bằng **React/Vite** kết hợp **HTML/CSS/Bootstrap/JS**, xây dựng theo mô hình **Single Page Application (SPA)**, cung cấp trải nghiệm tương tác mượt mà và trực quan.
 -   **FastAPI Backend**: Trụ cột chính sử dụng **Python FastAPI**, đảm nhận:
     -   Xử lý logic nghiệp vụ chính.
     -   Quản lý tác vụ, xác thực và phân quyền người dùng.
@@ -254,9 +254,10 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 | Vai trò   | Quyền lợi                                      | Giới hạn                           |
 | --------- | ---------------------------------------------- | ---------------------------------- |
-| **User**  | Tạo nội dung cơ bản, lưu trữ cá nhân.          | 10 lượt/ngày, dung lượng giới hạn. |
-| **Pro**   | Không giới hạn, ưu tiên xử lý, hỗ trợ cao cấp. | Ít hoặc không giới hạn.            |
-| **Admin** | Quản lý người dùng, hệ thống, mô hình AI.      | Toàn quyền.                        |
+| **Free**  | Tạo nội dung cơ bản, lưu trữ cá nhân.          | 10 lượt/ngày, dung lượng giới hạn,
+không upload file,không bao gồm chức năng text to videovideo |
+| **Plus**   | Không giới hạn, ưu tiên xử lý, hỗ trợ cao cấp. | không giới hạn lượt, được upload file, không bao gồm text to videovideo                                                                                     |
+| **Pro** | Quản lý người dùng, hệ thống, mô hình AI.      | Không giới hạn lươtj, toàn quyền chức năng, xử dụng api phiển bản advancedadvanced                                                                        |
 
 ---
 
