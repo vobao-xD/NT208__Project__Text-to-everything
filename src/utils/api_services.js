@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
-const BASE_URL=import.meta.env.VITE_API_BASE_URL;
+// const BASE_URL=import.meta.env.VITE_API_BASE_URL;
+BASE_URL="http://127.0.0.1:8000"
 const ApiService = {
 	// Hàm tiện ích: Xác định loại file đầu vào
 	detectInputFileType(filename) {
