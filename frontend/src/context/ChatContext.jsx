@@ -109,7 +109,7 @@ export const ChatProvider = ({ children }) => {
 	}, []);
 
 	const handleAutoAnalyze = useCallback(
-		async (text, file = null) => {
+		async (text, file = null,role) => {
 			if (!text?.trim() && !file) {
 				toast.error(
 					"Vui lòng nhập nội dung hoặc chọn file để phân tích."
@@ -123,11 +123,11 @@ export const ChatProvider = ({ children }) => {
 				setIsLoading(true);
 				let response;
 				if (text && file) {
-					response = await ApiService.analyzeTextAndFile(text, file);
+					response = await ApiService.analyzeTextAndFile(text, file,role);
 				} else if (text) {
-					response = await ApiService.analyzeText(text);
+					response = await ApiService.analyzeText(text,role);
 				} else if (file) {
-					response = await ApiService.analyzeFile(file);
+					response = await ApiService.analyzeFile(file,role);
 				}
 
 				if (response.status === 429) {
@@ -285,7 +285,7 @@ export const ChatProvider = ({ children }) => {
 						if (!analyzeResult.ok)
 							throw new Error("Phân tích text và file thất bại");
 					} else if (text) {
-						analyzeResult = await handleAutoAnalyze(text);
+						analyzeResult = await handleAutoAnalyze(text,null,role);
 						if (!analyzeResult.success) return;
 						finalOption = analyzeResult.action;
 						finalText = analyzeResult.prompt;

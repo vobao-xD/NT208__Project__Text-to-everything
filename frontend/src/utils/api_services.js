@@ -68,7 +68,23 @@ const ApiService = {
 	},
 
 	// Phân tích văn bản (cho mode 0 với text only)
-	async analyzeText(text) {
+	async analyzeText(text,role) {
+		if (role === "pro") {
+        const formData = new FormData();
+        formData.append("text", text); // Chỉ cần append text là đủ
+        const response = await fetch(
+            "http://localhost:8000/advanced/analyze",
+            {
+                method: "POST",
+                credentials: "include",
+                body: formData, 
+            }
+        );
+		if (!response.ok)
+			throw new Error(`Lỗi phân tích: ${response.statusText}`);
+		return response;
+}		else{
+
 		const response = await fetch("http://localhost:8000/analyze", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -78,12 +94,27 @@ const ApiService = {
 		if (!response.ok)
 			throw new Error(`Lỗi phân tích: ${response.statusText}`);
 		return response;
-	},
+	}},
 
 	// Phân tích file (cho mode 0 với file only)
 	async analyzeFile(file) {
 		const formData = new FormData();
 		formData.append("file", file);
+		if (role === "pro") {
+        const formData = new FormData();
+        formData.append("text", text); // Chỉ cần append text là đủ
+        const response = await fetch(
+            "http://localhost:8000/advanced/analyze",
+            {
+                method: "POST",
+                credentials: "include",
+                body: formData, 
+            }
+        );
+		if (!response.ok)
+			throw new Error(`Lỗi phân tích: ${response.statusText}`);
+		return response;
+}else{
 		const response = await fetch("http://localhost:8000/advanced/analyze", {
 			method: "POST",
 			credentials: "include",
@@ -92,13 +123,28 @@ const ApiService = {
 		if (!response.ok)
 			throw new Error(`Lỗi phân tích file: ${response.statusText}`);
 		return response;
-	},
+	}},
 
 	// Phân tích cả text và file (cho mode 0 với cả hai)
-	async analyzeTextAndFile(text, file) {
+	async analyzeTextAndFile(text, file,role) {
 		const formData = new FormData();
 		formData.append("text", text);
 		formData.append("file", file);
+		if (role === "pro") {
+        const formData = new FormData();
+        formData.append("text", text); // Chỉ cần append text là đủ
+        const response = await fetch(
+            "http://localhost:8000/advanced/analyze",
+            {
+                method: "POST",
+                credentials: "include",
+                body: formData, 
+            }
+        );
+		if (!response.ok)
+			throw new Error(`Lỗi phân tích: ${response.statusText}`);
+		return response;
+}else{
 		const response = await fetch("http://localhost:8000/advanced/analyze", {
 			method: "POST",
 			credentials: "include",
@@ -109,7 +155,7 @@ const ApiService = {
 				`Lỗi phân tích text và file: ${response.statusText}`
 			);
 		return response;
-	},
+	}},
 
 	// Xử lý text only (cho mode 1, 2, 3, 6, 7, 8)
 	async processText(text, option, role) {
@@ -376,15 +422,22 @@ const ApiService = {
 			botMessage.option = option;
 
 			if (["0", "1", "2", "3", "4", "5"].includes(option)) {
-				const filePath = data.file_path; // Đường dẫn đầy đủ, ví dụ: "_outputs/23520146@gm.uit.edu.vn/..."
+				const filePath = data.file_paths ? data.file_paths[0] : data.file_path;
 				if (!filePath)
 					throw new Error("Không tìm thấy file_path trong response");
+				
+				const normalizedPath = filePath.replace(/\\/g, "/");
+
+            
+            	const relativePath = normalizedPath.startsWith("_outputs/")
+					? normalizedPath.substring("_outputs/".length)
+					: normalizedPath;
 
 				botMessage.output_file_path = filePath;
-				botMessage.output_file_name = filePath.split("/").pop(); // Tên file, optional
-
+				botMessage.output_file_name = filePath.split("/").pop(); 
+				alert(relativePath);
 				const fileResponse = await fetch(
-					`http://localhost:8000/get-output/${filePath}`,
+					`http://localhost:8000/get-output/${relativePath}`,
 					{
 						method: "GET",
 						credentials: "include",
@@ -394,6 +447,7 @@ const ApiService = {
 					throw new Error(
 						`Lỗi tải file: ${await fileResponse.text()}`
 					);
+				
 				const blob = await fileResponse.blob();
 
 				switch (option) {

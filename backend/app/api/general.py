@@ -16,48 +16,44 @@ def read_root():
 @router.get("/get-output/{filename:path}")
 async def serve_output_file(
     filename: str,
-    request: Request
+    # Bỏ comment nếu bạn cần xác thực user ở đây
+    # request: Request
 ):
     """
     Lấy các file sản phẩm của AI (audio, image, video, text, v.v.) từ thư mục _outputs/.
-    Args:
-        filename: Đường dẫn file trong thư mục _outputs/ (ví dụ: _outputs/user@example.com/audio/abc.mp3).
-        request: Request chứa header để xác thực.
-    Returns:
-        FileResponse: File với media_type tương ứng (audio/mpeg, image/png, video/mp4, text/plain, v.v.).
-    Raises:
-        HTTPException: Nếu file không tồn tại, không có quyền truy cập, hoặc lỗi server.
     """
     try:
-        # Xác thực người dùng
-        # user_data = verify_user_access_token(source="cookie", request=request)
+        # =================== PHẦN SỬA LỖI LOGIC ===================
 
-        # Chuẩn hóa đường dẫn file
-        file_path = Path(filename)
-        outputs_dir = Path("_outputs")
+        # 1. Lấy đường dẫn tuyệt đối, an toàn của thư mục _outputs
+        #    .resolve() để đảm bảo đường dẫn là tuyệt đối và tránh lỗi
+        outputs_dir = Path("_outputs").resolve()
 
-        # Kiểm tra file có nằm trong _outputs/ không
-        if not str(file_path).startswith(str(outputs_dir) + "/"):
+        # 2. Tạo đường dẫn đầy đủ đến file được yêu cầu một cách an toàn
+        #    Bằng cách này, `filename` sẽ được coi là tương đối so với `outputs_dir`
+        full_path = outputs_dir.joinpath(filename).resolve()
+
+        # 3. Kiểm tra bảo mật: Đảm bảo đường dẫn cuối cùng thực sự nằm BÊN TRONG `outputs_dir`
+        #    Đây là cách kiểm tra đúng để chống lại tấn công Path Traversal (ví dụ: `../`)
+        if not str(full_path).startswith(str(outputs_dir)):
             raise HTTPException(status_code=403, detail="Access to files outside _outputs directory is forbidden")
 
-        # Kiểm tra quyền sở hữu (giả sử file_path chứa email của user, ví dụ: _outputs/user@example.com/...)
-        # if user_data["email"] not in str(file_path):
-        #     raise HTTPException(status_code=403, detail="You do not have permission to access this file")
+        # =========================================================
 
         # Kiểm tra file tồn tại
-        if not file_path.exists():
+        if not full_path.is_file(): # Dùng is_file() để chắc chắn nó là file
             raise HTTPException(status_code=404, detail="File not found")
 
         # Xác định media type dựa trên phần mở rộng file
-        media_type, _ = mimetypes.guess_type(file_path) or ("application/octet-stream", None)
+        media_type, _ = mimetypes.guess_type(full_path)
         if not media_type:
-            media_type = "application/octet-stream"  # Fallback nếu không xác định được
+            media_type = "application/octet-stream"
 
-        # Trả về file với media_type và filename phù hợp
+        # Trả về file với đường dẫn đầy đủ đã được xác thực
         return FileResponse(
-            path=str(file_path),
+            path=str(full_path),
             media_type=media_type,
-            filename=file_path.name
+            filename=full_path.name
         )
 
     except HTTPException as e:
