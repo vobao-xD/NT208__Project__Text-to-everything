@@ -21,11 +21,11 @@ from fastapi_limiter import FastAPILimiter
 
 load_dotenv()
 
-# REDIS_URL=os.getenv("REDIS_URL")
+REDIS_URL=os.getenv("REDIS_URL")
 
 init_db()
 
-# scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler()
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -60,22 +60,22 @@ app.add_middleware(
 
 app.include_router(router)
 
-# @app.on_event("startup")
-# async def startup_event():
-#     redis = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
-#     await FastAPILimiter.init(redis)
-#     print(f"FastAPI Limiter initialized with Redis at {REDIS_URL}")
-#     scheduler.add_job(check_expired_subscriptions, "interval", days=1)
-#     scheduler.start()
-# @app.exception_handler(RateLimitExceeded)
-# async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded):
-#     return JSONResponse(
-#         status_code=Status.HTTP_429_TOO_MANY_REQUESTS,
-#         content={"detail": f"Bạn đã gửi quá nhiều tin nhắn. Hãy thử lại sau {round(exc.retry_after)} giây."}
-#     )
-# @app.on_event("shutdown")
-# async def shutdown_event():
-#     scheduler.shutdown()
+@app.on_event("startup")
+async def startup_event():
+    redis = aioredis.from_url(REDIS_URL, encoding="utf-8", decode_responses=True)
+    await FastAPILimiter.init(redis)
+    print(f"FastAPI Limiter initialized with Redis at {REDIS_URL}")
+    scheduler.add_job(check_expired_subscriptions, "interval", days=1)
+    scheduler.start()
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=Status.HTTP_429_TOO_MANY_REQUESTS,
+        content={"detail": f"Bạn đã gửi quá nhiều tin nhắn. Hãy thử lại sau {round(exc.retry_after)} giây."}
+    )
+@app.on_event("shutdown")
+async def shutdown_event():
+    scheduler.shutdown()
 
 if __name__ == "__main__":
     import uvicorn

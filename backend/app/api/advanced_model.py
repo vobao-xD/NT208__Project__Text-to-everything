@@ -761,7 +761,7 @@ async def analyze(
     prompt_parts = ["Analyze the following user input to determine the most appropriate task type.\n\nUser Input Details:\n"]
     has_input = False
     file_path = None
-
+    file_path_for_return = None
     if text:
         prompt_parts.append(f"- Text provided: \"{text}\"\n")
         has_input = True
@@ -773,12 +773,30 @@ async def analyze(
         ext = file.filename.split(".")[-1] if file.filename else "bin"
         save_path = HistoryAndOutputManager.save_output_file(
             user_email=user_data["email"],
-            generator_name="analyze",
+            generator_name="analyze_input",
             file_content=file_bytes,
             file_extension=ext
         )
-        file_path = str(save_path)
+        file_path_for_return = str(save_path)
 
+        if file.content_type and file.content_type.startswith("audio/"):
+                try:
+                    # Gọi API Whisper để chuyển giọng nói thành văn bản
+                    transcript = await client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=file # Truyền thẳng đối tượng file
+                    )
+                    transcribed_text = transcript.text
+                    if transcribed_text:
+                        prompt_parts.append(f"- Transcribed text from audio file ('{file.filename}'): \"{transcribed_text}\"\n")
+                    else:
+                        prompt_parts.append(f"- Audio file ('{file.filename}') was uploaded but contained no speech.\n")
+                except Exception as e:
+                    print(f"Error during audio transcription: {e}")
+                    prompt_parts.append(f"- Could not transcribe audio file '{file.filename}'. Error: {e}\n")
+        else:
+            # Nếu không phải audio, chỉ cần ghi nhận thông tin file như cũ
+            prompt_parts.append(f"- File uploaded: name='{file.filename}', content_type='{file.content_type}'\n")
     if not has_input:
         raise HTTPException(status_code=400, detail="No input provided. Please provide text, an image_url, or upload a file.")
 
@@ -823,7 +841,7 @@ async def analyze(
         if task not in VALID_TASK_KEYS:
             print(f"Warning: AI returned a task ('{task}') not in the predefined VALID_TASK_KEYS. Treating as 'unknown_task'. Original JSON: {result_json}")
 
-        return {"intent_analysis": task, "file_path": file_path}
+        return {"intent_analysis": task, "file_path": file_path_for_return}
 
     except httpx.HTTPStatusError as e: # Catch errors from OpenAI client (e.g., auth, rate limits)
         error_detail_msg = str(e)

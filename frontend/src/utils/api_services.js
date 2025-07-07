@@ -97,7 +97,7 @@ const ApiService = {
 	}},
 
 	// Phân tích file (cho mode 0 với file only)
-	async analyzeFile(file) {
+	async analyzeFile(file,role) {
 		const formData = new FormData();
 		formData.append("file", file);
 		if (role === "pro") {

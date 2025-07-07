@@ -138,40 +138,33 @@ const InputBox = () => {
 			mediaRecorderRef.current.ondataavailable = (e) =>
 				chunksRef.current.push(e.data);
 			mediaRecorderRef.current.onstop = async () => {
-				const blob = new Blob(chunksRef.current, {
-					type: "audio/webm",
-				});
-				stream.getTracks().forEach((track) => track.stop());
-				if (selectedOption === "0") {
-					try {
-						const extractedText =
-							await ApiService.extractTextFromMedia(blob, "9");
-						setInputText(extractedText);
-						toast.success("Đã trích xuất văn bản từ giọng nói.");
-					} catch (error) {
-						toast.error(
-							"Lỗi trích xuất âm thanh: " + error.message
-						);
-					}
-				} else if (selectedOption === "4") {
-					try {
-						const wavBlob = await convertWebmToWav(blob);
-						const file = new File(
-							[wavBlob],
-							`voice_sample_${new Date()
-								.toISOString()
-								.replace(/[:.]/g, "-")}.wav`,
-							{ type: "audio/wav" }
-						);
-						setSelectedFile(file);
-						toast.success("Đã tạo file giọng mẫu .wav.");
-					} catch (error) {
-						toast.error(
-							"Lỗi chuyển đổi sang .wav: " + error.message
-						);
-					}
+			const blob = new Blob(chunksRef.current, {
+				type: "audio/webm",
+			});
+			stream.getTracks().forEach((track) => track.stop());
+			if (selectedOption === "0") {
+				const audioFile = new File([blob], "recording.webm", { type: "audio/webm" });
+				sendMessage(null, audioFile, "0");
+
+			} else if (selectedOption === "4") {
+				try {
+					const wavBlob = await convertWebmToWav(blob);
+					const file = new File(
+						[wavBlob],
+						`voice_sample_${new Date()
+							.toISOString()
+							.replace(/[:.]/g, "-")}.wav`,
+						{ type: "audio/wav" }
+					);
+					setSelectedFile(file); // Gán file vào state
+					toast.success("Đã tạo file giọng mẫu .wav. Hãy nhập lời thoại và bấm gửi.");
+				} catch (error) {
+					toast.error(
+						"Lỗi chuyển đổi sang .wav: " + error.message
+					);
 				}
-			};
+			}
+		};
 			mediaRecorderRef.current.start();
 			setIsRecording(true);
 		} catch (error) {

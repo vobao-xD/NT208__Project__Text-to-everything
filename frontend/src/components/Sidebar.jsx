@@ -18,31 +18,28 @@ const Sidebar = () => {
 		deleteChatHistory,
 	} = useContext(ChatContext);
 	const [isManualMode, setIsManualMode] = useState(false);
-	const [showFunctionDropdown, setShowFunctionDropdown] = useState(false);
 	const [selectedModel, setSelectedModel] = useState("1");
-	const [selectedFunction, setSelectedFunction] = useState("0");
 	const handleModeChange = (e) => {
 		const newMode = e.target.value;
-		if (newMode === "1.1" && role !== "pro") {
-			toast.error("Chỉ tài khoản Pro mới được phép sử dụng chế độ 1.1!");
-			navigate("/advanced");
-			return;
-		}
-		setSelectedModel(newMode);
+        if (newMode === "1.1" && role !== "pro") {
+            toast.error("Chỉ tài khoản Pro mới được phép sử dụng chế độ 1.1!");
+            navigate("/advanced");
+            return;
+        }
+        setSelectedModel(newMode);
 	};
 
 	const handleManualModeToggle = () => {
 		const newMode = !isManualMode;
-		setIsManualMode(newMode);
-		setShowFunctionDropdown(newMode);
-		if (!newMode) {
-			setSelectedFunction("0"); // quay lại Auto Analyze
-		}
+        setIsManualMode(newMode);
+        // Nếu tắt chế độ thủ công, quay về Auto Analyze
+        if (!newMode) {
+            setSelectedOption("0"); // FIX: Cập nhật state của context
+        }
 	};
 
 	const handleOptionChange = (e) => {
-		const newValue = e.target.value;
-		setSelectedFunction(newValue);
+		setSelectedOption(e.target.value);
 	};
 
 	return (
@@ -92,15 +89,15 @@ const Sidebar = () => {
 					{isManualMode ? "Chế độ thủ công" : "Chế độ tự động"}
 				</button>
 			</div>
-			{showFunctionDropdown && (
+			{isManualMode  && (
 				<div className="choices">
 					<select
 						className={`options ${isLoading ? "disabled" : ""}`}
-						value={selectedFunction}
+						value={selectedOption} // SỬA LẠI: Dùng `selectedOption` từ context
 						onChange={handleOptionChange}
 						disabled={isLoading}
 					>
-						<option value="0">Auto Analyze</option>
+						
 						<option value="1">Text to Speech (Default Voice)</option>
 						<option value="2">Text to Image</option>
 						<option value="3">Text to Video</option>

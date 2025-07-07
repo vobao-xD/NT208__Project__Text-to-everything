@@ -34,12 +34,12 @@ export const ChatProvider = ({ children }) => {
 		11: "11111111-1111-1111-1111-111111111111", // File to text
 	};
 	const actionMap = {
-		generate_speech: "1",
-		generate_image: "2",
-		generate_video: "3",
-		generate_text: "6",
-		generate_answer: "7",
-		generate_code: "8",
+		"text-to-audio": "1",    
+    "text-to-image": "2",   
+    "generate_video": "3",  
+    "chatbot-content": "6",
+    "generate_answer": "7",  
+    "text-to-code": "8",
 	};
 
 	// Load lịch sử chat khi component mount
@@ -141,6 +141,7 @@ export const ChatProvider = ({ children }) => {
 				}
 
 				const data = await response.json();
+				console.log("Dữ liệu nhận được từ backend analyze:", data);
 				if (data.intent_analysis && actionMap[data.intent_analysis]) {
 					const action = actionMap[data.intent_analysis];
 					if (action === "3" && role !== "pro") {
@@ -253,6 +254,7 @@ export const ChatProvider = ({ children }) => {
 
 	const sendMessage = useCallback(
 		async (text, file, option) => {
+			console.log("sendMessage được gọi với option:", option);
 			if (file && role === "free") {
 				toast.error("Tài khoản miễn phí không được phép upload file.", {
 					closeButton: true,
@@ -274,16 +276,14 @@ export const ChatProvider = ({ children }) => {
 				// Xử lý mode 0 (Auto Analyze)
 				if (option === "0") {
 					let analyzeResult;
-					if (text && file) {
-						analyzeResult = await ApiService.analyzeTextAndFile(
-							finalText,
-							file,
-							finalOption,
-							role,
-							email
-						);
-						if (!analyzeResult.ok)
-							throw new Error("Phân tích text và file thất bại");
+					if (file && !text) { 
+                    analyzeResult = await handleAutoAnalyze(null, file, role);
+
+                    if (!analyzeResult || !analyzeResult.success) {
+                        toast.error("Không thể tự động phân tích chức năng từ file.");
+                        setIsLoading(false);
+                        return; 
+                    }
 					} else if (text) {
 						analyzeResult = await handleAutoAnalyze(text,null,role);
 						if (!analyzeResult.success) return;
