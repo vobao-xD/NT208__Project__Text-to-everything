@@ -65,7 +65,7 @@ async def serve_output_file(
 async def save_output_file_endpoint(
     user_email: str,
     generator_name: str,
-    file_content: List[int],  # Nhận mảng bytes từ frontend
+    file_content: List[int],  
     file_extension: str,
     current_user=Depends(get_current_user)
 ):

@@ -435,7 +435,6 @@ const ApiService = {
 
 				botMessage.output_file_path = filePath;
 				botMessage.output_file_name = filePath.split("/").pop(); 
-				alert(relativePath);
 				const fileResponse = await fetch(
 					`http://localhost:8000/get-output/${relativePath}`,
 					{

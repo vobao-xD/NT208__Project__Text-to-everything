@@ -34,12 +34,11 @@ export const ChatProvider = ({ children }) => {
 		11: "11111111-1111-1111-1111-111111111111", // File to text
 	};
 	const actionMap = {
-		"text-to-audio": "1",    
-    "text-to-image": "2",   
-    "generate_video": "3",  
+	"text-to-audio": "1",
+    "text-to-image": "2",
     "chatbot-content": "6",
-    "generate_answer": "7",  
-    "text-to-code": "8",
+    "generate_answer": "7",
+    "generate_code": "8", 
 	};
 
 	// Load lịch sử chat khi component mount
