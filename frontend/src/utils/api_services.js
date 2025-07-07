@@ -620,86 +620,87 @@ const ApiService = {
 	},
 
 	async getConversation(conversationId, generatorIdMap) {
-		const token = Cookies.get("access_token");
-		if (!token) throw new Error("Không tìm thấy token xác thực");
+    const token = Cookies.get("access_token");
+    if (!token) throw new Error("Không tìm thấy token xác thực");
 
-		const response = await fetch(
-			`http://localhost:8000/chat-history/${conversationId}`,
-			{
-				method: "GET",
-				headers: { "Content-Type": "application/json" },
-				credentials: "include",
-			}
-		);
-		if (!response.ok)
-			throw new Error(
-				`Lỗi tải cuộc trò chuyện: ${await response.text()}`
-			);
+    const response = await fetch(
+        `http://localhost:8000/chat-history/${conversationId}`,
+        {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+        }
+    );
+    if (!response.ok)
+        throw new Error(
+            `Lỗi tải cuộc trò chuyện: ${await response.text()}`
+        );
 
-		const data = await response.json();
-		console.log("Raw response from /chat-history:", data);
-		const messages = [];
+    const data = await response.json();
+    console.log("Raw response from /chat-history:", data);
+    const messages = [];
 
-		const chat_details = data.chat_details || [];
-		for (let detail of chat_details) {
-			// Always push user message first
-			messages.push({
-				id: detail.id + "_user",
-				type: "user",
-				content: detail.input_text || (detail.input_file_name ? `[Đã gửi tệp: ${detail.input_file_name}]` : "[Tin nhắn rỗng]"),
-				isText: detail.input_type === "text",
-				isAudio: detail.input_type === "audio",
-				isImage: detail.input_type === "image",
-				isVideo: detail.input_type === "video",
-				isFile: detail.input_type === "file",
-				audio_url: detail.input_type === "audio" ? `http://localhost:8000/get-output/${detail.input_file_path}` : null,
-				image_url: detail.input_type === "image" ? `http://localhost:8000/get-output/${detail.input_file_path}` : null,
-				video_url: detail.input_type === "video" ? `http://localhost:8000/get-output/${detail.input_file_path}` : null,
-				file_url: detail.input_type === "file" ? `http://localhost:8000/get-output/${detail.input_file_path}` : null,
-				input_file_name: detail.input_file_name || null,
-				input_file_path: detail.input_file_path || null,
-				created_at: detail.created_at,
-			});
+    const chat_details = data.chat_details || [];
+    for (let detail of chat_details) {
+        // Always push user message first
+        messages.push({
+            id: detail.id + "_user",
+            type: "user",
+            content: detail.input_text || (detail.input_file_name ? `[Đã gửi tệp: ${detail.input_file_name}]` : "[Tin nhắn rỗng]"),
+            isText: detail.input_type === "text",
+            isAudio: detail.input_type === "audio",
+            isImage: detail.input_type === "image",
+            isVideo: detail.input_type === "video",
+            isFile: detail.input_type === "file",
+            // FIX: Sửa lại đường dẫn cho file người dùng upload
+            audio_url: detail.input_type === "audio" ? `http://localhost:8000/get-output/${detail.input_file_path.replace('_outputs/', '').replace(/\\/g, '/')}` : null,
+            image_url: detail.input_type === "image" ? `http://localhost:8000/get-output/${detail.input_file_path.replace('_outputs/', '').replace(/\\/g, '/')}` : null,
+            video_url: detail.input_type === "video" ? `http://localhost:8000/get-output/${detail.input_file_path.replace('_outputs/', '').replace(/\\/g, '/')}` : null,
+            file_url: detail.input_type === "file" ? `http://localhost:8000/get-output/${detail.input_file_path.replace('_outputs/', '').replace(/\\/g, '/')}` : null,
+            input_file_name: detail.input_file_name || null,
+            input_file_path: detail.input_file_path || null,
+            created_at: detail.created_at,
+        });
 
-			// Then push bot message if output exists
-			if (detail.output_text || detail.output_file_path) {
-				messages.push({
-					id: detail.id + "_bot",
-					type: "bot",
-					content: {
-						text: detail.output_text || null,
-						audio_url: detail.output_type === "audio" ? `http://localhost:8000/get-output/${detail.output_file_path}` : null,
-						image_url: detail.output_type === "image" ? `http://localhost:8000/get-output/${detail.output_file_path}` : null,
-						video_url: detail.output_type === "video" ? `http://localhost:8000/get-output/${detail.output_file_path}` : null,
-						file_url: detail.output_type === "file" ? `http://localhost:8000/get-output/${detail.output_file_path}` : null,
-						file_name: detail.output_file_name || null,
-					},
-					isText: detail.output_type === "text",
-					isAudio: detail.output_type === "audio",
-					isImage: detail.output_type === "image",
-					isVideo: detail.output_type === "video",
-					isFile: detail.output_type === "file",
-					option: Object.keys(generatorIdMap).find((key) => generatorIdMap[key] === detail.generator_id) || null,
-					output_file_path: detail.output_file_path || null,
-					created_at: detail.created_at,
-				});
-			}
-		}
+        // Then push bot message if output exists
+        if (detail.output_text || detail.output_file_path) {
+            messages.push({
+                id: detail.id + "_bot",
+                type: "bot",
+                content: {
+                    text: detail.output_text || null,
+                    audio_url: detail.output_type === "audio" ? `http://localhost:8000/get-output/${detail.output_file_path.replace('_outputs/', '').replace(/\\/g, '/')}` : null,
+                    image_url: detail.output_type === "image" ? `http://localhost:8000/get-output/${detail.output_file_path.replace('_outputs/', '').replace(/\\/g, '/')}` : null,
+                    video_url: detail.output_type === "video" ? `http://localhost:8000/get-output/${detail.output_file_path.replace('_outputs/', '').replace(/\\/g, '/')}` : null,
+                    file_url: detail.output_type === "file" ? `http://localhost:8000/get-output/${detail.output_file_path.replace('_outputs/', '').replace(/\\/g, '/')}` : null,
+                    file_name: detail.output_file_name || null,
+                },
+                isText: detail.output_type === "text",
+                isAudio: detail.output_type === "audio",
+                isImage: detail.output_type === "image",
+                isVideo: detail.output_type === "video",
+                isFile: detail.output_type === "file",
+                option: Object.keys(generatorIdMap).find((key) => generatorIdMap[key] === detail.generator_id) || null,
+                output_file_path: detail.output_file_path || null,
+                created_at: detail.created_at,
+            });
+        }
+    }
 
-		console.log("Prepared messages:", messages);
-		const firstDetail = chat_details[0] || {};
-		const title =
-			firstDetail.input_text && firstDetail.input_text.length > 30
-				? `${firstDetail.input_text.substring(0, 30)}...`
-				: firstDetail.input_text || "Cuộc trò chuyện mới";
+    console.log("Prepared messages:", messages);
+    const firstDetail = chat_details[0] || {};
+    const title =
+        firstDetail.input_text && firstDetail.input_text.length > 30
+            ? `${firstDetail.input_text.substring(0, 30)}...`
+            : firstDetail.input_text || "Cuộc trò chuyện mới";
 
-		return {
-			id: conversationId,
-			title,
-			created_at: data.created_at,
-			messages,
-		};
-	},
+    return {
+        id: conversationId,
+        title,
+        created_at: data.created_at,
+        messages,
+    };
+},
 
 	// Xóa cuộc trò chuyện
 	async deleteChatHistory(historyId) {
