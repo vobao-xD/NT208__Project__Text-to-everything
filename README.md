@@ -81,7 +81,7 @@ Dưới đây là những tính năng nổi bật, mang tính đột phá của 
 Hệ thống "Text to Everything" được thiết kế theo kiến trúc mô-đun, bao gồm các thành phần chính:
 
 ```
-Client (React/Vite + HTML/CSS/Bootstrap/JS)
+Client (React/Vite + HTML/CSS/Tailwind/JS)
 │
 │ (HTTP/WebSocket Requests)
 ▼
@@ -101,7 +101,7 @@ PostgreSQL Online Database
 
 ### 📑 Chi tiết thành phần
 
--   **Client**: Giao diện người dùng được phát triển bằng **React/Vite** kết hợp **HTML/CSS/Bootstrap/JS**, xây dựng theo mô hình **Single Page Application (SPA)**, cung cấp trải nghiệm tương tác mượt mà và trực quan.
+-   **Client**: Giao diện người dùng được phát triển bằng **React/Vite** kết hợp **HTML/CSS/Tailwind/JS**, xây dựng theo mô hình **Single Page Application (SPA)**, cung cấp trải nghiệm tương tác mượt mà và trực quan.
 -   **FastAPI Backend**: Trụ cột chính sử dụng **Python FastAPI**, đảm nhận:
     -   Xử lý logic nghiệp vụ chính.
     -   Quản lý tác vụ, xác thực và phân quyền người dùng.
@@ -255,9 +255,9 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 | Vai trò  | Quyền lợi                                      | Giới hạn                                                                                   |
 | -------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Free** | Tạo nội dung cơ bản, lưu trữ cá nhân.          | 10 lượt/ngày, dung lượng giới hạn, không upload file,không bao gồm chức năng text to video |
-| **Plus** | Không giới hạn, ưu tiên xử lý, hỗ trợ cao cấp. | không giới hạn lượt, được upload file, không bao gồm text to videovideo                    |
-| **Pro**  | Quản lý người dùng, hệ thống, mô hình AI.      | Không giới hạn lươtj, toàn quyền chức năng, xử dụng api phiển bản advancedadvanced         |
+| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn |
+| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp | Không bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất |
+| **Pro**  | Bao gồm toàn bộ quyền lợi của gói Plus, đồng thời truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ  | |
 
 ---
 
