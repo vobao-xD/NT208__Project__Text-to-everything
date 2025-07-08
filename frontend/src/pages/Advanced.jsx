@@ -286,11 +286,10 @@ const Advanced = () => {
             <p>Hỗ trợ người dùng mới, giới hạn 1 tháng</p>
           </div>
           <ul className="text-left space-y-2 mb-6">
-            <li>✅ Text-to-Image cơ bản (giới hạn số lần/ngày)</li>
-            <li>✅ Text-to-Speech (giọng cơ bản, giới hạn thời gian/ngày)</li>
-            <li>✅ Speech-to-Text cơ bản (hỗ trợ tiếng Việt và tiếng Anh)</li>
-            <li>✅ Lưu trữ 24 giờ</li>
-            <li>✅ Truy cập chatbot AI (giới hạn số lần)</li>
+            <li>✅ Sử dụng API-Model 1 để tạo nội dung cơ bản</li>
+            <li>✅ Hỗ trợ cả chế độ tự động và thủ công linh hoạt</li>
+            <li>❌ Không hỗ trợ upload file để xử lý</li>
+            <li>❌ Không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ</li>
           </ul>
           <button 
             id="free-button"
@@ -335,11 +334,9 @@ const Advanced = () => {
           <p>Nâng cao hiệu suất, không giới hạn lượt truy cập</p>
           <ul>
             <li>🔥 Tất cả quyền lợi của gói Miễn phí</li>
-            <li>✅ Text-to-Image nâng cao (AI chất lượng cao, giảm thời gian chờ)</li>
-            <li>✅ Text-to-Speech (giọng AI tự nhiên, nhiều ngôn ngữ)</li>
-            <li>✅ Speech-to-Text nâng cao (chính xác hơn, hỗ trợ đa giọng)</li>
-            <li>✅ Lưu trữ nội dung trong 7 ngày</li>
-            <li>✅ Không có quảng cáo</li>
+            <li>✅ Thêm tính năng upload file</li>
+            <li>✅ Hỗ trợ cao cấp</li>
+            <li>❌ Không bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất</li>
           </ul>
           <button
             id="plus-button"
@@ -384,11 +381,7 @@ const Advanced = () => {
           <p>Truy cập nhanh hơn, lưu trữ lớn hơn, quyền sử dụng cao nhất</p>
           <ul>
             <li>🔥 Tất cả quyền lợi của gói Plus</li>
-            <li>✅ Text-to-Video (AI tạo video từ văn bản, nhân vật ảo)</li>
-            <li>✅ AI Character Animation (tạo nhân vật động theo giọng nói)</li>
-            <li>✅ Lưu trữ không giới hạn</li>
-            <li>✅ Tăng tốc xử lý (ưu tiên hàng đợi)</li>
-            <li>✅ API riêng để tích hợp dự án</li>
+            <li>✅ Truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ </li>
           </ul>
           <button 
             id="pro-button"
