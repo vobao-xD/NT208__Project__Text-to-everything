@@ -13,6 +13,7 @@ export const ChatProvider = ({ children }) => {
 	const [role, setRole] = useState(localStorage.getItem("role") || "free");
 	const [email, setEmail] = useState(localStorage.getItem("email") || "");
 	const [selectedOption, setSelectedOption] = useState("0");
+	const [selectedModel, setSelectedModel] = useState("1");
 	const [messages, setMessages] = useState([]);
 	const [conversations, setConversations] = useState([]);
 	const [currentConversationId, setCurrentConversationId] = useState(null);
@@ -252,7 +253,7 @@ export const ChatProvider = ({ children }) => {
 	);
 
 	const sendMessage = useCallback(
-		async (text, file, option) => {
+		async (text, file, option, model) => {
 			console.log("sendMessage được gọi với option:", option);
 			if (file && role === "free") {
 				toast.error("Tài khoản miễn phí không được phép upload file.", {
@@ -379,23 +380,42 @@ export const ChatProvider = ({ children }) => {
 
 				// Gọi API
 				let response;
-				if (finalText && file) {
-					response = await ApiService.processTextAndFile(
-						finalText,
-						file,
-						finalOption,
-						role
-					);
-				} else if (finalText) {
-					response = await ApiService.processText(
-						finalText,
-						finalOption,
-						role
-					);
-				} else if (file) {
-					response = await ApiService.processFile(file, finalOption);
-				}
-
+				// console.log(model);
+				if (model === "1.1")
+					if (finalText && file) {
+						response = await ApiService.processTextAndFile(
+							finalText,
+							file,
+							finalOption,
+							role
+						);
+					} else if (finalText) {
+						response = await ApiService.processText(
+							finalText,
+							finalOption,
+							role
+						);
+					} else if (file) {
+						response = await ApiService.processFile(file, finalOption);
+					}
+				else if (model === "1")
+					if (finalText && file) {
+						response = await ApiService.processTextAndFile(
+							finalText,
+							file,
+							finalOption,
+							"free"
+						);
+					} else if (finalText) {
+						response = await ApiService.processText(
+							finalText,
+							finalOption,
+							"free"
+						);
+					} else if (file) {
+						response = await ApiService.processFile(file, finalOption);
+					}
+				console.log(model)
 				if (!response.ok)
 					throw new Error(`API error: ${await response.text()}`);
 
@@ -463,6 +483,8 @@ export const ChatProvider = ({ children }) => {
 				email,
 				selectedOption,
 				setSelectedOption,
+				selectedModel,
+				setSelectedModel,
 				messages,
 				conversations,
 				currentConversationId,

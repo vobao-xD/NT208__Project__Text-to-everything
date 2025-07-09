@@ -5,7 +5,7 @@ import FileUpload from "@/components/FileUpload";
 import ApiService from "@/utils/api_services";
 
 const InputBox = () => {
-	const { selectedOption, role, isLoading, sendMessage } =
+	const { selectedOption, role, isLoading, sendMessage, selectedModel } =
 		useContext(ChatContext);
 	const [inputValue, setInputValue] = useState("");
 	const [selectedFile, setSelectedFile] = useState(null);
@@ -91,7 +91,7 @@ const InputBox = () => {
 			return;
 		}
 
-		await sendMessage(inputValue, selectedFile, selectedOption);
+		await sendMessage(inputValue, selectedFile, selectedOption, selectedModel);
 		setInputValue("");
 		setSelectedFile(null);
 		if (fileInputRef.current) fileInputRef.current.value = "";
@@ -144,7 +144,7 @@ const InputBox = () => {
 			stream.getTracks().forEach((track) => track.stop());
 			if (selectedOption === "0") {
 				const audioFile = new File([blob], "recording.webm", { type: "audio/webm" });
-				sendMessage(null, audioFile, "0");
+				sendMessage(null, audioFile, "0", selectedModel);
 
 			} else if (selectedOption === "4") {
 				try {
@@ -254,7 +254,7 @@ const InputBox = () => {
 					<div className="file-upload-wrapper">
 						<FileUpload
 							onFileSend={(file) =>
-								sendMessage(null, file, selectedOption)
+								sendMessage(null, file, selectedOption, selectedModel)
 							}
 							accept={
 								selectedOption === "5"

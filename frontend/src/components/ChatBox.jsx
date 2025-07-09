@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { ChatContext } from "@/context/ChatContext";
+import { toast } from "react-toastify";
 import ReactMarkdown from "react-markdown";
 
 const MessageContent = ({ message, isUser }) => {

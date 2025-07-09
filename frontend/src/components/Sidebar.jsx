@@ -16,9 +16,11 @@ const Sidebar = () => {
 		loadConversation,
 		createConversation,
 		deleteChatHistory,
+		selectedModel,
+		setSelectedModel,
 	} = useContext(ChatContext);
 	const [isManualMode, setIsManualMode] = useState(false);
-	const [selectedModel, setSelectedModel] = useState("1");
+	// const [selectedModel, setSelectedModel] = useState("1");
 	const handleModeChange = (e) => {
 		const newMode = e.target.value;
         if (newMode === "1.1" && role !== "pro") {
