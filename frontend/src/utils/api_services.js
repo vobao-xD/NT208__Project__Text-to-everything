@@ -304,9 +304,9 @@ const ApiService = {
 	// Xử lý file only (cho mode 5, 9, 10, 11)
 	async processFile(file, option) {
 		const formData = new FormData();
-		formData.append("file", file);
+		formData.append("file", file.file);
 		let apiUrl;
-
+		console.log(formData.getAll("file"))
 		switch (option) {
 			case "5":
 				apiUrl = "http://localhost:8000/enhance";
@@ -481,7 +481,7 @@ const ApiService = {
 						botMessage.isVideo = true;
 						break;
 				}
-			} else if (["6", "7", "8"].includes(option)) {
+			} else if (["6", "7", "8","9","10","11"].includes(option)) {
 				botMessage.content = {
 					text:
 						(option === "8" && typeof data.code === "object"

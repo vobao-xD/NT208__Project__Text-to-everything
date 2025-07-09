@@ -98,6 +98,7 @@ const InputBox = () => {
 	};
 
 	const handleFileSelect = (e) => {
+		console.log("handleFileSelect was called.")
 		const file = e.target.files[0];
 		const validExtensions = [
 			".mp4",
@@ -116,6 +117,7 @@ const InputBox = () => {
 			validExtensions.some((ext) => file.name.toLowerCase().endsWith(ext))
 		) {
 			setSelectedFile(file);
+			console.log("File: " + file)
 		} else {
 			toast.error(
 				"File không hỗ trợ. Chọn .mp4, .wav, .mp3, .pdf, .doc, .docx, .txt, .jpg, .jpeg, .png."
@@ -253,8 +255,11 @@ const InputBox = () => {
 				{fileOnlyOptions.includes(selectedOption) ? (
 					<div className="file-upload-wrapper">
 						<FileUpload
-							onFileSend={(file) =>
-								sendMessage(null, file, selectedOption, selectedModel)
+							onFileSend={(a, file, b) =>
+							{
+								sendMessage(a, file, selectedOption, selectedModel)
+							}
+								
 							}
 							accept={
 								selectedOption === "5"
