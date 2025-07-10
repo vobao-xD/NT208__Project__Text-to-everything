@@ -81,43 +81,126 @@ Dưới đây là những tính năng nổi bật, mang tính đột phá của 
 Hệ thống "Text to Everything" được thiết kế theo kiến trúc mô-đun, bao gồm các thành phần chính:
 
 ```
-Client (React/Vite + HTML/CSS/Tailwind/JS)
+Client (React/Vite + HTML/CSS/Tailwind.CSS/JS)
 │
-│ (HTTP/WebSocket Requests)
+│ (HTTP Requests)
 ▼
 FastAPI Backend (Python)
-│ ───────────────────────────────────────────────────────────────────────────┐
-│ (Logic xử lý chính, Quản lý tác vụ, Xác thực, Phân quyền, API Gateway,.. ) │
-│   ├──► Kết nối PostgreSQL (Dữ liệu người dùng, metadata, cấu hình)         │
-│   ├──► Lưu trữ file (Input/Output từ người dùng)                           │
-│   └──► Gọi External AI APIs (OpenAI, CloudFlare, v.v.)                     │
-│       └──► Gọi Text-to-Speech Backend (Python FastAPI)                     │
-│            ├──► TTS Default                                                │
-│            └──► TTS with Voice Cloning (Vi-XTTS)                           │
+│ ────────────────────────────────────────────────────────────────────────────────┐
+│ (Logic xử lý chính, Quản lý tác vụ, Xác thực, Phân quyền, API Gateway,.. )      │
+│   ├──► Kết nối PostgreSQL (Dữ liệu người dùng, metadata, cấu hình)              │
+│   ├──► Lưu trữ file (Input/Output từ người dùng)                                │
+│   └──► Gọi External AI APIs (OpenAI, CloudFlare, v.v. thông qua Python FastAPI) │
+│       ├──► Gọi Text-to-Speech Backend                                           │
+│       │    ├──► TTS Default                                                     │
+│       │    ├──► TTS with Voice Cloning (Vi-XTTS)                                │
+│       │    └──► TTS Advanced (whisper-1)                                        │
+│       ├──► Gọi Text-to-Image Backend                                            │
+│       │    ├──► TTI Default (Cloudflare's Black Forest Lab's flux-1-schnell)    │
+│       │    └──► TTI Advanced (dall-e-3)                                         │
+│       ├──► Gọi Text-to-Video Backend                                            │
+│       │    ├──► TTV Default(Segmind's Mochi-1 Model)                            │
+│       │    └──► TTV Advanced (RunwayML)                                         │
+│       ├──► Gọi Text-to-Code Backend                                             │
+│       │    └──► TTC Default (openai/gpt-3.5-turbo)                              │
+│       │    └──► TTC Advanced (openai/gpt-40)                                    │
+│       ├──► Gọi Generate Answer Backend                                          │
+│       │    └──► Generate Answer Default (mistralai/mistral-7b-instruct)         │
+│       │    └──► Generate Answer Advanced (openai/gpt-4o)                        │
+│       ├──► Gọi Chatbot AI Backend                                               │
+│       │    └──► Chatbot AI Default/Advanced (openai/gpt-4o)                     │
+│       ├──► Gọi Image Enhancer Backend                                           │
+│       │    └──► Image Enhancer (ImageEnhancer thuộc module Pillow)              │
+│       ├──► Gọi Speech to Text Backend                                           │
+│       │    └──► Speech to Text (Recognizer thuộc module sr)                     │
+│       ├──► Gọi Image to Text Backend                                            │
+│       │    └──► Image to Text (module pytesseract)                              │
+│       ├──► Gọi File to Text Backend                                             │
+│       │    └──► File to Text (module PyPDF2 và module docx)                     │
+│       └──► Gọi Video to Text Backend                                            │
+│            └──► Video to Text (module moviepy)                                  │
+│
 ▼
 PostgreSQL Online Database
-(Dữ liệu người dùng, metadata, cấu hình, input, output,...)
+(Dữ liệu người dùng, cấu hình, input, output,...)
 ```
 
 ### 📑 Chi tiết thành phần
 
--   **Client**: Giao diện người dùng được phát triển bằng **React/Vite** kết hợp **HTML/CSS/Tailwind/JS**, xây dựng theo mô hình **Single Page Application (SPA)**, cung cấp trải nghiệm tương tác mượt mà và trực quan.
--   **FastAPI Backend**: Trụ cột chính sử dụng **Python FastAPI**, đảm nhận:
-    -   Xử lý logic nghiệp vụ chính.
-    -   Quản lý tác vụ, xác thực và phân quyền người dùng.
-    -   Kết nối với **PostgreSQL** để lưu trữ dữ liệu người dùng, metadata, và cấu hình.
-    -   Lưu trữ file input/output từ người dùng (hình ảnh, video, âm thanh).
-    -   Gọi các **API bên thứ ba** (OpenAI, CloudFlare, v.v.) để tích hợp tính năng AI.
--   **Text-to-Speech Backend**: Một dự án phụ biệt lập sử dụng **Python FastAPI**, được thiết kế riêng để hỗ trợ:
-    -   **TTS Default**: Tạo giọng nói tự nhiên từ văn bản.
-    -   **TTS with Voice Cloning**: Sử dụng mô hình **Vi-XTTS** để sao chép giọng nói tùy chỉnh của người dùng.
-    -   Backend này được FastAPI chính gọi để cung cấp tính năng TTS chuyên sâu.
--   **External AI APIs**: Tích hợp các dịch vụ từ **OpenAI**, **CloudFlare**, và các nhà cung cấp khác để mở rộng khả năng AI cho web app.
--   **PostgreSQL Database**: Lưu trữ dữ liệu có cấu trúc, bao gồm thông tin người dùng, metadata nội dung, và cấu hình hệ thống,...
+* **Client**
+  Giao diện người dùng được xây dựng bằng **React/Vite**, kết hợp với **HTML/CSS/Tailwind CSS/JavaScript**, theo mô hình **Single Page Application (SPA)**.
+  Cung cấp trải nghiệm người dùng hiện đại, mượt mà, với khả năng tương tác thời gian thực và tối ưu hiệu năng trình duyệt.
+
+---
+
+* **FastAPI Backend (Python)**
+  Là trung tâm điều phối của hệ thống, đảm nhiệm các vai trò quan trọng:
+
+  * **Xử lý logic nghiệp vụ**: Quản lý toàn bộ luồng xử lý tác vụ AI (TTS, TTI, TTC, v.v.).
+  * **Xác thực & phân quyền người dùng**: Hệ thống đăng nhập/đăng ký, cấp quyền theo vai trò (user/admin).
+  * **API Gateway**: Làm trung gian gọi tới các dịch vụ AI bên ngoài hoặc nội bộ.
+  * **Kết nối PostgreSQL**: Lưu trữ và truy vấn dữ liệu người dùng, metadata, cấu hình hệ thống.
+  * **Lưu trữ file**: Quản lý dữ liệu input/output (ảnh, video, âm thanh, file tài liệu) từ người dùng.
+  * **Gọi External AI APIs**: Tích hợp các API từ bên thứ ba (OpenAI, Cloudflare,...), bao gồm:
+
+    * **Text-to-Speech Backend**:
+
+      * `TTS Default`: Chuyển văn bản thành giọng nói cơ bản.
+      * `TTS with Voice Cloning`: Sử dụng mô hình **Vi-XTTS** để nhân bản giọng nói người dùng.
+      * `TTS Advanced`: Tạo giọng nói nâng cao từ văn bản với hỗ trợ mô hình như **whisper-1**.
+    * **Text-to-Image Backend**:
+
+      * `TTI Default`: Sử dụng mô hình như **flux-1-schnell** từ Cloudflare.
+      * `TTI Advanced`: Sử dụng mô hình **DALL·E 3** từ OpenAI.
+    * **Text-to-Video Backend**:
+
+      * `TTV Default`: Tạo video từ mô hình như **Mochi-1** (Segmind).
+      * `TTV Advanced`: Sử dụng nền tảng video AI cao cấp như **RunwayML**.
+    * **Text-to-Code Backend**:
+
+      * `TTC Default`: Tạo mã nguồn từ văn bản bằng **GPT-3.5-turbo**.
+      * `TTC Advanced`: Tạo mã chất lượng cao hơn bằng **GPT-4o**.
+    * **Generate Answer Backend**:
+
+      * `Default`: Dùng mô hình nhẹ như **Mistral-7B Instruct**.
+      * `Advanced`: Dùng mô hình cao cấp như **GPT-4o**.
+    * **Chatbot AI Backend**: Trò chuyện tương tác sử dụng **GPT-4o**.
+    * **Image Enhancer Backend**: Cải thiện chất lượng ảnh đầu vào với module **Pillow**.
+    * **Speech to Text Backend**: Chuyển giọng nói thành văn bản qua thư viện **SpeechRecognition** (`sr`).
+    * **Image to Text Backend**: Trích xuất văn bản từ hình ảnh qua **pytesseract**.
+    * **File to Text Backend**: Đọc nội dung từ file **PDF** và **DOCX** sử dụng **PyPDF2** và **python-docx**.
+    * **Video to Text Backend**: Trích xuất nội dung từ video thông qua **moviepy**.
+
+---
+
+* **Text-to-Speech Backend (Microservice riêng biệt)**
+  Một backend riêng biệt được triển khai bằng **FastAPI**, chuyên xử lý các yêu cầu liên quan đến chuyển văn bản thành giọng nói (TTS), hỗ trợ:
+
+  * TTS thường (Default)
+  * TTS giọng nói cá nhân hóa (Voice Cloning với Vi-XTTS)
+  * TTS nâng cao với chất lượng cao hơn (Whisper-1, v.v.)
+
+---
+
+* **External AI APIs**
+  Gồm các API từ **OpenAI**, **Cloudflare**, và các nhà cung cấp AI khác, được gọi thông qua các route của FastAPI backend để xử lý tác vụ nâng cao như tạo ảnh, tạo video, viết code, sinh câu trả lời, chatbot, v.v.
+
+---
+
+* **PostgreSQL Online Database**
+  Cơ sở dữ liệu trực tuyến dạng quan hệ, lưu trữ:
+
+  * Thông tin người dùng
+  * Metadata liên quan đến đầu vào/đầu ra
+  * Cấu hình hệ thống
+  * Trạng thái tác vụ và lịch sử xử lý AI
+
+---
+
 
 ### 🛠 Luồng hoạt động
 
-1. **Client**: Người dùng tương tác qua giao diện SPA, gửi yêu cầu qua HTTP/WebSocket.
+1. **Client**: Người dùng tương tác qua giao diện SPA, gửi yêu cầu qua HTTP.
 2. **FastAPI Backend**: Nhận yêu cầu, xác thực người dùng, điều phối đến các module xử lý, và lưu trữ dữ liệu/file.
 3. **Text-to-Speech Backend**: Xử lý riêng biệt các tác vụ TTS (default và voice cloning) khi được gọi.
 4. **External APIs**: Cung cấp hỗ trợ AI bổ sung từ các dịch vụ bên ngoài.
@@ -139,8 +222,7 @@ Dự án **Text to Everything** tận dụng các công nghệ hiện đại và
 | **AI Models**     | OpenAI, Stability AI, Vi-XTTS, v.v. | Tận dụng các mô hình State-of-the-Art (SOTA) từ OpenAI, Stability AI, và mô hình Vi-XTTS tự phát triển để xử lý đa dạng tác vụ AI.               |
 | **Xác thực**      | OAuth2, JWT                         | Đảm bảo an toàn và linh hoạt trong quản lý đăng nhập, xác thực người dùng và service với tiêu chuẩn công nghiệp.                                 |
 | **Triển khai**    | Docker, Railway, Render, Heroku     | Docker đóng gói ứng dụng đồng nhất; Railway, Render, Heroku cung cấp hạ tầng linh hoạt và dễ triển khai.                                         |
-| **Lưu trữ file**  | FastAPI Backend                     | Tự thiết kế cơ chế lưu trữ file ở backend để dễ dàng quản lý, truy vấn và sử dụng lại khi cần.                                                   |
-| **Linting**       | Black, Flake8, isort                | Đảm bảo mã nguồn nhất quán, dễ đọc và tuân thủ các tiêu chuẩn code style.                                                                        |
+| **Lưu trữ file**  | FastAPI Backend                     | Tự thiết kế cơ chế lưu trữ file ở backend để dễ dàng quản lý, truy vấn và sử dụng lại khi cần.                                                   |                                                                      |
 
 ---
 
@@ -255,9 +337,9 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 | Vai trò  | Quyền lợi                                      | Giới hạn                                                                                   |
 | -------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn |
-| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp | Không bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất |
-| **Pro**  | Bao gồm toàn bộ quyền lợi của gói Plus, đồng thời truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ  | |
+| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn, không bao gồm text-to-video |
+| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp | Không bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất và không bao gồm text-to-video |
+| **Pro**  | Bao gồm toàn bộ quyền lợi của gói Plus, đồng thời truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ cùng với chức năng text-to-video cơ bản và nâng cao  | |
 
 ---
 
