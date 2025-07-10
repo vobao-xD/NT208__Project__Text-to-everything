@@ -253,17 +253,17 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 ## 👤 Tài khoản và phân quyền
 
-| Vai trò  | Quyền lợi                                      | Giới hạn                                                                                   |
-| -------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn |
-| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp | Không bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất |
-| **Pro**  | Bao gồm toàn bộ quyền lợi của gói Plus, đồng thời truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ  | |
+| Vai trò  | Quyền lợi                                                                                              | Giới hạn                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt             | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn |
+| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp            | Không bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất                           |
+| **Pro**  | Bao gồm toàn bộ quyền lợi của gói Plus, đồng thời truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ |                                                                                           |
 
 ---
 
 ## 📊 Demo và minh họa (xem chi tiết hơn qua video demo (link drive))
 
--   **Giao diện Home Page của app trước khi đăng nhập**: Giới thiệu tổng quan về Web App Text to Everything.
+-   **Giao diện Home Page của app (trước khi đăng nhập)**: Giới thiệu tổng quan về Web App Text to Everything.
 
     ![Giao diện Home Page](_demo_resources/home_page.png)
 
@@ -287,41 +287,42 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
     ![Giao diện Text to Speech Custom](_demo_resources/)
 
--   **Giao diện tính năng Text to Image**:
+-   **Giao diện tính năng Text to Image**: chuyển đổi văn bản thành hình ảnh với chất lượng cao, nét vẽ đẹp, tạo ảnh mô tả cho văn bản
 
-    ![Giao diện Text to Image](_demo_resources/)
+    ![Giao diện Text to Image](_demo_resources/text_to_image.png)
 
--   **Giao diện tính năng Text to Video**:
+-   **Giao diện tính năng Text to Video**: chuyển đổi văn bản thành video ngắn với chất lượng ổn định, đồ họa bắt mắt
 
-    ![Giao diện Text to Video](_demo_resources/)
+    ![Giao diện Text to Video](_demo_resources/text_to_video.png)
 
--   **Giao diện tính năng Image Quality Enhancing**:
+-   **Giao diện tính năng Image Quality Enhancing**: sử dụng công nghệ độc quyền để cải thiện chất lượng hình ảnh bằng cách tinh chỉnh các thông số như độ sáng, độ nét,...
 
-    ![Giao diện Image Enhancer](_demo_resources/)
+    ![Giao diện trước Image Enhancer](_demo_resources/before_image_enhancer.png)
+    ![Giao diện sau Image Enhancer](_demo_resources/after_image_enhancer.png)
 
--   **Giao diện tính năng AI Chatbot sáng tạo nội dung**:
+-   **Giao diện tính năng AI Chatbot sáng tạo nội dung**: tạo content, viết truyện, kịch bản phim, làm thơ,...
 
-    ![Giao diện AI Chatbot](_demo_resources/)
+    ![Giao diện AI Chatbot](_demo_resources/content_generate_chatbot.png)
 
--   **Giao diện tính năng AI Chatbot Assistant**:
+-   **Giao diện tính năng AI Chatbot Assistant**: hỗ trợ tri thức và giải đáp thắc mắc cho người sử dụng
 
-    ![Giao diện AI Assistant](_demo_resources/)
+    ![Giao diện AI Assistant](_demo_resources/generate_answer.png)
 
--   **Giao diện tính năng Code Generator**:
+-   **Giao diện tính năng Code Generator**: viết các chương trình, phần mềm bằng ngôn ngữ lập trình tùy chỉnh, hỗ trợ đắc lực cho developer
 
-    ![Giao diện Code Generator](_demo_resources/)
+    ![Giao diện Code Generator](_demo_resources/code_generator.png)
 
--   **Giao diện tính năng trích xuất thông tin từ âm thanh**:
+-   **Giao diện tính năng trích xuất thông tin từ âm thanh**: trích xuất text từ các loại file audio
 
-    ![Giao diện Speech to Text](_demo_resources/)
+    ![Giao diện Speech to Text](_demo_resources/speech_to_text.png)
 
--   **Giao diện tính năng trích xuất thông tin từ video**:
+-   **Giao diện tính năng trích xuất thông tin từ video**: trích xuất text và cả ngữ cảnh từ các loại file video
 
-    ![Giao diện Video to Text](_demo_resources/)
+    ![Giao diện Video to Text](_demo_resources/video_to_text.png)
 
--   **Giao diện tính năng trích xuất thông tin từ file (pdf, txt,...)**:
+-   **Giao diện tính năng trích xuất thông tin từ file (pdf, txt,...)**: trích xuất thông tin từ nhiều loại file đầu vào khác nhau
 
-    ![Giao diện File to Text](_demo_resources/)
+    ![Giao diện File to Text](_demo_resources/file_to_text.png)
 
 -   **Video Demo**:
     [Link Drive](https://drive.google.com/drive/folders/1Tzi-JuDX_c6AOfSXEGv8iiPp3Syrj9B3?usp=sharing)
