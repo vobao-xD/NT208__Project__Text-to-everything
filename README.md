@@ -324,12 +324,6 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 -   **ReDoc**: `http://localhost:8000/redoc`
 
 **Các endpoint chính**:
-
--   **POST /auth/register**: Đăng ký tài khoản.
-    -   Body: `{"email": "user@example.com", "password": "pass"}`
--   **POST /text-to-speech/default**: Tạo giọng nói.
-    -   Body: `{"text": "Xin chào", "language": "vi"}`
-    -   Response: URL file âm thanh.
 ### General
 -   **GET /get-output/{filename}**: Lấy file trong từ thư mục outputs ở backend.
     -   Body: `{"filename":"readme.md"}`
