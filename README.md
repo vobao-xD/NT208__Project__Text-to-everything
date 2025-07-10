@@ -495,8 +495,8 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 | Vai trò  | Quyền lợi                                      | Giới hạn                                                                                   |
 | -------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn, không bao gồm text-to-video |
-| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp | Không bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất và không bao gồm text-to-video |
+| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn, không bao gồm text-to-video,giới hạn 10 lần gửi tin nhắn mỗi ngày |
+| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp | Bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất và không bao gồm text-to-video |
 | **Pro**  | Bao gồm toàn bộ quyền lợi của gói Plus, đồng thời truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ cùng với chức năng text-to-video cơ bản và nâng cao  | |
 
 ---
@@ -517,7 +517,7 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 -   **Giao diện tính năng Auto Analyze**: tự động trích xuất yêu cầu của người dùng từ prompt và thực hiện chức năng tương ứng.
 
-    ![Giao diện Auto Analyze](_demo_resources/)
+    ![Giao diện Auto Analyze](_demo_resources/auto_analyze.png)
 
 -   **Giao diện tính năng Text to Speech With Default Voice**:
 
@@ -529,7 +529,7 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 -   **Giao diện tính năng Text to Image**:
 
-    ![Giao diện Text to Image](_demo_resources/)
+    ![Giao diện Text to Image](_demo_resources/text_to_image.png)
 
 -   **Giao diện tính năng Text to Video**:
 
@@ -537,11 +537,12 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 -   **Giao diện tính năng Image Quality Enhancing**:
 
-    ![Giao diện Image Enhancer](_demo_resources/)
-
+    ![Giao diện Image Enhancer](_demo_resources/before.png)
+    ![Giao diện Image Enhancer](_demo_resources/after.png)
+    
 -   **Giao diện tính năng AI Chatbot sáng tạo nội dung**:
 
-    ![Giao diện AI Chatbot](_demo_resources/)
+    ![Giao diện AI Chatbot](_demo_resources/aichatbot.png)
 
 -   **Giao diện tính năng AI Chatbot Assistant**:
 
@@ -549,7 +550,7 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 -   **Giao diện tính năng Code Generator**:
 
-    ![Giao diện Code Generator](_demo_resources/)
+    ![Giao diện Code Generator](_demo_resources/code.png)
 
 -   **Giao diện tính năng trích xuất thông tin từ âm thanh**:
 
@@ -561,7 +562,7 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 -   **Giao diện tính năng trích xuất thông tin từ file (pdf, txt,...)**:
 
-    ![Giao diện File to Text](_demo_resources/)
+    ![Giao diện File to Text](_demo_resources/file_to_text.png)
 
 -   **Video Demo**:
     [Link Drive](https://drive.google.com/drive/folders/1Tzi-JuDX_c6AOfSXEGv8iiPp3Syrj9B3?usp=sharing)
