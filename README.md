@@ -277,15 +277,13 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 
 -   **Giao diện tính năng Auto Analyze**: tự động trích xuất yêu cầu của người dùng từ prompt và thực hiện chức năng tương ứng.
 
-    ![Giao diện Auto Analyze](_demo_resources/)
+    ![Giao diện Auto Analyze](_demo_resources/analyze_1.png)
+    ![Giao diện Auto Analyze](_demo_resources/analyze_2.png)
+    ![Giao diện Auto Analyze](_demo_resources/analyze_3.png)
 
--   **Giao diện tính năng Text to Speech With Default Voice**:
+-   **Giao diện tính năng Text to Speech With Default Voice**: chuyển đổi văn bản thành giọng với với các giọng được cung cấp sẵng hoặc người dùng tự upload giọng của mình lên.
 
-    ![Giao diện Text to Speech Default](_demo_resources/)
-
--   **Giao diện tính năng Text to Speech With Custom Voice (Voice Cloning)**:
-
-    ![Giao diện Text to Speech Custom](_demo_resources/)
+    ![Giao diện Text to Speech Default](_demo_resources/text_to_speech.png)
 
 -   **Giao diện tính năng Text to Image**: chuyển đổi văn bản thành hình ảnh với chất lượng cao, nét vẽ đẹp, tạo ảnh mô tả cho văn bản
 
