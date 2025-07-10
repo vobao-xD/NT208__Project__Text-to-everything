@@ -559,7 +559,7 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
     ![Giao diện Auto Analyze](_demo_resources/analyze_2.png)
     ![Giao diện Auto Analyze](_demo_resources/analyze_3.png)
 
--   **Giao diện tính năng Text to Speech With Default Voice**: chuyển đổi văn bản thành giọng với với các giọng được cung cấp sẵng hoặc người dùng tự upload giọng của mình lên.
+-   **Giao diện tính năng Text to Speech**: chuyển đổi văn bản thành giọng với với các giọng được cung cấp sẵng hoặc người dùng tự upload giọng của mình lên.
 
     ![Giao diện Text to Speech Default](_demo_resources/text_to_speech.png)
 
