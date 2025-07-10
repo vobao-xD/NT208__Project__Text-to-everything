@@ -323,14 +323,178 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 -   **Swagger UI**: `http://localhost:8000/docs`
 -   **ReDoc**: `http://localhost:8000/redoc`
 
-**Ví dụ endpoint**:
+**Các endpoint chính**:
 
 -   **POST /auth/register**: Đăng ký tài khoản.
     -   Body: `{"email": "user@example.com", "password": "pass"}`
 -   **POST /text-to-speech/default**: Tạo giọng nói.
     -   Body: `{"text": "Xin chào", "language": "vi"}`
     -   Response: URL file âm thanh.
+### General
+-   **GET /get-output/{filename}**: Lấy file trong từ thư mục outputs ở backend.
+    -   Body: `{"filename":"readme.md"}`
+    -   Response: URL file.
+-   **POST /save-output-file**: save file vào thư mục outputs
+    -   Body: `{"user_email":"uit@.edu.vn","generator_name":"A","file_extension":""}
+### Authentication
+-   **GET /auth/github**: Khởi tạo quy trình đăng nhập với Github.
+    -   Response: Chuyển hướng đến trang xác thực của Github.
 
+-   **GET /auth/github/callback**: Endpoint callback sau khi xác thực thành công từ Github.
+    -   Response: Chuyển hướng người dùng về trang chủ hoặc trang profile sau khi đăng nhập thành công.
+
+-   **GET /auth/google**: Khởi tạo quy trình đăng nhập với Google.
+    -   Response: Chuyển hướng đến trang xác thực của Google.
+
+-   **GET /auth/google/callback**: Endpoint callback sau khi xác thực thành công từ Google.
+    -   Response: Chuyển hướng người dùng về trang chủ hoặc trang profile sau khi đăng nhập thành công.
+
+-   **GET /auth/logout**: Đăng xuất người dùng.
+    -   Response: Thông báo đăng xuất thành công và xóa session/token.
+
+-   **GET /auth/get-user-info**: Lấy thông tin của người dùng đã đăng nhập.
+    -   Response: Đối tượng JSON chứa thông tin người dùng. Ví dụ: `{"user_email":"user@example.com", "name":"Tên người dùng"}`.
+### Chat History
+
+-   **POST /chat-history**: Lưu một cuộc trò chuyện mới.
+    -   Body: Đối tượng JSON chứa thông tin ban đầu của cuộc trò chuyện. Ví dụ: `{"user_id": "user123", "title": "Chủ đề về AI", "messages": [...]}`
+    -   Response: Đối tượng của cuộc trò chuyện vừa được tạo, bao gồm cả `history_id` mới.
+
+-   **GET /chat-history**: Lấy tất cả lịch sử trò chuyện của người dùng.
+    -   Response: Mảng chứa các đối tượng tóm tắt về những cuộc trò chuyện đã có.
+
+-   **POST /chat-history/{history_id}/add-detail**: Thêm tin nhắn vào một cuộc trò chuyện đã có.
+    -   Body: Đối tượng JSON chứa nội dung tin nhắn mới. Ví dụ: `{"sender": "user", "text": "Nội dung tin nhắn."}`
+    -   Response: Trạng thái thành công hoặc chi tiết cuộc trò chuyện đã được cập nhật.
+
+-   **GET /chat-history/{history_id}**: Lấy chi tiết một cuộc trò chuyện theo ID.
+    -   Response: Đối tượng JSON chứa toàn bộ thông tin và tin nhắn của cuộc trò chuyện.
+
+-   **DELETE /chat-history/{history_id}**: Xóa một cuộc trò chuyện theo ID.
+    -   Response: Thông báo xác nhận xóa thành công.
+### Input Processing
+
+-   **POST /input/text**: Gửi dữ liệu dạng văn bản để xử lý.
+    -   Body: Đối tượng JSON chứa văn bản. Ví dụ: `{"text": "Nội dung văn bản cần xử lý."}`
+    -   Response: Kết quả sau khi xử lý văn bản.
+
+-   **POST /input/speech**: Gửi file âm thanh để chuyển đổi thành văn bản (Speech-to-Text).
+    -   Body: File âm thanh (ví dụ: .mp3, .wav) được gửi dưới dạng `multipart/form-data`.
+    -   Response: Đối tượng JSON chứa văn bản đã được chuyển đổi. Ví dụ: `{"transcript": "Đây là nội dung đã được nhận dạng."}`
+
+-   **POST /input/image**: Gửi file hình ảnh để xử lý.
+    -   Body: File hình ảnh (ví dụ: .jpg, .png) được gửi dưới dạng `multipart/form-data`.
+    -   Response: Kết quả sau khi xử lý hình ảnh (ví dụ: mô tả nội dung, nhận dạng đối tượng).
+
+-   **POST /input/video**: Gửi file video để xử lý.
+    -   Body: File video (ví dụ: .mp4) được gửi dưới dạng `multipart/form-data`.
+    -   Response: Kết quả phân tích hoặc xử lý video.
+
+-   **POST /input/document**: Gửi một file tài liệu (văn bản, pdf,...) để xử lý.
+    -   Body: File tài liệu (ví dụ: .pdf, .docx) được gửi dưới dạng `multipart/form-data`.
+    -   Response: Kết quả sau khi trích xuất và xử lý nội dung tài liệu.
+
+-   **POST /analyze**: Phân tích một đoạn văn bản cho trước.
+    -   Body: Đối tượng JSON chứa văn bản cần phân tích. Ví dụ: `{"text": "Văn bản này cần được phân tích."}`
+    -   Response: Kết quả phân tích (ví dụ: phân tích cảm xúc, nhận dạng thực thể, tóm tắt).
+### Text to speech
+
+-   **POST /text-to-speech/default**: Chuyển đổi văn bản thành giọng nói sử dụng giọng mặc định.
+    -   Body: Đối tượng JSON chứa văn bản. Ví dụ: `{"text": "Xin chào thế giới."}`
+    -   Response: File âm thanh (.mp3, .wav) của giọng nói.
+
+-   **POST /text-to-speech/custom**: Chuyển đổi văn bản thành giọng nói sử dụng giọng đã được nhân bản (voice cloning).
+    -   Body: Đối tượng JSON chứa văn bản và ID của giọng nói. Ví dụ: `{"text": "Xin chào.", "voice_id": "id_giong_noi_custom"}`
+    -   Response: File âm thanh (.mp3, .wav) của giọng nói tùy chỉnh.
+
+### Text to image
+
+-   **POST /text-to-image/**: Tạo hình ảnh từ mô tả văn bản.
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Một con mèo phi hành gia trên mặt trăng."}`
+    -   Response: File hình ảnh được tạo ra (.png, .jpg).
+
+### Text to video
+
+-   **POST /text-to-video/**: Tạo video từ mô tả văn bản.
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Cảnh hoàng hôn trên một bãi biển vắng người."}`
+    -   Response: File video được tạo ra (.mp4).
+
+### Text to code
+
+-   **POST /text-to-code/**: Tạo mã nguồn (code) từ mô tả yêu cầu bằng ngôn ngữ tự nhiên.
+    -   Body: Đối tượng JSON chứa mô tả yêu cầu và ngôn ngữ lập trình. Ví dụ: `{"request": "Viết một hàm để tính tổng hai số.", "language": "python"}`
+    -   Response: Đối tượng JSON chứa đoạn mã được tạo.
+
+### Content generative chatbot
+
+-   **POST /chatbot/content**: Tương tác với chatbot để tạo ra nội dung văn bản.
+    -   Body: Đối tượng JSON chứa câu hỏi hoặc yêu cầu. Ví dụ: `{"query": "Viết một đoạn văn ngắn về lợi ích của trí tuệ nhân tạo."}`
+    -   Response: Đối tượng JSON chứa nội dung do chatbot tạo ra.
+
+### Image enhancing
+
+-   **POST /enhance**: Nâng cao chất lượng, độ phân giải của hình ảnh.
+    -   Body: File hình ảnh cần nâng cao chất lượng, gửi dưới dạng `multipart/form-data`.
+    -   Response: File hình ảnh đã được cải thiện chất lượng.
+
+### Generate answer
+
+-   **POST /generate_answer**: Tạo câu trả lời dựa trên một câu hỏi hoặc một ngữ cảnh cho trước.
+    -   Body: Đối tượng JSON chứa câu hỏi hoặc ngữ cảnh. Ví dụ: `{"question": "Thủ đô của Việt Nam là gì?"}`
+    -   Response: Đối tượng JSON chứa câu trả lời được tạo ra.
+### Advanced model
+
+-   **POST /advanced/text-to-code**: Tạo mã nguồn (code) từ mô tả yêu cầu bằng mô hình nâng cao.
+    -   Body: Đối tượng JSON chứa mô tả yêu cầu. Ví dụ: `{"request": "Viết một hàm python để tính tổng hai số."}`
+    -   Response: Đối tượng JSON chứa đoạn mã được tạo.
+
+-   **POST /advanced/text-to-image**: Tạo hình ảnh từ mô tả văn bản bằng mô hình nâng cao.
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Một con mèo phi hành gia đang cưỡi ngựa."}`
+    -   Response: File hình ảnh được tạo ra (.png, .jpg).
+
+-   **POST /advanced/text-to-video**: Tạo video từ mô tả văn bản bằng mô hình nâng cao.
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Một đoạn phim ngắn về một thành phố tương lai."}`
+    -   Response: File video được tạo ra (.mp4).
+
+-   **POST /advanced/text-to-audio**: Tạo âm thanh (lời nói, nhạc) từ mô tả văn bản bằng mô hình nâng cao.
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Tạo một đoạn nhạc lofi ngắn để học bài."}`
+    -   Response: File âm thanh được tạo ra (.mp3, .wav).
+
+-   **POST /advanced/generate-answer**: Tạo câu trả lời dựa trên câu hỏi/ngữ cảnh bằng mô hình nâng cao.
+    -   Body: Đối tượng JSON chứa câu hỏi/ngữ cảnh. Ví dụ: `{"context": "...", "question": "Dựa vào văn bản trên, hãy trả lời..."}`
+    -   Response: Đối tượng JSON chứa câu trả lời chi tiết.
+
+-   **POST /advanced/chatbot-content**: Tương tác với chatbot nâng cao để tạo ra nội dung phức tạp.
+    -   Body: Đối tượng JSON chứa câu hỏi hoặc yêu cầu. Ví dụ: `{"query": "Lên một kế hoạch chi tiết cho một chiến dịch marketing."}`
+    -   Response: Đối tượng JSON chứa nội dung do chatbot tạo ra.
+
+-   **POST /advanced/enhance**: Nâng cao chất lượng hình ảnh/âm thanh bằng thuật toán nâng cao.
+    -   Body: File hình ảnh hoặc âm thanh cần nâng cao chất lượng, gửi dưới dạng `multipart/form-data`.
+    -   Response: File media đã được cải thiện chất lượng.
+
+-   **POST /advanced/file-text-to-answer**: Đặt câu hỏi và nhận câu trả lời thông minh từ nội dung của một file.
+    -   Body: File (.pdf, .txt, .docx) và câu hỏi được gửi dưới dạng `multipart/form-data`.
+    -   Response: Đối tượng JSON chứa câu trả lời được trích xuất và tổng hợp từ file.
+
+-   **POST /advanced/analyze**: Phân tích sâu văn bản hoặc dữ liệu bằng mô hình nâng cao.
+    -   Body: Đối tượng JSON chứa văn bản cần phân tích. Ví dụ: `{"text": "Nội dung văn bản cần phân tích sâu."}`
+    -   Response: Kết quả phân tích chi tiết (cảm xúc, xu hướng, thực thể,...).
+### Payment
+-   **POST /momo/create-payment**: Khởi tạo một giao dịch thanh toán qua cổng MoMo.
+
+    -   Body: Đối tượng JSON chứa thông tin giao dịch. Ví dụ: {"order_id": "...", "amount": 100000, "order_info": "Thanh toán gói Premium"}
+
+    -   Response: Đối tượng JSON chứa payUrl để chuyển hướng người dùng đến trang thanh toán của MoMo.
+
+-   **POST /momo/callback**: Endpoint để MoMo gọi lại (callback) và thông báo kết quả giao dịch.
+
+    -   Body: Đối tượng JSON do MoMo gửi về, chứa thông tin và trạng thái của giao dịch.
+
+    -   Response: Xác nhận đã nhận và xử lý callback thành công, thường sẽ cập nhật trạng thái gói đăng ký cho người dùng.
+
+-   **GET /user-subscription**: Lấy thông tin về gói đăng ký hiện tại của người dùng.
+
+    -   Response: Đối tượng JSON chứa thông tin về gói đăng ký. Ví dụ: {"user_id": "...", "plan_name": "Premium", "expiry_date": "2026-07-10"}
 ---
 
 ## 👤 Tài khoản và phân quyền
