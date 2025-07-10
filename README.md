@@ -81,43 +81,130 @@ Dưới đây là những tính năng nổi bật, mang tính đột phá của 
 Hệ thống "Text to Everything" được thiết kế theo kiến trúc mô-đun, bao gồm các thành phần chính:
 
 ```
-Client (React/Vite + HTML/CSS/Tailwind/JS)
+Client (React/Vite + HTML/CSS/Tailwind.CSS/JS)
 │
-│ (HTTP/WebSocket Requests)
+│ (HTTP Requests)
 ▼
 FastAPI Backend (Python)
-│ ───────────────────────────────────────────────────────────────────────────┐
-│ (Logic xử lý chính, Quản lý tác vụ, Xác thực, Phân quyền, API Gateway,.. ) │
-│   ├──► Kết nối PostgreSQL (Dữ liệu người dùng, metadata, cấu hình)         │
-│   ├──► Lưu trữ file (Input/Output từ người dùng)                           │
-│   └──► Gọi External AI APIs (OpenAI, CloudFlare, v.v.)                     │
-│       └──► Gọi Text-to-Speech Backend (Python FastAPI)                     │
-│            ├──► TTS Default                                                │
-│            └──► TTS with Voice Cloning (Vi-XTTS)                           │
+│ ────────────────────────────────────────────────────────────────────────────────┐
+│ (Logic xử lý chính, Quản lý tác vụ, Xác thực, Phân quyền, API Gateway,.. )      │
+│   ├──► Kết nối PostgreSQL (Dữ liệu người dùng, metadata, cấu hình)              │
+│   ├──► Lưu trữ file (Input/Output từ người dùng)                                │
+│   └──► Gọi External AI APIs (OpenAI, CloudFlare, v.v. thông qua Python FastAPI) │
+│       ├──► Gọi Text-to-Speech Backend                                           │
+│       │    ├──► TTS Default                                                     │
+│       │    ├──► TTS with Voice Cloning (Vi-XTTS)                                │
+│       │    └──► TTS Advanced (whisper-1)                                        │
+│       ├──► Gọi Text-to-Image Backend                                            │
+│       │    ├──► TTI Default (Cloudflare's Black Forest Lab's flux-1-schnell)    │
+│       │    └──► TTI Advanced (dall-e-3)                                         │
+│       ├──► Gọi Text-to-Video Backend                                            │
+│       │    ├──► TTV Default(Segmind's Mochi-1 Model)                            │
+│       │    └──► TTV Advanced (RunwayML)                                         │
+│       ├──► Gọi Text-to-Code Backend                                             │
+│       │    └──► TTC Default (openai/gpt-3.5-turbo)                              │
+│       │    └──► TTC Advanced (openai/gpt-40)                                    │
+│       ├──► Gọi Generate Answer Backend                                          │
+│       │    └──► Generate Answer Default (mistralai/mistral-7b-instruct)         │
+│       │    └──► Generate Answer Advanced (openai/gpt-4o)                        │
+│       ├──► Gọi Chatbot AI Backend                                               │
+│       │    └──► Chatbot AI Default/Advanced (openai/gpt-4o)                     │
+│       ├──► Gọi Image Enhancer Backend                                           │
+│       │    └──► Image Enhancer (ImageEnhancer thuộc module Pillow)              │
+│       ├──► Gọi Speech to Text Backend                                           │
+│       │    └──► Speech to Text (Recognizer thuộc module sr)                     │
+│       ├──► Gọi Image to Text Backend                                            │
+│       │    └──► Image to Text (module pytesseract)                              │
+│       ├──► Gọi File to Text Backend                                             │
+│       │    └──► File to Text (module PyPDF2 và module docx)                     │
+│       └──► Gọi Video to Text Backend                                            │
+│            └──► Video to Text (module moviepy)                                  │
+│
 ▼
 PostgreSQL Online Database
-(Dữ liệu người dùng, metadata, cấu hình, input, output,...)
+(Dữ liệu người dùng, cấu hình, input, output,...)
 ```
 
 ### 📑 Chi tiết thành phần
 
--   **Client**: Giao diện người dùng được phát triển bằng **React/Vite** kết hợp **HTML/CSS/Tailwind/JS**, xây dựng theo mô hình **Single Page Application (SPA)**, cung cấp trải nghiệm tương tác mượt mà và trực quan.
--   **FastAPI Backend**: Trụ cột chính sử dụng **Python FastAPI**, đảm nhận:
-    -   Xử lý logic nghiệp vụ chính.
-    -   Quản lý tác vụ, xác thực và phân quyền người dùng.
-    -   Kết nối với **PostgreSQL** để lưu trữ dữ liệu người dùng, metadata, và cấu hình.
-    -   Lưu trữ file input/output từ người dùng (hình ảnh, video, âm thanh).
-    -   Gọi các **API bên thứ ba** (OpenAI, CloudFlare, v.v.) để tích hợp tính năng AI.
--   **Text-to-Speech Backend**: Một dự án phụ biệt lập sử dụng **Python FastAPI**, được thiết kế riêng để hỗ trợ:
-    -   **TTS Default**: Tạo giọng nói tự nhiên từ văn bản.
-    -   **TTS with Voice Cloning**: Sử dụng mô hình **Vi-XTTS** để sao chép giọng nói tùy chỉnh của người dùng.
-    -   Backend này được FastAPI chính gọi để cung cấp tính năng TTS chuyên sâu.
--   **External AI APIs**: Tích hợp các dịch vụ từ **OpenAI**, **CloudFlare**, và các nhà cung cấp khác để mở rộng khả năng AI cho web app.
--   **PostgreSQL Database**: Lưu trữ dữ liệu có cấu trúc, bao gồm thông tin người dùng, metadata nội dung, và cấu hình hệ thống,...
+-   **Client**
+    Giao diện người dùng được xây dựng bằng **React/Vite**, kết hợp với **HTML/CSS/Tailwind CSS/JavaScript**, theo mô hình **Single Page Application (SPA)**.
+    Cung cấp trải nghiệm người dùng hiện đại, mượt mà, với khả năng tương tác thời gian thực và tối ưu hiệu năng trình duyệt.
+
+---
+
+-   **FastAPI Backend (Python)**
+    Là trung tâm điều phối của hệ thống, đảm nhiệm các vai trò quan trọng:
+
+    -   **Xử lý logic nghiệp vụ**: Quản lý toàn bộ luồng xử lý tác vụ AI (TTS, TTI, TTC, v.v.).
+    -   **Xác thực & phân quyền người dùng**: Hệ thống đăng nhập/đăng ký, cấp quyền theo vai trò (user/admin).
+    -   **API Gateway**: Làm trung gian gọi tới các dịch vụ AI bên ngoài hoặc nội bộ.
+    -   **Kết nối PostgreSQL**: Lưu trữ và truy vấn dữ liệu người dùng, metadata, cấu hình hệ thống.
+    -   **Lưu trữ file**: Quản lý dữ liệu input/output (ảnh, video, âm thanh, file tài liệu) từ người dùng.
+    -   **Gọi External AI APIs**: Tích hợp các API từ bên thứ ba (OpenAI, Cloudflare,...), bao gồm:
+
+        -   **Text-to-Speech Backend**:
+
+            -   `TTS Default`: Chuyển văn bản thành giọng nói cơ bản.
+            -   `TTS with Voice Cloning`: Sử dụng mô hình **Vi-XTTS** để nhân bản giọng nói người dùng.
+            -   `TTS Advanced`: Tạo giọng nói nâng cao từ văn bản với hỗ trợ mô hình như **whisper-1**.
+
+        -   **Text-to-Image Backend**:
+
+            -   `TTI Default`: Sử dụng mô hình như **flux-1-schnell** từ Cloudflare.
+            -   `TTI Advanced`: Sử dụng mô hình **DALL·E 3** từ OpenAI.
+
+        -   **Text-to-Video Backend**:
+
+            -   `TTV Default`: Tạo video từ mô hình như **Mochi-1** (Segmind).
+            -   `TTV Advanced`: Sử dụng nền tảng video AI cao cấp như **RunwayML**.
+
+        -   **Text-to-Code Backend**:
+
+            -   `TTC Default`: Tạo mã nguồn từ văn bản bằng **GPT-3.5-turbo**.
+            -   `TTC Advanced`: Tạo mã chất lượng cao hơn bằng **GPT-4o**.
+
+        -   **Generate Answer Backend**:
+
+            -   `Default`: Dùng mô hình nhẹ như **Mistral-7B Instruct**.
+            -   `Advanced`: Dùng mô hình cao cấp như **GPT-4o**.
+
+        -   **Chatbot AI Backend**: Trò chuyện tương tác sử dụng **GPT-4o**.
+        -   **Image Enhancer Backend**: Cải thiện chất lượng ảnh đầu vào với module **Pillow**.
+        -   **Speech to Text Backend**: Chuyển giọng nói thành văn bản qua thư viện **SpeechRecognition** (`sr`).
+        -   **Image to Text Backend**: Trích xuất văn bản từ hình ảnh qua **pytesseract**.
+        -   **File to Text Backend**: Đọc nội dung từ file **PDF** và **DOCX** sử dụng **PyPDF2** và **python-docx**.
+        -   **Video to Text Backend**: Trích xuất nội dung từ video thông qua **moviepy**.
+
+---
+
+-   **Text-to-Speech Backend (Microservice riêng biệt)**
+    Một backend riêng biệt được triển khai bằng **FastAPI**, chuyên xử lý các yêu cầu liên quan đến chuyển văn bản thành giọng nói (TTS), hỗ trợ:
+
+    -   TTS thường (Default)
+    -   TTS giọng nói cá nhân hóa (Voice Cloning với Vi-XTTS)
+    -   TTS nâng cao với chất lượng cao hơn (Whisper-1, v.v.)
+
+---
+
+-   **External AI APIs**
+    Gồm các API từ **OpenAI**, **Cloudflare**, và các nhà cung cấp AI khác, được gọi thông qua các route của FastAPI backend để xử lý tác vụ nâng cao như tạo ảnh, tạo video, viết code, sinh câu trả lời, chatbot, v.v.
+
+---
+
+-   **PostgreSQL Online Database**
+    Cơ sở dữ liệu trực tuyến dạng quan hệ, lưu trữ:
+
+    -   Thông tin người dùng
+    -   Metadata liên quan đến đầu vào/đầu ra
+    -   Cấu hình hệ thống
+    -   Trạng thái tác vụ và lịch sử xử lý AI
+
+---
 
 ### 🛠 Luồng hoạt động
 
-1. **Client**: Người dùng tương tác qua giao diện SPA, gửi yêu cầu qua HTTP/WebSocket.
+1. **Client**: Người dùng tương tác qua giao diện SPA, gửi yêu cầu qua HTTP.
 2. **FastAPI Backend**: Nhận yêu cầu, xác thực người dùng, điều phối đến các module xử lý, và lưu trữ dữ liệu/file.
 3. **Text-to-Speech Backend**: Xử lý riêng biệt các tác vụ TTS (default và voice cloning) khi được gọi.
 4. **External APIs**: Cung cấp hỗ trợ AI bổ sung từ các dịch vụ bên ngoài.
@@ -132,15 +219,14 @@ Kiến trúc này cho phép mở rộng linh hoạt, đặc biệt với mô-đu
 Dự án **Text to Everything** tận dụng các công nghệ hiện đại và tối ưu để đảm bảo hiệu suất, khả năng mở rộng và trải nghiệm người dùng vượt trội. Dưới đây là danh sách các công nghệ cốt lõi và lý do lựa chọn:
 
 | Thành phần        | Công nghệ                           | Lý do lựa chọn                                                                                                                                   |
-| ----------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ----------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --- |
 | **Backend**       | Python 3.11+, FastAPI               | Python 3.11+ cung cấp hiệu năng vượt trội và hệ sinh thái AI/ML phong phú; FastAPI đảm bảo tốc độ cao, tự động tạo tài liệu API (Swagger/ReDoc). |
 | **Frontend**      | React + Vite                        | React mang đến giao diện tương tác mạnh mẽ; Vite tối ưu hóa tốc độ phát triển và tải trang nhanh.                                                |
 | **Cơ sở dữ liệu** | PostgreSQL                          | Hỗ trợ mạnh mẽ cho dữ liệu phức tạp, đáng tin cậy, và phù hợp với ứng dụng đa năng như Text to Everything.                                       |
 | **AI Models**     | OpenAI, Stability AI, Vi-XTTS, v.v. | Tận dụng các mô hình State-of-the-Art (SOTA) từ OpenAI, Stability AI, và mô hình Vi-XTTS tự phát triển để xử lý đa dạng tác vụ AI.               |
 | **Xác thực**      | OAuth2, JWT                         | Đảm bảo an toàn và linh hoạt trong quản lý đăng nhập, xác thực người dùng và service với tiêu chuẩn công nghiệp.                                 |
 | **Triển khai**    | Docker, Railway, Render, Heroku     | Docker đóng gói ứng dụng đồng nhất; Railway, Render, Heroku cung cấp hạ tầng linh hoạt và dễ triển khai.                                         |
-| **Lưu trữ file**  | FastAPI Backend                     | Tự thiết kế cơ chế lưu trữ file ở backend để dễ dàng quản lý, truy vấn và sử dụng lại khi cần.                                                   |
-| **Linting**       | Black, Flake8, isort                | Đảm bảo mã nguồn nhất quán, dễ đọc và tuân thủ các tiêu chuẩn code style.                                                                        |
+| **Lưu trữ file**  | FastAPI Backend                     | Tự thiết kế cơ chế lưu trữ file ở backend để dễ dàng quản lý, truy vấn và sử dụng lại khi cần.                                                   |     |
 
 ---
 
@@ -241,23 +327,215 @@ FastAPI tự động tạo tài liệu OpenAPI. Truy cập:
 -   **Swagger UI**: `http://localhost:8000/docs`
 -   **ReDoc**: `http://localhost:8000/redoc`
 
-**Ví dụ endpoint**:
+**Các endpoint chính**:
 
--   **POST /auth/register**: Đăng ký tài khoản.
-    -   Body: `{"email": "user@example.com", "password": "pass"}`
--   **POST /text-to-speech/default**: Tạo giọng nói.
-    -   Body: `{"text": "Xin chào", "language": "vi"}`
-    -   Response: URL file âm thanh.
+### General
+
+-   **GET /get-output/{filename}**: Lấy file trong từ thư mục outputs ở backend.
+    -   Body: `{"filename":"readme.md"}`
+    -   Response: URL file.
+-   **POST /save-output-file**: save file vào thư mục outputs
+    -   Body: `{"user_email":"uit@.edu.vn","generator_name":"A","file_extension":""}
+
+### Authentication
+
+-   **GET /auth/github**: Khởi tạo quy trình đăng nhập với Github.
+
+    -   Response: Chuyển hướng đến trang xác thực của Github.
+
+-   **GET /auth/github/callback**: Endpoint callback sau khi xác thực thành công từ Github.
+
+    -   Response: Chuyển hướng người dùng về trang chủ hoặc trang profile sau khi đăng nhập thành công.
+
+-   **GET /auth/google**: Khởi tạo quy trình đăng nhập với Google.
+
+    -   Response: Chuyển hướng đến trang xác thực của Google.
+
+-   **GET /auth/google/callback**: Endpoint callback sau khi xác thực thành công từ Google.
+
+    -   Response: Chuyển hướng người dùng về trang chủ hoặc trang profile sau khi đăng nhập thành công.
+
+-   **GET /auth/logout**: Đăng xuất người dùng.
+
+    -   Response: Thông báo đăng xuất thành công và xóa session/token.
+
+-   **GET /auth/get-user-info**: Lấy thông tin của người dùng đã đăng nhập.
+    -   Response: Đối tượng JSON chứa thông tin người dùng. Ví dụ: `{"user_email":"user@example.com", "name":"Tên người dùng"}`.
+
+### Chat History
+
+-   **POST /chat-history**: Lưu một cuộc trò chuyện mới.
+
+    -   Body: Đối tượng JSON chứa thông tin ban đầu của cuộc trò chuyện. Ví dụ: `{"user_id": "user123", "title": "Chủ đề về AI", "messages": [...]}`
+    -   Response: Đối tượng của cuộc trò chuyện vừa được tạo, bao gồm cả `history_id` mới.
+
+-   **GET /chat-history**: Lấy tất cả lịch sử trò chuyện của người dùng.
+
+    -   Response: Mảng chứa các đối tượng tóm tắt về những cuộc trò chuyện đã có.
+
+-   **POST /chat-history/{history_id}/add-detail**: Thêm tin nhắn vào một cuộc trò chuyện đã có.
+
+    -   Body: Đối tượng JSON chứa nội dung tin nhắn mới. Ví dụ: `{"sender": "user", "text": "Nội dung tin nhắn."}`
+    -   Response: Trạng thái thành công hoặc chi tiết cuộc trò chuyện đã được cập nhật.
+
+-   **GET /chat-history/{history_id}**: Lấy chi tiết một cuộc trò chuyện theo ID.
+
+    -   Response: Đối tượng JSON chứa toàn bộ thông tin và tin nhắn của cuộc trò chuyện.
+
+-   **DELETE /chat-history/{history_id}**: Xóa một cuộc trò chuyện theo ID.
+    -   Response: Thông báo xác nhận xóa thành công.
+
+### Input Processing
+
+-   **POST /input/text**: Gửi dữ liệu dạng văn bản để xử lý.
+
+    -   Body: Đối tượng JSON chứa văn bản. Ví dụ: `{"text": "Nội dung văn bản cần xử lý."}`
+    -   Response: Kết quả sau khi xử lý văn bản.
+
+-   **POST /input/speech**: Gửi file âm thanh để chuyển đổi thành văn bản (Speech-to-Text).
+
+    -   Body: File âm thanh (ví dụ: .mp3, .wav) được gửi dưới dạng `multipart/form-data`.
+    -   Response: Đối tượng JSON chứa văn bản đã được chuyển đổi. Ví dụ: `{"transcript": "Đây là nội dung đã được nhận dạng."}`
+
+-   **POST /input/image**: Gửi file hình ảnh để xử lý.
+
+    -   Body: File hình ảnh (ví dụ: .jpg, .png) được gửi dưới dạng `multipart/form-data`.
+    -   Response: Kết quả sau khi xử lý hình ảnh (ví dụ: mô tả nội dung, nhận dạng đối tượng).
+
+-   **POST /input/video**: Gửi file video để xử lý.
+
+    -   Body: File video (ví dụ: .mp4) được gửi dưới dạng `multipart/form-data`.
+    -   Response: Kết quả phân tích hoặc xử lý video.
+
+-   **POST /input/document**: Gửi một file tài liệu (văn bản, pdf,...) để xử lý.
+
+    -   Body: File tài liệu (ví dụ: .pdf, .docx) được gửi dưới dạng `multipart/form-data`.
+    -   Response: Kết quả sau khi trích xuất và xử lý nội dung tài liệu.
+
+-   **POST /analyze**: Phân tích một đoạn văn bản cho trước.
+    -   Body: Đối tượng JSON chứa văn bản cần phân tích. Ví dụ: `{"text": "Văn bản này cần được phân tích."}`
+    -   Response: Kết quả phân tích (ví dụ: phân tích cảm xúc, nhận dạng thực thể, tóm tắt).
+
+### Text to speech
+
+-   **POST /text-to-speech/default**: Chuyển đổi văn bản thành giọng nói sử dụng giọng mặc định.
+
+    -   Body: Đối tượng JSON chứa văn bản. Ví dụ: `{"text": "Xin chào thế giới."}`
+    -   Response: File âm thanh (.mp3, .wav) của giọng nói.
+
+-   **POST /text-to-speech/custom**: Chuyển đổi văn bản thành giọng nói sử dụng giọng đã được nhân bản (voice cloning).
+    -   Body: Đối tượng JSON chứa văn bản và ID của giọng nói. Ví dụ: `{"text": "Xin chào.", "voice_id": "id_giong_noi_custom"}`
+    -   Response: File âm thanh (.mp3, .wav) của giọng nói tùy chỉnh.
+
+### Text to image
+
+-   **POST /text-to-image/**: Tạo hình ảnh từ mô tả văn bản.
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Một con mèo phi hành gia trên mặt trăng."}`
+    -   Response: File hình ảnh được tạo ra (.png, .jpg).
+
+### Text to video
+
+-   **POST /text-to-video/**: Tạo video từ mô tả văn bản.
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Cảnh hoàng hôn trên một bãi biển vắng người."}`
+    -   Response: File video được tạo ra (.mp4).
+
+### Text to code
+
+-   **POST /text-to-code/**: Tạo mã nguồn (code) từ mô tả yêu cầu bằng ngôn ngữ tự nhiên.
+    -   Body: Đối tượng JSON chứa mô tả yêu cầu và ngôn ngữ lập trình. Ví dụ: `{"request": "Viết một hàm để tính tổng hai số.", "language": "python"}`
+    -   Response: Đối tượng JSON chứa đoạn mã được tạo.
+
+### Content generative chatbot
+
+-   **POST /chatbot/content**: Tương tác với chatbot để tạo ra nội dung văn bản.
+    -   Body: Đối tượng JSON chứa câu hỏi hoặc yêu cầu. Ví dụ: `{"query": "Viết một đoạn văn ngắn về lợi ích của trí tuệ nhân tạo."}`
+    -   Response: Đối tượng JSON chứa nội dung do chatbot tạo ra.
+
+### Image enhancing
+
+-   **POST /enhance**: Nâng cao chất lượng, độ phân giải của hình ảnh.
+    -   Body: File hình ảnh cần nâng cao chất lượng, gửi dưới dạng `multipart/form-data`.
+    -   Response: File hình ảnh đã được cải thiện chất lượng.
+
+### Generate answer
+
+-   **POST /generate_answer**: Tạo câu trả lời dựa trên một câu hỏi hoặc một ngữ cảnh cho trước.
+    -   Body: Đối tượng JSON chứa câu hỏi hoặc ngữ cảnh. Ví dụ: `{"question": "Thủ đô của Việt Nam là gì?"}`
+    -   Response: Đối tượng JSON chứa câu trả lời được tạo ra.
+
+### Advanced model
+
+-   **POST /advanced/text-to-code**: Tạo mã nguồn (code) từ mô tả yêu cầu bằng mô hình nâng cao.
+
+    -   Body: Đối tượng JSON chứa mô tả yêu cầu. Ví dụ: `{"request": "Viết một hàm python để tính tổng hai số."}`
+    -   Response: Đối tượng JSON chứa đoạn mã được tạo.
+
+-   **POST /advanced/text-to-image**: Tạo hình ảnh từ mô tả văn bản bằng mô hình nâng cao.
+
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Một con mèo phi hành gia đang cưỡi ngựa."}`
+    -   Response: File hình ảnh được tạo ra (.png, .jpg).
+
+-   **POST /advanced/text-to-video**: Tạo video từ mô tả văn bản bằng mô hình nâng cao.
+
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Một đoạn phim ngắn về một thành phố tương lai."}`
+    -   Response: File video được tạo ra (.mp4).
+
+-   **POST /advanced/text-to-audio**: Tạo âm thanh (lời nói, nhạc) từ mô tả văn bản bằng mô hình nâng cao.
+
+    -   Body: Đối tượng JSON chứa mô tả (prompt). Ví dụ: `{"prompt": "Tạo một đoạn nhạc lofi ngắn để học bài."}`
+    -   Response: File âm thanh được tạo ra (.mp3, .wav).
+
+-   **POST /advanced/generate-answer**: Tạo câu trả lời dựa trên câu hỏi/ngữ cảnh bằng mô hình nâng cao.
+
+    -   Body: Đối tượng JSON chứa câu hỏi/ngữ cảnh. Ví dụ: `{"context": "...", "question": "Dựa vào văn bản trên, hãy trả lời..."}`
+    -   Response: Đối tượng JSON chứa câu trả lời chi tiết.
+
+-   **POST /advanced/chatbot-content**: Tương tác với chatbot nâng cao để tạo ra nội dung phức tạp.
+
+    -   Body: Đối tượng JSON chứa câu hỏi hoặc yêu cầu. Ví dụ: `{"query": "Lên một kế hoạch chi tiết cho một chiến dịch marketing."}`
+    -   Response: Đối tượng JSON chứa nội dung do chatbot tạo ra.
+
+-   **POST /advanced/enhance**: Nâng cao chất lượng hình ảnh/âm thanh bằng thuật toán nâng cao.
+
+    -   Body: File hình ảnh hoặc âm thanh cần nâng cao chất lượng, gửi dưới dạng `multipart/form-data`.
+    -   Response: File media đã được cải thiện chất lượng.
+
+-   **POST /advanced/file-text-to-answer**: Đặt câu hỏi và nhận câu trả lời thông minh từ nội dung của một file.
+
+    -   Body: File (.pdf, .txt, .docx) và câu hỏi được gửi dưới dạng `multipart/form-data`.
+    -   Response: Đối tượng JSON chứa câu trả lời được trích xuất và tổng hợp từ file.
+
+-   **POST /advanced/analyze**: Phân tích sâu văn bản hoặc dữ liệu bằng mô hình nâng cao.
+    -   Body: Đối tượng JSON chứa văn bản cần phân tích. Ví dụ: `{"text": "Nội dung văn bản cần phân tích sâu."}`
+    -   Response: Kết quả phân tích chi tiết (cảm xúc, xu hướng, thực thể,...).
+
+### Payment
+
+-   **POST /momo/create-payment**: Khởi tạo một giao dịch thanh toán qua cổng MoMo.
+
+    -   Body: Đối tượng JSON chứa thông tin giao dịch. Ví dụ: {"order_id": "...", "amount": 100000, "order_info": "Thanh toán gói Premium"}
+
+    -   Response: Đối tượng JSON chứa payUrl để chuyển hướng người dùng đến trang thanh toán của MoMo.
+
+-   **POST /momo/callback**: Endpoint để MoMo gọi lại (callback) và thông báo kết quả giao dịch.
+
+    -   Body: Đối tượng JSON do MoMo gửi về, chứa thông tin và trạng thái của giao dịch.
+
+    -   Response: Xác nhận đã nhận và xử lý callback thành công, thường sẽ cập nhật trạng thái gói đăng ký cho người dùng.
+
+-   **GET /user-subscription**: Lấy thông tin về gói đăng ký hiện tại của người dùng.
+
+    -   Response: Đối tượng JSON chứa thông tin về gói đăng ký. Ví dụ: {"user_id": "...", "plan_name": "Premium", "expiry_date": "2026-07-10"}
 
 ---
 
 ## 👤 Tài khoản và phân quyền
 
-| Vai trò  | Quyền lợi                                                                                              | Giới hạn                                                                                  |
-| -------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt             | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn |
-| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp            | Không bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất                           |
-| **Pro**  | Bao gồm toàn bộ quyền lợi của gói Plus, đồng thời truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ |                                                                                           |
+| Vai trò  | Quyền lợi                                                                                                                                                  | Giới hạn                                                                                                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Free** | Sử dụng API-Model 1 để tạo nội dung cơ bản, hỗ trợ cả chế độ tự động và thủ công linh hoạt                                                                 | Không hỗ trợ upload file để xử lý và không bao gồm mô hình API-Model 1.1 mới, mạnh mẽ hơn, không bao gồm text-to-video,giới hạn 10 lần gửi tin nhắn mỗi ngày |
+| **Plus** | Bao gồm tất cả quyền lợi của gói Free, bổ sung thêm tính năng upload file và hỗ trợ cao cấp                                                                | Bao gồm quyền truy cập vào mô hình API-Model 1.1 mới nhất và không bao gồm text-to-video                                                                     |
+| **Pro**  | Bao gồm toàn bộ quyền lợi của gói Plus, đồng thời truy cập đầy đủ mô hình API-Model 1.1 mới và mạnh mẽ cùng với chức năng text-to-video cơ bản và nâng cao |                                                                                                                                                              |
 
 ---
 
